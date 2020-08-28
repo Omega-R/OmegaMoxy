@@ -22,6 +22,4 @@ public @interface InjectViewState {
 
 	Class<? extends MvpView> view() default DefaultView.class;
 
-	boolean generateSuperClass() default true;
-
 }
