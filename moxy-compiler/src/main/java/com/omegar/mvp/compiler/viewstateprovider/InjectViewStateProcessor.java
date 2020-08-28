@@ -147,6 +147,10 @@ public class InjectViewStateProcessor extends ElementProcessor<TypeElement, Pres
 			}
 
 			parentTypes = types;
+			InjectViewState annotation = superclassElement.getAnnotation(InjectViewState.class);
+			if (annotation != null && !annotation.generateSuperClass()) {
+				break;
+			}
 
 			superclass = superclassElement.getSuperclass();
 		}
