@@ -12,7 +12,7 @@ import java.util.Map;
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 class MvpReflectorExtractor {
-    
+
     private final Class mCls;
 
     public MvpReflectorExtractor(String moxyReflectorClass) {
