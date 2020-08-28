@@ -57,8 +57,6 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 
 			NotGeneratedSubClasses annotation = info.getElement().getAnnotation(NotGeneratedSubClasses.class);
 
-			if (annotation != null) continue;
-			
 			JavaFile javaFile = filesMap.get(info);
 			if (javaFile == null) {
 				javaFile = generate(info);
@@ -66,6 +64,9 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 				filesMap.put(info, javaFile);
 			}
 			fileList.add(javaFile);
+
+			if (annotation != null) break;
+
 		}
 		return fileList;
 	}
