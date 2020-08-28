@@ -142,13 +142,17 @@ public class InjectViewStateProcessor extends ElementProcessor<TypeElement, Pres
 			}
 			InjectViewState annotation = superclassElement.getAnnotation(InjectViewState.class);
 
-			if (superclassElement.toString().equals(MVP_PRESENTER_CLASS) || (annotation != null && !annotation.generateSuperClass())) {
+			if (annotation != null && !annotation.generateSuperClass()) {
+				return fillGenerics(types, typeArguments);
+			}
+
+			if (superclassElement.toString().equals(MVP_PRESENTER_CLASS)) {
 				// MvpPresenter is typed only on View class
 				return fillGenerics(parentTypes, typeArguments);
 			}
 
 			parentTypes = types;
-			
+
 			superclass = superclassElement.getSuperclass();
 		}
 
