@@ -173,9 +173,9 @@ public class MoxyReflectorGenerator {
 			builder.add("\n");
 			String extractorName = "extractor" + position;
 			builder.addStatement("$T " + extractorName + " = new $T()", TYPE_MVP_REFLECTOR_EXTRACTOR, TYPE_MVP_REFLECTOR_EXTRACTOR);
-			builder.addStatement("sViewStateProviders.putAll(extractorName.getViewStateProviders())");
-			builder.addStatement("sPresenterBinders.putAll(extractorName.getPresenterBinders())");
-			builder.addStatement("sStrategies.putAll(extractorName.getStrategies())");
+			builder.addStatement("sViewStateProviders.putAll("+ extractorName +".getViewStateProviders())");
+			builder.addStatement("sPresenterBinders.putAll("+ extractorName + ".getPresenterBinders())");
+			builder.addStatement("sStrategies.putAll("+ extractorName + ".getStrategies())");
 		}
 
 		return builder.build();
