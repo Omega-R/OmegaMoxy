@@ -61,7 +61,7 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 				annotation = info.getElement()
 						.getAnnotation(NotGeneratedSubClasses.class);
 				if (annotation != null) {
-					filterEnd = i - 1;
+					filterEnd = i;
 				}
 			}
 
@@ -75,7 +75,7 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 		}
 
 		if (filterEnd >= 0) {
-			return fileList.subList(filterEnd + 1, fileList.size() - filterEnd);
+			return fileList.subList(filterEnd, fileList.size() - filterEnd);
 		}
 
 		return fileList;
