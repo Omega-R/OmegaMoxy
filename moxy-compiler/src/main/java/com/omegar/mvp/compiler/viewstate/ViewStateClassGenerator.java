@@ -53,28 +53,31 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 		if (list.isEmpty()) return Collections.emptyList();
 		List<JavaFile> fileList = new ArrayList<>();
 		NotGeneratedSubClasses annotation = null;
+		int filterEnd = -1;
 		for (int i = 0; i < list.size(); i++) {
 			ViewInterfaceInfo info = list.get(i);
 
 			if (annotation == null) {
 				annotation = info.getElement()
 						.getAnnotation(NotGeneratedSubClasses.class);
+				if (annotation != null) {
+					filterEnd = i - 1;
+				}
 			}
 
 			JavaFile javaFile = filesMap.get(info);
 			if (javaFile == null) {
 				javaFile = generate(info);
-				if (annotation == null) {
-					fileList.add(javaFile);
-				}
 				filesMap.put(info, javaFile);
 			}
-			if (annotation == null) {
-				fileList.add(javaFile);
-			}
 
-
+			fileList.add(javaFile);
 		}
+
+		if (filterEnd >= 0) {
+			return fileList.subList(filterEnd + 1, list.size() - filterEnd);
+		}
+
 		return fileList;
 	}
 
