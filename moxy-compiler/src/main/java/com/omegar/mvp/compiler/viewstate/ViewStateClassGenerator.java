@@ -75,7 +75,7 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 		}
 
 		if (filterEnd >= 0) {
-			return fileList.subList(filterEnd, fileList.size() - filterEnd);
+			return fileList.subList(filterEnd, fileList.size());
 		}
 
 		return fileList;
