@@ -47,8 +47,6 @@ public class MoxyReflectorGenerator {
 	private static final TypeName MAP_CLASS_TO_LIST_OF_OBJECT_TYPE_NAME // Map<Class<*>, List<Object>>
 			= ParameterizedTypeName.get(ClassName.get(Map.class), CLASS_WILDCARD_TYPE_NAME, LIST_OF_OBJECT_TYPE_NAME);
 
-	private static final ClassName TYPE_MVP_REFLECTOR_EXTRACTOR = ClassName.get("com.omegar.mvp", "MvpReflectorExtractor");
-
 
 	public static JavaFile generate(String destinationPackage,
 	                                List<TypeElement> presenterClassNames,
@@ -164,19 +162,15 @@ public class MoxyReflectorGenerator {
 			builder.addStatement("sStrategies.put($1T.class, new $1T())", strategyClass);
 		}
 
-		int position = 0;
-
 		for (String pkg : additionalMoxyReflectorsPackages) {
-			position++;
 			ClassName moxyReflector = ClassName.get(pkg, "MoxyReflector");
 
 			builder.add("\n");
-			String extractorName = "extractor" + position;
-			builder.addStatement("$T " + extractorName + " = new $T(\"$T\")", TYPE_MVP_REFLECTOR_EXTRACTOR, TYPE_MVP_REFLECTOR_EXTRACTOR, moxyReflector);
-			builder.addStatement("sViewStateProviders.putAll("+ extractorName +".getViewStateProviders())");
-			builder.addStatement("sPresenterBinders.putAll("+ extractorName + ".getPresenterBinders())");
-			builder.addStatement("sStrategies.putAll("+ extractorName + ".getStrategies())");
+			builder.addStatement("sViewStateProviders.putAll($T.getViewStateProviders())", moxyReflector);
+			builder.addStatement("sPresenterBinders.putAll($T.getPresenterBinders())", moxyReflector);
+			builder.addStatement("sStrategies.putAll($T.getStrategies())", moxyReflector);
 		}
+
 
 		return builder.build();
 	}
