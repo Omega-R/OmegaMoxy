@@ -2,7 +2,10 @@ package com.omegar.mvp;
 
 import android.os.Bundle;
 
+import androidx.annotation.ContentView;
+import androidx.annotation.LayoutRes;
 import androidx.appcompat.app.AppCompatActivity;
+
 
 /**
  * Date: 25-July-18
@@ -13,6 +16,11 @@ import androidx.appcompat.app.AppCompatActivity;
 @SuppressWarnings("unused")
 public class MvpAppCompatActivity extends AppCompatActivity {
     private MvpDelegate<? extends MvpAppCompatActivity> mMvpDelegate;
+
+    public MvpAppCompatActivity() { super(); }
+
+    @ContentView
+    public MvpAppCompatActivity(@LayoutRes int contentLayoutId) { super(contentLayoutId); }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
