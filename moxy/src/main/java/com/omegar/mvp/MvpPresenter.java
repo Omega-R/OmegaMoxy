@@ -15,7 +15,6 @@ import com.omegar.mvp.viewstate.MvpViewState;
  * @author Alexander Blinov
  * @author Konstantin Tckhovrebov
  */
-@InjectViewState
 public abstract class MvpPresenter<View extends MvpView> {
 	private boolean mFirstLaunch = true;
 	private String mTag;
