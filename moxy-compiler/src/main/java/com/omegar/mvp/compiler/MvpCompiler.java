@@ -19,6 +19,7 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessorType;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +56,7 @@ public class MvpCompiler extends AbstractProcessor {
 	public static final String MOXY_REFLECTOR_DEFAULT_PACKAGE = "com.omegar.mvp";
 
 	private static final String OPTION_MOXY_REFLECTOR_PACKAGE = "moxyReflectorPackage";
+	private static final String OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES = "moxyRegisterReflectorPackages";
 
 	private static Messager sMessager;
 	private static Types sTypeUtils;
@@ -145,7 +147,16 @@ public class MvpCompiler extends AbstractProcessor {
 			moxyReflectorPackage = MOXY_REFLECTOR_DEFAULT_PACKAGE;
 		}
 
-		List<String> additionalMoxyReflectorPackages = getAdditionalMoxyReflectorPackages(roundEnv);
+		String moxyRegisterReflectorPackage = sOptions.get(OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES);
+
+		List<String> additionalMoxyReflectorPackages = new ArrayList<>();
+
+		if (moxyRegisterReflectorPackage != null) {
+			String[] strings = moxyRegisterReflectorPackage.split(",");
+			additionalMoxyReflectorPackages.addAll(Arrays.asList(strings));
+		}
+
+		additionalMoxyReflectorPackages.addAll(getAdditionalMoxyReflectorPackages(roundEnv));
 
 		JavaFile moxyReflector = MoxyReflectorGenerator.generate(
 				moxyReflectorPackage,
