@@ -1,7 +1,7 @@
 package com.omegar.mvp.compiler.viewstate;
 
 import com.omegar.mvp.MvpProcessor;
-import com.omegar.mvp.NotGeneratedParentClasses;
+import com.omegar.mvp.NotGenerateParentClasses;
 import com.omegar.mvp.compiler.JavaFilesGenerator;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
@@ -52,14 +52,14 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 	public List<JavaFile> generate(List<ViewInterfaceInfo> list) {
 		if (list.isEmpty()) return Collections.emptyList();
 		List<JavaFile> fileList = new ArrayList<>();
-		NotGeneratedParentClasses annotation = null;
+		NotGenerateParentClasses annotation = null;
 		int filterEnd = -1;
 		for (int i = 0; i < list.size(); i++) {
 			ViewInterfaceInfo info = list.get(i);
 
 			if (annotation == null) {
 				annotation = info.getElement()
-						.getAnnotation(NotGeneratedParentClasses.class);
+						.getAnnotation(NotGenerateParentClasses.class);
 				if (annotation != null) {
 					filterEnd = i;
 				}
