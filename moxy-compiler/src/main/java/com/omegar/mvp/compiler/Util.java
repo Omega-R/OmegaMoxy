@@ -60,54 +60,56 @@ public final class Util {
 	}
 
 	public static String fillGenerics(Map<String, String> types, List<? extends TypeMirror> params, String separator) {
-		String result = "";
+		StringBuilder result = new StringBuilder();
 
 		for (TypeMirror param : params) {
 			if (result.length() > 0) {
-				result += separator;
+				result.append(separator);
 			}
 
 			/**
 			 * "if" block's order is critically! E.g. IntersectionType is TypeVariable.
 			 */
 			if (param instanceof WildcardType) {
-				result += "?";
+				result.append("?");
 				final TypeMirror extendsBound = ((WildcardType) param).getExtendsBound();
 				if (extendsBound != null) {
-					result += " extends " + fillGenerics(types, extendsBound);
+					result.append(" extends ").append(fillGenerics(types, extendsBound));
 				}
 				final TypeMirror superBound = ((WildcardType) param).getSuperBound();
 				if (superBound != null) {
-					result += " super " + fillGenerics(types, superBound);
+					result.append(" super ").append(fillGenerics(types, superBound));
 				}
 			} else if (param instanceof IntersectionType) {
-				result += "?";
+				result.append("?");
 				final List<? extends TypeMirror> bounds = ((IntersectionType) param).getBounds();
 
 				if (!bounds.isEmpty()) {
-					result += " extends " + fillGenerics(types, bounds, " & ");
+					result.append(" extends ").append(fillGenerics(types, bounds, " & "));
 				}
 			} else if (param instanceof DeclaredType) {
-				result += ((DeclaredType) param).asElement();
+				result.append(((DeclaredType) param).asElement());
 
 				final List<? extends TypeMirror> typeArguments = ((DeclaredType) param).getTypeArguments();
 				if (!typeArguments.isEmpty()) {
 					final String s = fillGenerics(types, typeArguments);
 
-					result += "<" + s + ">";
+					result.append("<").append(s).append(">");
 				}
 			} else if (param instanceof TypeVariable) {
 				String type = types.get(param.toString());
+
 				if (type == null) {
-					type = param.toString();
+					type = ((TypeVariable) param).getUpperBound().toString();
 				}
-				result += type;
+				result.append(type);
+
 			} else {
-				result += param;
+				result.append(param);
 			}
 		}
 
-		return result;
+		return result.toString();
 	}
 
 	public static String getFullClassName(TypeMirror typeMirror) {

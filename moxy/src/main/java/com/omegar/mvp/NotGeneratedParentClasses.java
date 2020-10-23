@@ -12,7 +12,7 @@ import static java.lang.annotation.ElementType.TYPE;
  */
 @Target(value = TYPE)
 @Inherited
-public @interface NotGeneratedSubClasses {
+public @interface NotGeneratedParentClasses {
 
 
 }
