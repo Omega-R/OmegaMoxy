@@ -39,7 +39,6 @@ import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
-import javax.tools.Diagnostic;
 
 /**
  * Utilities for handling types in annotation processors
@@ -208,6 +207,11 @@ public final class Util {
 		}
 		return false;
 	}
+
+	public static String capitalizeString(String string) {
+		return string == null || string.isEmpty() ? "" : string.length() == 1 ? string.toUpperCase() : Character.toUpperCase(string.charAt(0)) + string.substring(1);
+	}
+
 
 	public static String decapitalizeString(String string) {
 		return string == null || string.isEmpty() ? "" : string.length() == 1 ? string.toLowerCase() : Character.toLowerCase(string.charAt(0)) + string.substring(1);
