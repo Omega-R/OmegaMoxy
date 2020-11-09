@@ -5,7 +5,7 @@ import com.omegar.mvp.InjectViewState
 import com.omegar.mvp.MvpPresenter
 import example.com.moxy_androidx_sample.contract.Contract
 
-class MainPresenter : MvpPresenter<Contract.MainView>() {
+class MainPresenter : BasePresenter<Contract.MainView>() {
 	
 	override fun onFirstViewAttach() {
 		super.onFirstViewAttach()

@@ -47,6 +47,7 @@ public class MoxyReflectorGenerator {
 	private static final TypeName MAP_CLASS_TO_LIST_OF_OBJECT_TYPE_NAME // Map<Class<*>, List<Object>>
 			= ParameterizedTypeName.get(ClassName.get(Map.class), CLASS_WILDCARD_TYPE_NAME, LIST_OF_OBJECT_TYPE_NAME);
 
+
 	public static JavaFile generate(String destinationPackage,
 	                                List<TypeElement> presenterClassNames,
 	                                List<TypeElement> presentersContainers,
@@ -169,6 +170,7 @@ public class MoxyReflectorGenerator {
 			builder.addStatement("sPresenterBinders.putAll($T.getPresenterBinders())", moxyReflector);
 			builder.addStatement("sStrategies.putAll($T.getStrategies())", moxyReflector);
 		}
+
 
 		return builder.build();
 	}

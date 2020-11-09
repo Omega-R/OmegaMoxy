@@ -1,6 +1,7 @@
 package com.omegar.mvp.compiler.presenterbinder;
 
 import com.omegar.mvp.MvpProcessor;
+import com.omegar.mvp.compiler.Util;
 import com.omegar.mvp.presenter.PresenterType;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
@@ -48,7 +49,7 @@ class TargetPresenterField {
 	}
 
 	String getGeneratedClassName() {
-		return name + MvpProcessor.PRESENTER_BINDER_INNER_SUFFIX;
+		return Util.capitalizeString(name) + MvpProcessor.PRESENTER_BINDER_INNER_SUFFIX;
 	}
 
 	String getTag() {
