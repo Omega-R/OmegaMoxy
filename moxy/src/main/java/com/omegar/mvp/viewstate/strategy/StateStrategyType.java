@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface StateStrategyType {
 
-	BasicStrategyType value() default BasicStrategyType.CUSTOM;
+	BasicStrategyType value();
 
 	Class<? extends StateStrategy> custom() default SkipStrategy.class;
 

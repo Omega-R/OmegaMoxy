@@ -181,9 +181,19 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 
 			BasicStrategyType type = Util.getAnnotationValueAsBasicStrategyType(annotation, "value");
 
-			TypeElement strategyClass;
+			TypeElement strategyClass = null;
 
-			if (annotation == null) {
+			if (type == BasicStrategyType.CUSTOM || type == null) {
+				// get strategy from annotation
+				TypeMirror strategyClassFromAnnotation = Util.getAnnotationValueAsTypeMirror(annotation, "custom");
+				if (strategyClassFromAnnotation != null) {
+					strategyClass = (TypeElement) ((DeclaredType) strategyClassFromAnnotation).asElement();
+				}
+			} else {
+				strategyClass = MvpCompiler.getElementUtils().getTypeElement(type.getStrategyClass().getName());
+			}
+
+			if (strategyClass == null) {
 				String message = String.format("\nYou are trying generate ViewState for %s. " +
 								"But %s interface and \"%s\" method don't provide Strategy type. " +
 								"Please annotate your %s interface or method with Strategy." + "\n\n" +
@@ -196,12 +206,6 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 				);
 				MvpCompiler.getMessager().printMessage(Diagnostic.Kind.ERROR, message);
 				return;
-			} else if (type == BasicStrategyType.CUSTOM || type == null) {
-				// get strategy from annotation
-				TypeMirror strategyClassFromAnnotation = Util.getAnnotationValueAsTypeMirror(annotation, "custom");
-				strategyClass = (TypeElement) ((DeclaredType) strategyClassFromAnnotation).asElement();
-			} else {
-				strategyClass = MvpCompiler.getElementUtils().getTypeElement(type.getStrategyClass().getName());
 			}
 
 			// get tag from annotation
