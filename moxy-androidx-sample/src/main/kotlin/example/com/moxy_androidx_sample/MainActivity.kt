@@ -8,29 +8,29 @@ import example.com.moxy_androidx_sample.contract.Contract
 import example.com.moxy_androidx_sample.packagee.Item
 
 class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView, SecondInterface {
-	override fun fourth(item: String?) {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
-
-	override fun firstLog(m: Item?) {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
-
-	override fun firstCopyMethod(item: MutableList<Location>?) {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
-
-	override fun thirdMethod() {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
-
-	override fun secondMethod() {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
-
-	override fun firstMethod(item: List<Item>) {
-		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-	}
+//	override fun fourth(item: String?) {
+//		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//	}
+//
+//	override fun firstLog(m: Item?) {
+//		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//	}
+//
+//	override fun firstCopyMethod(item: MutableList<Location>?) {
+//		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//	}
+//
+//	override fun thirdMethod() {
+//		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//	}
+//
+//	override fun secondMethod() {
+//		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//	}
+//
+//	override fun firstMethod(item: List<Item>) {
+//		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//	}
 
 	@InjectPresenter
 	internal lateinit var presenter: MainPresenter

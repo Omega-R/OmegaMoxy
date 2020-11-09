@@ -27,7 +27,6 @@ class ViewInterfaceInfo {
     private final ClassName name;
     private final List<TypeVariableName> typeVariables;
     private final List<ViewMethod> methods;
-    private final List<TypeElement> superTypeMvpElements;
 
     ViewInterfaceInfo(TypeElement element, List<ViewMethod> methods) {
         this(null, element, methods);
@@ -42,10 +41,7 @@ class ViewInterfaceInfo {
         this.typeVariables = element.getTypeParameters().stream()
                 .map(TypeVariableName::get)
                 .collect(Collectors.toList());
-        superTypeMvpElements = element.getInterfaces().stream()
-                .map((Function<TypeMirror, TypeElement>) Util::asElement)
-                .filter(Util::isMvpElement)
-                .collect(Collectors.toList());
+
     }
 
     @Nullable
@@ -84,9 +80,6 @@ class ViewInterfaceInfo {
         return superInterfaceInfo == null ? null : superInterfaceInfo.getElement();
     }
 
-    List<TypeElement> getSuperTypeMvpElements() {
-        return superTypeMvpElements;
-    }
 
     @Override
     public boolean equals(Object o) {
