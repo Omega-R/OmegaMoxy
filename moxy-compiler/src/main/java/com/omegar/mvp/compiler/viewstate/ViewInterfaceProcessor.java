@@ -3,6 +3,7 @@ package com.omegar.mvp.compiler.viewstate;
 import com.omegar.mvp.compiler.ElementProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
+import com.omegar.mvp.viewstate.strategy.BasicStrategyType;
 import com.omegar.mvp.viewstate.strategy.StateStrategyType;
 import com.squareup.javapoet.ParameterSpec;
 
@@ -152,8 +153,10 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 	}
 
 	private void getMethods(TypeElement typeElement,
-	                        List<ViewMethod> rootMethods,
-	                        List<ViewMethod> superinterfacesMethods) {
+							List<ViewMethod> rootMethods,
+							List<ViewMethod> superinterfacesMethods) {
+
+
 		for (Element element : typeElement.getEnclosedElements()) {
 			// ignore all but non-static methods
 			if (element.getKind() != ElementKind.METHOD || element.getModifiers().contains(Modifier.STATIC)) {
@@ -176,17 +179,15 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 
 			AnnotationMirror annotation = Util.getAnnotation(methodElement, STATE_STRATEGY_TYPE_ANNOTATION);
 
-			// get strategy from annotation
-			TypeMirror strategyClassFromAnnotation = Util.getAnnotationValueAsTypeMirror(annotation, "value");
+			BasicStrategyType type = Util.getAnnotationValueAsBasicStrategyType(annotation, "value");
 
 			TypeElement strategyClass;
-			if (strategyClassFromAnnotation != null) {
-				strategyClass = (TypeElement) ((DeclaredType) strategyClassFromAnnotation).asElement();
-			} else {
-				String message = String.format("You are trying generate ViewState for %s. " +
+
+			if (annotation == null) {
+				String message = String.format("\nYou are trying generate ViewState for %s. " +
 								"But %s interface and \"%s\" method don't provide Strategy type. " +
 								"Please annotate your %s interface or method with Strategy." + "\n\n" +
-								"For example:\n@StateStrategyType(AddToEndSingleStrategy::class)" + "\n" + "fun %s",
+								"For example:\n@StateStrategyType(ADD_TO_END_SINGLE)" + "\n" + "fun %s()\n\n",
 						typeElement.getSimpleName(),
 						typeElement.getSimpleName(),
 						methodElement.getSimpleName(),
@@ -195,7 +196,12 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 				);
 				MvpCompiler.getMessager().printMessage(Diagnostic.Kind.ERROR, message);
 				return;
-
+			} else if (type == BasicStrategyType.CUSTOM || type == null) {
+				// get strategy from annotation
+				TypeMirror strategyClassFromAnnotation = Util.getAnnotationValueAsTypeMirror(annotation, "custom");
+				strategyClass = (TypeElement) ((DeclaredType) strategyClassFromAnnotation).asElement();
+			} else {
+				strategyClass = MvpCompiler.getElementUtils().getTypeElement(type.getStrategyClass().getName());
 			}
 
 			// get tag from annotation

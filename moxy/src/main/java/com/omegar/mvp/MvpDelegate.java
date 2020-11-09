@@ -85,8 +85,7 @@ public class MvpDelegate<Delegated> {
 		mParentDelegate.removeChildDelegate(this);
 	}
 
-	public void removeAllChildDelegates()
-	{
+	public void removeAllChildDelegates() {
 		// For avoiding ConcurrentModificationException when removing by removeChildDelegate()
 		List<MvpDelegate> childDelegatesClone = new ArrayList<MvpDelegate>(mChildDelegates.size());
 		childDelegatesClone.addAll(mChildDelegates);
