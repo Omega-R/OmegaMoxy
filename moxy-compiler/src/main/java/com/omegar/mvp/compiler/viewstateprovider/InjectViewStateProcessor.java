@@ -24,6 +24,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
 
 import static com.omegar.mvp.compiler.Util.fillGenerics;
 
@@ -74,6 +75,7 @@ public class InjectViewStateProcessor extends ElementProcessor<TypeElement, Pres
 				if (viewTypeElement == null) {
 					throw new IllegalArgumentException("View \"" + view + "\" for " + typeElement + " cannot be found. \n 1. " + getViewStateClassFromAnnotationParams(typeElement) + "\n 2. " +  getViewClassFromAnnotationParams(typeElement) + "\n3. " + getViewClassFromGeneric(typeElement));
 				}
+				MvpCompiler.getMessager().printMessage(Diagnostic.Kind.WARNING, "\nUSED_VIEWS += " + viewTypeElement.toString() + "\n");
 
 				usedViews.add(viewTypeElement);
 				viewState = Util.getFullClassName(viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX;

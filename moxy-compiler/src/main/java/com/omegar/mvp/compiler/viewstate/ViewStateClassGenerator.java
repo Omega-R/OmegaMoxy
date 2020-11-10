@@ -26,6 +26,7 @@ import java.util.Random;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
 
 import static com.omegar.mvp.compiler.Util.decapitalizeString;
 
@@ -83,6 +84,8 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 
 	private JavaFile generate(ViewInterfaceInfo viewInterfaceInfo) {
 		ClassName viewName = viewInterfaceInfo.getName();
+		MvpCompiler.getMessager().printMessage(Diagnostic.Kind.WARNING, "\nGENERATE " + viewName.toString() + "\n");
+
 		TypeName nameWithTypeVariables = viewInterfaceInfo.getNameWithTypeVariables();
 		DeclaredType viewInterfaceType = (DeclaredType) viewInterfaceInfo.getElement().asType();
 		TypeVariableName variableName = TypeVariableName.get(VIEW, nameWithTypeVariables);
