@@ -138,8 +138,8 @@ public class MvpCompiler extends AbstractProcessor {
 		processInjectors(roundEnv, InjectPresenter.class, ElementKind.FIELD,
 				injectPresenterProcessor, presenterBinderClassGenerator);
 
-		generateCode(injectViewStateProcessor.getUsedViews(), ElementKind.INTERFACE,
-				viewInterfaceProcessor, viewStateClassGenerator);
+//		generateCode(injectViewStateProcessor.getUsedViews(), ElementKind.INTERFACE,
+//				viewInterfaceProcessor, viewStateClassGenerator);
 
 		String moxyReflectorPackage = sOptions.get(OPTION_MOXY_REFLECTOR_PACKAGE);
 
