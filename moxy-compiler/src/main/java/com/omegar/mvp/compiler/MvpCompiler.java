@@ -205,8 +205,6 @@ public class MvpCompiler extends AbstractProcessor {
 	                                                     ElementProcessor<E, R> processor,
 	                                                     JavaFilesGenerator<R> classGenerator) {
 		for (Element element : roundEnv.getElementsAnnotatedWith(clazz)) {
-			MvpCompiler.getMessager().printMessage(Diagnostic.Kind.WARNING, "\nPROCESSING = " + element.toString() + "\n");
-
 			if (element.getKind() != kind) {
 				getMessager().printMessage(Diagnostic.Kind.ERROR,
 						element + " must be " + kind.name() + ", or not mark it as @" + clazz.getSimpleName());

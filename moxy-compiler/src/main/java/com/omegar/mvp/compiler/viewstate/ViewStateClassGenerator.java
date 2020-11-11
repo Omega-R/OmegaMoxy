@@ -47,7 +47,7 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 	private static final ParameterizedTypeName MVP_VIEW_STATE_TYPE_NAME
 			= ParameterizedTypeName.get(MVP_VIEW_STATE_CLASS_NAME, GENERIC_TYPE_VARIABLE_NAME);
 
-	private Map<ViewInterfaceInfo, JavaFile> filesMap = new HashMap<>();
+	private final Map<ViewInterfaceInfo, JavaFile> filesMap = new HashMap<>();
 
 	@Override
 	public List<JavaFile> generate(List<ViewInterfaceInfo> list) {
@@ -84,7 +84,6 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 
 	private JavaFile generate(ViewInterfaceInfo viewInterfaceInfo) {
 		ClassName viewName = viewInterfaceInfo.getName();
-		MvpCompiler.getMessager().printMessage(Diagnostic.Kind.WARNING, "\nGENERATE " + viewName.toString() + "\n");
 
 		TypeName nameWithTypeVariables = viewInterfaceInfo.getNameWithTypeVariables();
 		DeclaredType viewInterfaceType = (DeclaredType) viewInterfaceInfo.getElement().asType();

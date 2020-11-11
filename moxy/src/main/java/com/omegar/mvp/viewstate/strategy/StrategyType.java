@@ -3,7 +3,7 @@ package com.omegar.mvp.viewstate.strategy;
 /**
  * Created by Anton Knyazev on 09.11.2020.
  */
-public enum BasicStrategyType {
+public enum StrategyType {
     ADD_TO_END(AddToEndStrategy.class),
     ADD_TO_END_SINGLE(AddToEndSingleStrategy.class),
     ONE_EXECUTION(OneExecutionStateStrategy.class),
@@ -13,7 +13,7 @@ public enum BasicStrategyType {
 
     private Class<? extends StateStrategy> mClassStrategy;
 
-    BasicStrategyType(Class<? extends StateStrategy> clz) {
+    StrategyType(Class<? extends StateStrategy> clz) {
         mClassStrategy = clz;
     }
 

@@ -17,7 +17,7 @@
 package com.omegar.mvp.compiler;
 
 import com.omegar.mvp.MvpView;
-import com.omegar.mvp.viewstate.strategy.BasicStrategyType;
+import com.omegar.mvp.viewstate.strategy.StrategyType;
 import com.squareup.javapoet.ClassName;
 
 import java.util.ArrayList;
@@ -160,12 +160,12 @@ public final class Util {
 		}
 	}
 
-	public static BasicStrategyType getAnnotationValueAsBasicStrategyType(AnnotationMirror annotationMirror, String key) {
+	public static StrategyType getAnnotationValueAsStrategyType(AnnotationMirror annotationMirror, String key) {
 		AnnotationValue av = getAnnotationValue(annotationMirror, key);
 
 		if (av != null) {
 			String enumString = av.getValue().toString();
-			return BasicStrategyType.valueOf(enumString);
+			return StrategyType.valueOf(enumString);
 		} else {
 			return null;
 		}

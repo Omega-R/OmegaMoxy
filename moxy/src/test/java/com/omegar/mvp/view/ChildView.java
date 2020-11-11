@@ -1,10 +1,8 @@
 package com.omegar.mvp.view;
 
-import com.omegar.mvp.viewstate.strategy.BasicStrategyType;
-import com.omegar.mvp.viewstate.strategy.SkipStrategy;
 import com.omegar.mvp.viewstate.strategy.StateStrategyType;
 
-import static com.omegar.mvp.viewstate.strategy.BasicStrategyType.SKIP;
+import static com.omegar.mvp.viewstate.strategy.StrategyType.SKIP;
 
 /**
  * Date: 29.02.2016

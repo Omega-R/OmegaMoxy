@@ -6,6 +6,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -79,7 +80,10 @@ class ViewInterfaceInfo {
     TypeElement getSuperClassElement() {
         return superInterfaceInfo == null ? null : superInterfaceInfo.getElement();
     }
-
+    @Deprecated
+    List<TypeElement> getSuperTypeMvpElements() {
+        return Collections.emptyList();
+    }
 
     @Override
     public boolean equals(Object o) {
