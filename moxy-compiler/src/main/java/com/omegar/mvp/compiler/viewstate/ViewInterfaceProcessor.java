@@ -127,7 +127,6 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 				if (superInterfaceInfo == null) {
 					superInterfaceInfo = Util.lastOrNull(parentInfos);
 				}
-				interfaceInfos.addAll(parentInfos);
             }
 		}
 
