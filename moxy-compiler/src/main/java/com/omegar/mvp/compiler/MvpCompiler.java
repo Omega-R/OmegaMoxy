@@ -103,7 +103,7 @@ public class MvpCompiler extends AbstractProcessor {
 
 	private boolean isEnabledIsolatingProcessing() {
 		String s = sOptions.get(OPTION_ENABLE_ISOLATING_PROCESSING);
-		return !("false".equalsIgnoreCase(s));
+		return Boolean.parseBoolean(s);
 	}
 
 	private IncrementalAnnotationProcessorType getCurrentIncrementalAnnotationProcessorType() {
