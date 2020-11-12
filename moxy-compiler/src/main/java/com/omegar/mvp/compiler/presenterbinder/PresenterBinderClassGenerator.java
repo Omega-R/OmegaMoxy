@@ -53,16 +53,18 @@ public final class PresenterBinderClassGenerator extends JavaFilesGenerator<Targ
 	@Override
 	public List<JavaFile> generate(TargetClassInfo targetClassInfo) {
 		ClassName targetClassName = targetClassInfo.getName();
+		TypeElement element = targetClassInfo.getElement();
 		List<TargetPresenterField> fields = targetClassInfo.getFields();
 
 		final String containerSimpleName = String.join("$", targetClassName.simpleNames());
 
 		TypeSpec.Builder classBuilder = TypeSpec.classBuilder(containerSimpleName + MvpProcessor.PRESENTER_BINDER_SUFFIX)
+				.addOriginatingElement(targetClassInfo.getElement())
 				.addModifiers(Modifier.PUBLIC)
 				.superclass(ParameterizedTypeName.get(ClassName.get(PresenterBinder.class), targetClassName));
 
 		for (TargetPresenterField field : fields) {
-			classBuilder.addType(generatePresenterBinderClass(field, targetClassName));
+			classBuilder.addType(generatePresenterBinderClass(element, field, targetClassName));
 		}
 
 		classBuilder.addMethod(generateGetPresentersMethod(fields, targetClassName));
@@ -95,12 +97,13 @@ public final class PresenterBinderClassGenerator extends JavaFilesGenerator<Targ
 		return builder.build();
 	}
 
-	private static TypeSpec generatePresenterBinderClass(TargetPresenterField field,
-	                                                     ClassName targetClassName) {
+	private static TypeSpec generatePresenterBinderClass(TypeElement element, TargetPresenterField field,
+														 ClassName targetClassName) {
 		String tag = field.getTag();
 		if (tag == null) tag = field.getName();
 
 		TypeSpec.Builder classBuilder = TypeSpec.classBuilder(field.getGeneratedClassName())
+				.addOriginatingElement(element)
 				.addModifiers(Modifier.PUBLIC)
 				.superclass(ParameterizedTypeName.get(
 						ClassName.get(PresenterField.class), targetClassName))

@@ -51,17 +51,19 @@ import static javax.lang.model.SourceVersion.latestSupported;
 
 @SuppressWarnings("unused")
 @AutoService(Processor.class)
-@IncrementalAnnotationProcessor(IncrementalAnnotationProcessorType.AGGREGATING)
+@IncrementalAnnotationProcessor(IncrementalAnnotationProcessorType.DYNAMIC)
 public class MvpCompiler extends AbstractProcessor {
 	public static final String MOXY_REFLECTOR_DEFAULT_PACKAGE = "com.omegar.mvp";
 
 	private static final String OPTION_MOXY_REFLECTOR_PACKAGE = "moxyReflectorPackage";
 	private static final String OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES = "moxyRegisterReflectorPackages";
+	private static final String OPTION_ENABLE_ISOLATING_PROCESSING = "moxyEnableIsolatingProcessing";
 
 	private static Messager sMessager;
 	private static Types sTypeUtils;
 	private static Elements sElementUtils;
 	private static Map<String, String> sOptions;
+	private static final List<Element> sUsedElements = new ArrayList<>();
 
 	public static Messager getMessager() {
 		return sMessager;
@@ -73,6 +75,10 @@ public class MvpCompiler extends AbstractProcessor {
 
 	public static Elements getElementUtils() {
 		return sElementUtils;
+	}
+
+	public static List<Element> getUsedElements() {
+		return sUsedElements;
 	}
 
 	@Override
@@ -87,7 +93,23 @@ public class MvpCompiler extends AbstractProcessor {
 
 	@Override
 	public Set<String> getSupportedOptions() {
-		return Collections.singleton(OPTION_MOXY_REFLECTOR_PACKAGE);
+		return new HashSet<>(Arrays.asList(
+				OPTION_MOXY_REFLECTOR_PACKAGE,
+				OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES,
+				OPTION_ENABLE_ISOLATING_PROCESSING,
+				getCurrentIncrementalAnnotationProcessorType().getProcessorOption()
+		));
+	}
+
+	private boolean isEnabledIsolatingProcessing() {
+		String s = sOptions.get(OPTION_ENABLE_ISOLATING_PROCESSING);
+		return !("false".equalsIgnoreCase(s));
+	}
+
+	private IncrementalAnnotationProcessorType getCurrentIncrementalAnnotationProcessorType() {
+		return isEnabledIsolatingProcessing()
+				? IncrementalAnnotationProcessorType.ISOLATING
+				: IncrementalAnnotationProcessorType.AGGREGATING;
 	}
 
 	@Override
@@ -122,6 +144,7 @@ public class MvpCompiler extends AbstractProcessor {
 	}
 
 	private boolean throwableProcess(RoundEnvironment roundEnv) {
+		sUsedElements.clear();
 		checkInjectors(roundEnv, InjectPresenter.class, new PresenterInjectorRules(ElementKind.FIELD, Modifier.PUBLIC, Modifier.DEFAULT));
 
 		InjectViewStateProcessor injectViewStateProcessor = new InjectViewStateProcessor();
@@ -209,7 +232,7 @@ public class MvpCompiler extends AbstractProcessor {
 				getMessager().printMessage(Diagnostic.Kind.ERROR,
 						element + " must be " + kind.name() + ", or not mark it as @" + clazz.getSimpleName());
 			}
-
+			sUsedElements.add(element);
 			generateCode(element, kind, processor, classGenerator);
 		}
 	}

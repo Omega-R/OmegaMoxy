@@ -2,6 +2,7 @@ package com.omegar.mvp.compiler.reflector;
 
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.ViewStateProvider;
+import com.omegar.mvp.compiler.MvpCompiler;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -58,6 +60,10 @@ public class MoxyReflectorGenerator {
 				.addField(MAP_CLASS_TO_OBJECT_TYPE_NAME, "sViewStateProviders", Modifier.PRIVATE, Modifier.STATIC)
 				.addField(MAP_CLASS_TO_LIST_OF_OBJECT_TYPE_NAME, "sPresenterBinders", Modifier.PRIVATE, Modifier.STATIC)
 				.addField(MAP_CLASS_TO_OBJECT_TYPE_NAME, "sStrategies", Modifier.PRIVATE, Modifier.STATIC);
+
+		for (Element element : MvpCompiler.getUsedElements()) {
+			classBuilder.addOriginatingElement(element);
+		}
 
 		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage, presenterClassNames, presentersContainers, strategyClasses, additionalMoxyReflectorsPackages));
 

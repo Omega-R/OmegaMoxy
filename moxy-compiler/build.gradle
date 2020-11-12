@@ -249,12 +249,12 @@ assemble.dependsOn copyVersion
 dependencies {
     implementation project(':moxy')
     implementation deps.javapoet
+    implementation deps.gradleIncapHelperAnnotations
 
     compileOnly deps.autocommon
     compileOnly deps.autoserviceAnnotations
     annotationProcessor deps.autoservice
     compileOnly deps.guava
-    compileOnly deps.gradleIncapHelperAnnotations
     annotationProcessor deps.gradleIncapHelperProcessor
 
     javadocDeps project(':moxy')
