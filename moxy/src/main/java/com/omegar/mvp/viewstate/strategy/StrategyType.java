@@ -6,6 +6,7 @@ package com.omegar.mvp.viewstate.strategy;
 public enum StrategyType {
     ADD_TO_END(AddToEndStrategy.class),
     ADD_TO_END_SINGLE(AddToEndSingleStrategy.class),
+    ADD_TO_END_SINGLE_TAG(AddToEndSingleTagStrategy.class),
     ONE_EXECUTION(OneExecutionStateStrategy.class),
     SINGLE(SingleStateStrategy.class),
     SKIP(SkipStrategy.class),
