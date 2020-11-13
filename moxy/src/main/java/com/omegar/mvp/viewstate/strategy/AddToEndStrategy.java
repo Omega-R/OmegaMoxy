@@ -8,7 +8,6 @@ import com.omegar.mvp.viewstate.ViewCommand;
 /**
  * Command will be added to end of commands queue.
  *
- * This strategy used by default.
  *
  * Date: 17.12.2015
  * Time: 11:29

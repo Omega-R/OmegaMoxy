@@ -6,6 +6,10 @@ import com.omegar.mvp.viewstate.ViewCommand;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Command will be added to the end of the commands queue. If the commands queue contains the same tag, then
+ * an existing command will be removed.
+ */
 class AddToEndSingleTagStrategy implements StateStrategy {
 
     @Override
