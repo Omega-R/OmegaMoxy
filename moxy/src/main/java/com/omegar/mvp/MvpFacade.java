@@ -7,36 +7,16 @@ package com.omegar.mvp;
  * @author Alexander Blinov
  * @author Yuri Shmakov
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
-public final class MvpFacade {
-	private static volatile MvpFacade sInstance;
-
-	private static final Object sLock = new Object();
+public enum MvpFacade {
+	INSTANCE;
 
 	public static MvpFacade getInstance() {
-		if (sInstance == null) {
-			synchronized (sLock) {
-				if (sInstance == null) {
-					sInstance = new MvpFacade();
-				}
-			}
-		}
-		return sInstance;
+		return INSTANCE;
 	}
 
-	public static void init() {
-		getInstance();
-	}
-
-	private MvpFacade() {
-		mPresentersCounter = new PresentersCounter();
-		mPresenterStore = new PresenterStore();
-		mMvpProcessor = new MvpProcessor();
-	}
-
-	private PresenterStore mPresenterStore;
-	private MvpProcessor mMvpProcessor;
-	private PresentersCounter mPresentersCounter;
+	private PresenterStore mPresenterStore = new PresenterStore();
+	private MvpProcessor mMvpProcessor = new MvpProcessor();
+	private PresentersCounter mPresentersCounter = new PresentersCounter();
 
 	public PresenterStore getPresenterStore() {
 		return mPresenterStore;
@@ -61,4 +41,5 @@ public final class MvpFacade {
 	public void setPresentersCounter(PresentersCounter presentersCounter) {
 		mPresentersCounter = presentersCounter;
 	}
+
 }
