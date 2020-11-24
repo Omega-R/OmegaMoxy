@@ -17,9 +17,5 @@ import static java.lang.annotation.ElementType.TYPE;
  */
 @Target(value = TYPE)
 @Inherited
-public @interface InjectViewState {
-	Class<? extends MvpViewState> value() default DefaultViewState.class;
-
-	Class<? extends MvpView> view() default DefaultView.class;
-
+@interface InjectViewState {
 }

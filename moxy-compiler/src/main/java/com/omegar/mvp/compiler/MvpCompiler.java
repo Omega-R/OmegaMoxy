@@ -1,7 +1,6 @@
 package com.omegar.mvp.compiler;
 
 import com.google.auto.service.AutoService;
-import com.omegar.mvp.InjectViewState;
 import com.omegar.mvp.RegisterMoxyReflectorPackages;
 import com.omegar.mvp.compiler.presenterbinder.InjectPresenterProcessor;
 import com.omegar.mvp.compiler.presenterbinder.PresenterBinderClassGenerator;
@@ -54,7 +53,7 @@ import static javax.lang.model.SourceVersion.latestSupported;
 @IncrementalAnnotationProcessor(IncrementalAnnotationProcessorType.DYNAMIC)
 public class MvpCompiler extends AbstractProcessor {
 	public static final String MOXY_REFLECTOR_DEFAULT_PACKAGE = "com.omegar.mvp";
-
+	private static final String MOXY_ANNOTATION_INJECT_VIEW_STATE = "com.omegar.mvp.InjectViewState";
 	private static final String OPTION_MOXY_REFLECTOR_PACKAGE = "moxyReflectorPackage";
 	private static final String OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES = "moxyRegisterReflectorPackages";
 	private static final String OPTION_ENABLE_ISOLATING_PROCESSING = "moxyEnableIsolatingProcessing";
@@ -117,7 +116,7 @@ public class MvpCompiler extends AbstractProcessor {
 		Set<String> supportedAnnotationTypes = new HashSet<>();
 		Collections.addAll(supportedAnnotationTypes,
 				InjectPresenter.class.getCanonicalName(),
-				InjectViewState.class.getCanonicalName(),
+				MOXY_ANNOTATION_INJECT_VIEW_STATE,
 				RegisterMoxyReflectorPackages.class.getCanonicalName());
 		return supportedAnnotationTypes;
 	}
@@ -156,9 +155,16 @@ public class MvpCompiler extends AbstractProcessor {
 		ViewInterfaceProcessor viewInterfaceProcessor = new ViewInterfaceProcessor();
 		ViewStateClassGenerator viewStateClassGenerator = new ViewStateClassGenerator();
 
-		processInjectors(roundEnv, InjectViewState.class, ElementKind.CLASS,
-				injectViewStateProcessor, viewStateProviderClassGenerator);
-		processInjectors(roundEnv, InjectPresenter.class, ElementKind.FIELD,
+		processInjectors(
+				roundEnv,
+				getElementUtils().getTypeElement(MOXY_ANNOTATION_INJECT_VIEW_STATE),
+				ElementKind.CLASS,
+				injectViewStateProcessor,
+				viewStateProviderClassGenerator
+		);
+		processInjectors(roundEnv,
+				getElementUtils().getTypeElement(InjectPresenter.class.getCanonicalName()),
+				ElementKind.FIELD,
 				injectPresenterProcessor, presenterBinderClassGenerator);
 
 		generateCode(injectViewStateProcessor.getUsedViews(), ElementKind.INTERFACE,
@@ -223,14 +229,14 @@ public class MvpCompiler extends AbstractProcessor {
 	}
 
 	private <E extends Element, R> void processInjectors(RoundEnvironment roundEnv,
-	                                                     Class<? extends Annotation> clazz,
+	                                                     TypeElement annotationClass,
 	                                                     ElementKind kind,
 	                                                     ElementProcessor<E, R> processor,
 	                                                     JavaFilesGenerator<R> classGenerator) {
-		for (Element element : roundEnv.getElementsAnnotatedWith(clazz)) {
+		for (Element element : roundEnv.getElementsAnnotatedWith(annotationClass)) {
 			if (element.getKind() != kind) {
 				getMessager().printMessage(Diagnostic.Kind.ERROR,
-						element + " must be " + kind.name() + ", or not mark it as @" + clazz.getSimpleName());
+						element + " must be " + kind.name() + ", or not mark it as @" + annotationClass.getSimpleName());
 			}
 			sUsedElements.add(element);
 			generateCode(element, kind, processor, classGenerator);
