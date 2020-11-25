@@ -15,7 +15,6 @@ import com.omegar.mvp.viewstate.strategy.StateStrategy;
  *
  * @author Yuri Shmakov
  */
-@SuppressWarnings("WeakerAccess")
 public abstract class MvpViewState<View extends MvpView> {
 	protected ViewCommands<View> mViewCommands = new ViewCommands<>();
 	protected Set<View> mViews;

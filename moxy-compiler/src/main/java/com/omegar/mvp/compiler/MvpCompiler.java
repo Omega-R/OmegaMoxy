@@ -144,6 +144,12 @@ public class MvpCompiler extends AbstractProcessor {
 
 	private boolean throwableProcess(RoundEnvironment roundEnv) {
 		sUsedElements.clear();
+
+		String moxyReflectorPackage = sOptions.get(OPTION_MOXY_REFLECTOR_PACKAGE);
+		if (moxyReflectorPackage == null) {
+			moxyReflectorPackage = MOXY_REFLECTOR_DEFAULT_PACKAGE;
+		}
+
 		checkInjectors(roundEnv, InjectPresenter.class, new PresenterInjectorRules(ElementKind.FIELD, Modifier.PUBLIC, Modifier.DEFAULT));
 
 		InjectViewStateProcessor injectViewStateProcessor = new InjectViewStateProcessor();
@@ -153,7 +159,7 @@ public class MvpCompiler extends AbstractProcessor {
 		PresenterBinderClassGenerator presenterBinderClassGenerator = new PresenterBinderClassGenerator();
 
 		ViewInterfaceProcessor viewInterfaceProcessor = new ViewInterfaceProcessor();
-		ViewStateClassGenerator viewStateClassGenerator = new ViewStateClassGenerator();
+		ViewStateClassGenerator viewStateClassGenerator = new ViewStateClassGenerator(moxyReflectorPackage);
 
 		processInjectors(
 				roundEnv,
@@ -170,12 +176,6 @@ public class MvpCompiler extends AbstractProcessor {
 		generateCode(injectViewStateProcessor.getUsedViews(), ElementKind.INTERFACE,
 				viewInterfaceProcessor, viewStateClassGenerator);
 
-		String moxyReflectorPackage = sOptions.get(OPTION_MOXY_REFLECTOR_PACKAGE);
-
-		if (moxyReflectorPackage == null) {
-			moxyReflectorPackage = MOXY_REFLECTOR_DEFAULT_PACKAGE;
-		}
-
 		String moxyRegisterReflectorPackage = sOptions.get(OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES);
 
 		List<String> additionalMoxyReflectorPackages = new ArrayList<>();
@@ -186,6 +186,7 @@ public class MvpCompiler extends AbstractProcessor {
 		}
 
 		additionalMoxyReflectorPackages.addAll(getAdditionalMoxyReflectorPackages(roundEnv));
+		additionalMoxyReflectorPackages.addAll(viewStateClassGenerator.getReflectorPackages());
 
 		JavaFile moxyReflector = MoxyReflectorGenerator.generate(
 				moxyReflectorPackage,
