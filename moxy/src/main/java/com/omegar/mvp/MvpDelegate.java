@@ -44,6 +44,7 @@ public class MvpDelegate<Delegated> {
 	private List<MvpPresenter<? super Delegated>> mPresenters;
 	private List<MvpDelegate> mChildDelegates;
 	private Bundle mBundle;
+	private PresenterBinder<Delegated> mLocalPresenterBinder;
 
 	public MvpDelegate(Delegated delegated) {
 		mDelegated = delegated;
@@ -135,7 +136,7 @@ public class MvpDelegate<Delegated> {
 		}
 
 		//bind presenters to view
-		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag);
+		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag, mLocalPresenterBinder);
 
 		for (MvpDelegate childDelegate : mChildDelegates) {
 			childDelegate.onCreate(bundle);
@@ -258,6 +259,10 @@ public class MvpDelegate<Delegated> {
 	@SuppressWarnings("unused")
 	public Bundle getChildrenSaveState() {
 		return mBundle;
+	}
+
+	public void setLocalPresenterBinder(PresenterBinder<Delegated> localPresenterBinder) {
+		mLocalPresenterBinder = localPresenterBinder;
 	}
 
 	/**

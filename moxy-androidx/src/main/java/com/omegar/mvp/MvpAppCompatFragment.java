@@ -14,7 +14,7 @@ import androidx.fragment.app.Fragment;
  */
 
 @SuppressWarnings({"ConstantConditions", "unused"})
-public class MvpAppCompatFragment extends Fragment {
+public class MvpAppCompatFragment extends Fragment implements MvpDelegateHolder {
 
     private boolean mIsStateSaved;
 
@@ -105,6 +105,7 @@ public class MvpAppCompatFragment extends Fragment {
     /**
      * @return The {@link MvpDelegate} being used by this Fragment.
      */
+    @Override
     public MvpDelegate getMvpDelegate() {
         if (mMvpDelegate == null) {
             mMvpDelegate = new MvpDelegate<>(this);

@@ -11,7 +11,7 @@ import android.os.Bundle;
  * @author Alexander Bliniov
  * @author Konstantin Tckhovrebov
  */
-public class MvpActivity extends Activity {
+public class MvpActivity extends Activity implements MvpDelegateHolder {
 	private MvpDelegate<? extends MvpActivity> mMvpDelegate;
 
 	@Override
@@ -64,6 +64,7 @@ public class MvpActivity extends Activity {
 	/**
 	 * @return The {@link MvpDelegate} being used by this Activity.
 	 */
+	@Override
 	public MvpDelegate getMvpDelegate() {
 		if (mMvpDelegate == null) {
 			mMvpDelegate = new MvpDelegate<>(this);

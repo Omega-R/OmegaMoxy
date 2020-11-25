@@ -13,7 +13,7 @@ import android.os.Bundle;
  * @author Konstantin Tckhovrebov
  */
 @SuppressWarnings("ConstantConditions")
-public class MvpFragment extends Fragment {
+public class MvpFragment extends Fragment implements MvpDelegateHolder {
 
 	private boolean mIsStateSaved;
 	private MvpDelegate<? extends MvpFragment> mMvpDelegate;
@@ -101,6 +101,7 @@ public class MvpFragment extends Fragment {
 	/**
 	 * @return The {@link MvpDelegate} being used by this Fragment.
 	 */
+	@Override
 	public MvpDelegate getMvpDelegate() {
 		if (mMvpDelegate == null) {
 			mMvpDelegate = new MvpDelegate<>(this);

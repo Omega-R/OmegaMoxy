@@ -7,7 +7,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
-public class MvpBottomSheetDialogFragment extends BottomSheetDialogFragment {
+public class MvpBottomSheetDialogFragment extends BottomSheetDialogFragment implements MvpDelegateHolder{
 
     private boolean mIsStateSaved;
     private MvpDelegate<? extends MvpBottomSheetDialogFragment> mMvpDelegate;
@@ -86,6 +86,7 @@ public class MvpBottomSheetDialogFragment extends BottomSheetDialogFragment {
     /**
      * @return The {@link MvpDelegate} being used by this Fragment.
      */
+    @Override
     public MvpDelegate getMvpDelegate() {
         if (mMvpDelegate == null) {
             mMvpDelegate = new MvpDelegate<>(this);

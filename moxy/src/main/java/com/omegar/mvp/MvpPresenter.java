@@ -26,8 +26,11 @@ public abstract class MvpPresenter<View extends MvpView> {
 	private MvpViewState<View> mViewState;
 	private Class<? extends MvpPresenter> mPresenterClass;
 
+	@SuppressWarnings("unchecked")
 	public MvpPresenter() {
-		Binder.bind(this);
+        MvpView viewState = (MvpView) MoxyReflector.getViewState(getClass());
+		mViewStateAsView = (View) viewState;
+        mViewState = (MvpViewState<View>) viewState;
 
 		mViews = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
 	}
@@ -161,12 +164,4 @@ public abstract class MvpPresenter<View extends MvpView> {
 	public void onDestroy() {
 	}
 
-	private static class Binder {
-		static void bind(MvpPresenter presenter) {
-			MvpView viewState = (MvpView) MoxyReflector.getViewState(presenter.getClass());
-
-			presenter.mViewStateAsView = viewState;
-			presenter.mViewState = (MvpViewState) viewState;
-		}
-	}
 }
