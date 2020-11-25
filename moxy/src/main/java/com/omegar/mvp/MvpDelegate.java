@@ -6,6 +6,7 @@ import java.util.Set;
 
 import android.os.Bundle;
 
+import com.omegar.mvp.presenter.PresenterField;
 import com.omegar.mvp.presenter.PresenterType;
 
 /**
@@ -44,7 +45,7 @@ public class MvpDelegate<Delegated> {
 	private List<MvpPresenter<? super Delegated>> mPresenters;
 	private List<MvpDelegate> mChildDelegates;
 	private Bundle mBundle;
-	private PresenterBinder<Delegated> mLocalPresenterBinder;
+	private List<PresenterField<Delegated>> mCustomPresenterFields;
 
 	public MvpDelegate(Delegated delegated) {
 		mDelegated = delegated;
@@ -136,7 +137,7 @@ public class MvpDelegate<Delegated> {
 		}
 
 		//bind presenters to view
-		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag, mLocalPresenterBinder);
+		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag, mCustomPresenterFields);
 
 		for (MvpDelegate childDelegate : mChildDelegates) {
 			childDelegate.onCreate(bundle);
@@ -261,8 +262,8 @@ public class MvpDelegate<Delegated> {
 		return mBundle;
 	}
 
-	public void setLocalPresenterBinder(PresenterBinder<Delegated> localPresenterBinder) {
-		mLocalPresenterBinder = localPresenterBinder;
+	public void addCustomPresenterFields(PresenterField<Delegated> customPresenterField) {
+		mCustomPresenterFields.add(customPresenterField);
 	}
 
 	/**

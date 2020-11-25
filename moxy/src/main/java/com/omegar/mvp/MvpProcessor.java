@@ -77,10 +77,31 @@ public class MvpProcessor {
 	 */
 	<Delegated> List<MvpPresenter<? super Delegated>> getMvpPresenters(Delegated delegated,
 																	   String delegateTag,
-																	   PresenterBinder<Delegated> localPresenterBinder) {
-		if (!hasMoxyReflector()) {
-			return Collections.emptyList();
+																	   List<PresenterField<Delegated>> customPresenterFields) {
+		List<MvpPresenter<? super Delegated>> presenters = new ArrayList<>();
+
+		List<Object> presenterBinders = getPresenterBinders(delegated);
+
+		for (Object presenterBinderObject : presenterBinders) {
+			//noinspection unchecked
+			PresenterBinder<Delegated> presenterBinder = (PresenterBinder<Delegated>) presenterBinderObject;
+			List<PresenterField<Delegated>> presenterFields = presenterBinder.getPresenterFields();
+
+			for (PresenterField<Delegated> presenterField : presenterFields) {
+				handlePresenterField(delegated, delegateTag, presenters, presenterField);
+			}
 		}
+
+		// handle custom presenter fields
+		for (PresenterField<Delegated> presenterField : customPresenterFields) {
+			handlePresenterField(delegated, delegateTag, presenters, presenterField);
+		}
+
+		return presenters;
+	}
+
+	private <Delegated> List<Object> getPresenterBinders(Delegated delegated) {
+		if (!hasMoxyReflector()) return Collections.emptyList();
 
 		@SuppressWarnings("unchecked")
 		Class<? super Delegated> aClass = (Class<Delegated>) delegated.getClass();
@@ -92,34 +113,22 @@ public class MvpProcessor {
 			aClass = aClass.getSuperclass();
 		}
 
-		if (localPresenterBinder != null) {
-			if (presenterBinders == null) {
-				presenterBinders = new ArrayList<>(1);
-			}
-			presenterBinders.add(localPresenterBinder);
-		} else if (presenterBinders == null || presenterBinders.isEmpty()) {
+		if (presenterBinders == null || presenterBinders.isEmpty()) {
 			return Collections.emptyList();
 		}
+		return presenterBinders;
+	}
 
-		List<MvpPresenter<? super Delegated>> presenters = new ArrayList<>();
+	private <Delegated> void handlePresenterField(Delegated delegated, String delegateTag, List<MvpPresenter<? super Delegated>> presenters, PresenterField<Delegated> presenterField) {
 		PresentersCounter presentersCounter = MvpFacade.getInstance().getPresentersCounter();
-		for (Object presenterBinderObject : presenterBinders) {
-			//noinspection unchecked
-			PresenterBinder<Delegated> presenterBinder = (PresenterBinder<Delegated>) presenterBinderObject;
-			List<PresenterField<Delegated>> presenterFields = presenterBinder.getPresenterFields();
 
-			for (PresenterField<Delegated> presenterField : presenterFields) {
-				MvpPresenter<? super Delegated> presenter = getMvpPresenter(delegated, presenterField, delegateTag);
+		MvpPresenter<? super Delegated> presenter = getMvpPresenter(delegated, presenterField, delegateTag);
 
-				if (presenter != null) {
-					presentersCounter.injectPresenter(presenter, delegateTag);
-					presenters.add(presenter);
-					presenterField.bind(delegated, presenter);
-				}
-			}
+		if (presenter != null) {
+			presentersCounter.injectPresenter(presenter, delegateTag);
+			presenters.add(presenter);
+			presenterField.bind(delegated, presenter);
 		}
-
-		return presenters;
 	}
 
 	private static Boolean hasMoxyReflector = null;
