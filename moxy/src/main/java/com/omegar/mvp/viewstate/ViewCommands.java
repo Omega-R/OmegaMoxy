@@ -30,24 +30,7 @@ public class ViewCommands<View extends MvpView> {
 	}
 
 	private StateStrategy getStateStrategy(ViewCommand<View> viewCommand) {
-		StateStrategy stateStrategy = (StateStrategy) MoxyReflector.getStrategy(viewCommand.getStrategyClass());
-
-		if (stateStrategy == null) {
-			stateStrategy = newInstanceStateStrategyByReflection(viewCommand);
-		}
-
-		return stateStrategy;
-	}
-
-	private StateStrategy newInstanceStateStrategyByReflection(ViewCommand<View> viewCommand) {
-		//noinspection TryWithIdenticalCatches
-		try {
-			return viewCommand.getStrategyClass().newInstance();
-		} catch (InstantiationException e) {
-			throw new IllegalArgumentException("Unable to create state strategy: " + viewCommand.toString());
-		} catch (IllegalAccessException e) {
-			throw new IllegalArgumentException("Unable to create state strategy: " + viewCommand.toString());
-		}
+		return (StateStrategy) MoxyReflector.getStrategy(viewCommand.getStrategyClass());
 	}
 
 	public boolean isEmpty() {

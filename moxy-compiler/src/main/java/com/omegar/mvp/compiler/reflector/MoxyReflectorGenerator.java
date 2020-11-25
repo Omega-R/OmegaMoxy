@@ -94,7 +94,27 @@ public class MoxyReflectorGenerator {
 					.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
 					.returns(Object.class)
 					.addParameter(CLASS_WILDCARD_TYPE_NAME, "strategyClass")
-					.addStatement("return sStrategies.get(strategyClass)")
+					.addStatement("Object stateStrategy = sStrategies.get(strategyClass)")
+					.beginControlFlow("if (stateStrategy == null)")
+					.addStatement("stateStrategy = newStrategy(strategyClass)")
+					.addStatement("sStrategies.put(strategyClass, stateStrategy)")
+					.endControlFlow()
+					.addStatement("return stateStrategy")
+					.build());
+
+			classBuilder.addMethod(MethodSpec.methodBuilder("newStrategy")
+					.addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+					.returns(Object.class)
+					.addParameter(CLASS_WILDCARD_TYPE_NAME, "strategyClass")
+					.beginControlFlow("try")
+					.addStatement("return strategyClass.newInstance()")
+					.endControlFlow()
+					.beginControlFlow("catch (InstantiationException e)")
+					.addStatement("throw new IllegalArgumentException(\"Unable to create state strategy: \" + strategyClass)")
+					.endControlFlow()
+					.beginControlFlow("catch (IllegalAccessException e)")
+					.addStatement("throw new IllegalArgumentException(\"Unable to create state strategy: \" + strategyClass)")
+					.endControlFlow()
 					.build());
 		} else {
 			classBuilder.addMethod(MethodSpec.methodBuilder("getViewStateProviders")
