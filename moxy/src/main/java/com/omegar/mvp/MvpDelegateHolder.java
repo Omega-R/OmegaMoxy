@@ -1,6 +1,6 @@
 package com.omegar.mvp;
 
-interface MvpDelegateHolder {
+public interface MvpDelegateHolder {
 
     MvpDelegate getMvpDelegate();
 
