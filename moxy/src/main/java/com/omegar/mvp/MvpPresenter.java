@@ -15,12 +15,13 @@ import com.omegar.mvp.viewstate.MvpViewState;
  * @author Alexander Blinov
  * @author Konstantin Tckhovrebov
  */
+@SuppressWarnings("rawtypes")
 @InjectViewState
 public abstract class MvpPresenter<View extends MvpView> {
+	private final Set<View> mViews;
 	private boolean mFirstLaunch = true;
 	private String mTag;
 	private PresenterType mPresenterType;
-	private Set<View> mViews;
 	private View mViewStateAsView;
 	private MvpViewState<View> mViewState;
 	private Class<? extends MvpPresenter> mPresenterClass;
@@ -148,6 +149,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 		mPresenterClass = presenterClass;
 	}
 
+	@SuppressWarnings("unused")
 	Class<? extends MvpPresenter> getPresenterClass() {
 		return mPresenterClass;
 	}

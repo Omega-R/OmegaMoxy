@@ -31,6 +31,7 @@ import com.omegar.mvp.presenter.PresenterType;
  * @author Alexander Blinov
  * @author Konstantin Tckhovrebov
  */
+@SuppressWarnings("rawtypes")
 public class MvpDelegate<Delegated> {
 	private static final String KEY_TAG = "MvpDelegate.KEY_TAG";
 	public static final String MOXY_DELEGATE_TAGS_KEY = "MoxyDelegateBundle";
@@ -49,6 +50,7 @@ public class MvpDelegate<Delegated> {
 		mChildDelegates = new ArrayList<>();
 	}
 
+	@SuppressWarnings("unused")
 	public void setParentDelegate(MvpDelegate delegate, String childId) {
 		if (mBundle != null) {
 			throw new IllegalStateException("You should call setParentDelegate() before first onCreate()");
@@ -85,9 +87,10 @@ public class MvpDelegate<Delegated> {
 		mParentDelegate.removeChildDelegate(this);
 	}
 
+	@SuppressWarnings("unused")
 	public void removeAllChildDelegates() {
 		// For avoiding ConcurrentModificationException when removing by removeChildDelegate()
-		List<MvpDelegate> childDelegatesClone = new ArrayList<MvpDelegate>(mChildDelegates.size());
+		List<MvpDelegate> childDelegatesClone = new ArrayList<>(mChildDelegates.size());
 		childDelegatesClone.addAll(mChildDelegates);
 
 		for (MvpDelegate childDelegate : childDelegatesClone) {
@@ -189,7 +192,7 @@ public class MvpDelegate<Delegated> {
 		}
 
 		// For avoiding ConcurrentModificationException when removing from mChildDelegates
-		List<MvpDelegate> childDelegatesClone = new ArrayList<MvpDelegate>(mChildDelegates.size());
+		List<MvpDelegate> childDelegatesClone = new ArrayList<>(mChildDelegates.size());
 		childDelegatesClone.addAll(mChildDelegates);
 
 		for (MvpDelegate childDelegate : childDelegatesClone) {
@@ -252,6 +255,7 @@ public class MvpDelegate<Delegated> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public Bundle getChildrenSaveState() {
 		return mBundle;
 	}

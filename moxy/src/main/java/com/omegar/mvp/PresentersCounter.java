@@ -12,11 +12,11 @@ import java.util.Set;
  *
  * @author Yuri Shmakov
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings("rawtypes")
 public class PresentersCounter {
 
-	private Map<MvpPresenter<?>, Set<String>> mConnections = new HashMap<>();
-	private Map<String, Set<MvpPresenter>> mTags = new HashMap<>();
+	private final Map<MvpPresenter<?>, Set<String>> mConnections = new HashMap<>();
+	private final Map<String, Set<MvpPresenter>> mTags = new HashMap<>();
 
 	/**
 	 * Save delegate tag when it inject presenter to delegate's object

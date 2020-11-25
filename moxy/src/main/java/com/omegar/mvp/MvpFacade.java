@@ -22,6 +22,7 @@ public enum MvpFacade {
 		return mPresenterStore;
 	}
 
+	@SuppressWarnings("unused")
 	public void setPresenterStore(PresenterStore presenterStore) {
 		mPresenterStore = presenterStore;
 	}
@@ -30,6 +31,7 @@ public enum MvpFacade {
 		return mMvpProcessor;
 	}
 
+	@SuppressWarnings("unused")
 	public void setMvpProcessor(MvpProcessor mvpProcessor) {
 		mMvpProcessor = mvpProcessor;
 	}
@@ -38,6 +40,7 @@ public enum MvpFacade {
 		return mPresentersCounter;
 	}
 
+	@SuppressWarnings("unused")
 	public void setPresentersCounter(PresentersCounter presentersCounter) {
 		mPresentersCounter = presentersCounter;
 	}
