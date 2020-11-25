@@ -3,6 +3,7 @@ package com.omegar.mvp.compiler.reflector;
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.ViewStateProvider;
 import com.omegar.mvp.compiler.MvpCompiler;
+import com.omegar.mvp.compiler.Util;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
@@ -64,6 +65,8 @@ public class MoxyReflectorGenerator {
 		for (Element element : MvpCompiler.getUsedElements()) {
 			classBuilder.addOriginatingElement(element);
 		}
+
+		additionalMoxyReflectorsPackages = Util.newDistinctList(additionalMoxyReflectorsPackages);
 
 		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage, presenterClassNames, presentersContainers, strategyClasses, additionalMoxyReflectorsPackages));
 

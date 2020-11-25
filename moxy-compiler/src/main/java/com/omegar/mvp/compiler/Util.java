@@ -23,6 +23,7 @@ import com.squareup.javapoet.ClassName;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -259,6 +260,10 @@ public final class Util {
 
 	public static TypeElement asElement(TypeMirror mirror) {
 		return (TypeElement) ((DeclaredType) mirror).asElement();
+	}
+
+	public static <E> List<E> newDistinctList(List<E> list) {
+		return new ArrayList<E>(new LinkedHashSet<E>(list));
 	}
 
 }
