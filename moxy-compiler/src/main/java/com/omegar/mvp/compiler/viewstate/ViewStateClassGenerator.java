@@ -18,11 +18,14 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -50,13 +53,13 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 
     private final Map<ViewInterfaceInfo, JavaFile> filesMap = new HashMap<>();
     private final String currentMoxyReflectorPackage;
-    private List<String> reflectorPackages = new ArrayList<>();
+    private Set<String> reflectorPackages = new HashSet<>();
 
     public ViewStateClassGenerator(String currentMoxyReflectorPackage) {
         this.currentMoxyReflectorPackage = currentMoxyReflectorPackage;
     }
 
-    public List<String> getReflectorPackages() {
+    public Collection<String> getReflectorPackages() {
         return reflectorPackages;
     }
 
