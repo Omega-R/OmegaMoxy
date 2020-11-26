@@ -187,6 +187,7 @@ public class MvpCompiler extends AbstractProcessor {
 
 		additionalMoxyReflectorPackages.addAll(getAdditionalMoxyReflectorPackages(roundEnv));
 		additionalMoxyReflectorPackages.addAll(viewStateClassGenerator.getReflectorPackages());
+		additionalMoxyReflectorPackages.remove(MOXY_REFLECTOR_DEFAULT_PACKAGE);
 
 		JavaFile moxyReflector = MoxyReflectorGenerator.generate(
 				moxyReflectorPackage,
