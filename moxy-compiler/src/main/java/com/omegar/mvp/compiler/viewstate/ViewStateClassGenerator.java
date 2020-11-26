@@ -116,7 +116,7 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
         }
 
         for (ViewMethod method : viewInterfaceInfo.getMethods()) {
-            TypeSpec commandClass = generateCommandClass(method);
+            TypeSpec commandClass = generateCommandClass(method, variableName);
             classBuilder.addType(commandClass);
             classBuilder.addMethod(generateMethod(viewInterfaceType, method, nameWithTypeVariables, commandClass));
         }
@@ -156,10 +156,10 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
         return parentClassTypeVariables.toArray(new TypeVariableName[parentClassTypeVariables.size()]);
     }
 
-    private TypeSpec generateCommandClass(ViewMethod method) {
+    private TypeSpec generateCommandClass(ViewMethod method, TypeVariableName variableName ) {
         MethodSpec applyMethod = MethodSpec.methodBuilder("apply")
                 .addAnnotation(Override.class)
-                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addParameter(GENERIC_TYPE_VARIABLE_NAME, "mvpView")
                 .addExceptions(method.getExceptions())
                 .addStatement("mvpView.$L($L)", method.getName(), method.getArgumentsString())
@@ -167,15 +167,16 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(method.getCommandClassName())
                 .addOriginatingElement(method.getElement())
-                .addModifiers(Modifier.PUBLIC) // TODO: private and static
-                .addTypeVariables(method.getTypeVariables())
+                .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                .addTypeVariables(new ArrayList<TypeVariableName>(method.getTypeVariables()) {{
+                    add(0, variableName);
+                }})
                 .superclass(VIEW_COMMAND_TYPE_NAME)
                 .addMethod(generateCommandConstructor(method))
                 .addMethod(applyMethod);
 
         for (ParameterSpec parameter : method.getParameterSpecs()) {
-            // TODO: private field
-            classBuilder.addField(parameter.type, parameter.name, Modifier.PUBLIC, Modifier.FINAL);
+            classBuilder.addField(parameter.type, parameter.name, Modifier.PRIVATE, Modifier.FINAL);
         }
 
         return classBuilder.build();
@@ -193,14 +194,14 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
         }
 
         return MethodSpec.overriding(method.getElement(), enclosingType, MvpCompiler.getTypeUtils())
-                .addStatement("$1N $2L = new $1N($3L)", commandClass, commandFieldName, method.getArgumentsString())
+                .addStatement("$1N $2L = new $1N<$4L>($3L)", commandClass, commandFieldName, method.getArgumentsString(), VIEW)
                 .addStatement("mViewCommands.beforeApply($L)", commandFieldName)
                 .addCode("\n")
                 .beginControlFlow("if (mViews == null || mViews.isEmpty())")
                 .addStatement("return")
                 .endControlFlow()
                 .addCode("\n")
-                .beginControlFlow("for ($T view$$ : mViews)", viewTypeName)
+                .beginControlFlow("for ($L view$$ : mViews)", VIEW)
                 .addStatement("view$$.$L($L)", method.getName(), method.getArgumentsString())
                 .endControlFlow()
                 .addCode("\n")
@@ -213,6 +214,7 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
 
         MethodSpec.Builder builder = MethodSpec.constructorBuilder()
                 .addParameters(parameters)
+                .addModifiers(Modifier.PRIVATE)
                 .addStatement("super($S, $T.class)", method.getTag(), method.getStrategy());
 
         if (parameters.size() > 0) {
