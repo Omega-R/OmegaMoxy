@@ -3,6 +3,7 @@ package com.omegar.mvp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import android.os.Bundle;
 
@@ -37,6 +38,8 @@ public class MvpDelegate<Delegated> {
 	private static final String KEY_TAG = "MvpDelegate.KEY_TAG";
 	public static final String MOXY_DELEGATE_TAGS_KEY = "MoxyDelegateBundle";
 
+	private final List<PresenterField<Delegated>> mCustomPresenterFields = new ArrayList<>();
+
 	private String mKeyTag = KEY_TAG;
 	private String mDelegateTag;
 	private final Delegated mDelegated;
@@ -45,7 +48,6 @@ public class MvpDelegate<Delegated> {
 	private List<MvpPresenter<? super Delegated>> mPresenters;
 	private List<MvpDelegate> mChildDelegates;
 	private Bundle mBundle;
-	private List<PresenterField<Delegated>> mCustomPresenterFields;
 
 	public MvpDelegate(Delegated delegated) {
 		mDelegated = delegated;

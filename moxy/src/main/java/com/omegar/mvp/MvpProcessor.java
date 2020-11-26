@@ -93,8 +93,10 @@ public class MvpProcessor {
 		}
 
 		// handle custom presenter fields
-		for (PresenterField<Delegated> presenterField : customPresenterFields) {
-			handlePresenterField(delegated, delegateTag, presenters, presenterField);
+		if (customPresenterFields != null) {
+			for (PresenterField<Delegated> presenterField : customPresenterFields) {
+				handlePresenterField(delegated, delegateTag, presenters, presenterField);
+			}
 		}
 
 		return presenters;
