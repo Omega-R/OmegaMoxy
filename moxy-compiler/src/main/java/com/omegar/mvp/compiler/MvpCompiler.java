@@ -34,6 +34,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -147,7 +148,7 @@ public class MvpCompiler extends AbstractProcessor {
 
 		String moxyReflectorPackage = sOptions.get(OPTION_MOXY_REFLECTOR_PACKAGE);
 		if (moxyReflectorPackage == null) {
-			moxyReflectorPackage = MOXY_REFLECTOR_DEFAULT_PACKAGE;
+			moxyReflectorPackage = getMoxyReflectorPackage(roundEnv);
 		}
 
 		checkInjectors(roundEnv, InjectPresenter.class, new PresenterInjectorRules(ElementKind.FIELD, Modifier.PUBLIC, Modifier.DEFAULT));
@@ -200,6 +201,36 @@ public class MvpCompiler extends AbstractProcessor {
 		createSourceFile(moxyReflector);
 
 		return true;
+	}
+
+	private String getMoxyReflectorPackage(RoundEnvironment roundEnv) {
+		TypeElement annotationTypeElement = getElementUtils().getTypeElement(MOXY_ANNOTATION_INJECT_VIEW_STATE);
+		Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(annotationTypeElement);
+		if (!elements.isEmpty()) {
+			Element firstElement = elements.iterator().next();
+			PackageElement packageElement = sElementUtils.getPackageOf(firstElement);
+			String packageName = packageElement.getQualifiedName().toString();
+			String[] strings = packageName.split("\\.");
+			for (int i = strings.length - 1; i >= 0; i--) {
+				String packagePart = strings[i];
+				String buildConfig = packageName + ".BuildConfig";
+				TypeElement typeElement = sElementUtils.getTypeElement(buildConfig);
+				if (typeElement != null) {
+					for (Element element : typeElement.getEnclosedElements()) {
+						if (element.getKind() != ElementKind.FIELD) {
+							continue;
+						}
+						if (element.getSimpleName().toString().equals("LIBRARY_PACKAGE_NAME")) {
+							return packageName;
+						} else	return MOXY_REFLECTOR_DEFAULT_PACKAGE;
+
+					}
+					break;
+				}
+				packageName = packageName.replace("."+packagePart, "");
+			}
+		}
+			return MOXY_REFLECTOR_DEFAULT_PACKAGE;
 	}
 
 	private List<String> getAdditionalMoxyReflectorPackages(RoundEnvironment roundEnv) {
