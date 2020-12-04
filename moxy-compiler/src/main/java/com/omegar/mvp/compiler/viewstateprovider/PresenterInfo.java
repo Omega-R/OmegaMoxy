@@ -32,4 +32,24 @@ class PresenterInfo {
 	ClassName getViewStateName() {
 		return viewStateName;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		PresenterInfo that = (PresenterInfo) o;
+
+		if (name != null ? !name.equals(that.name) : that.name != null) return false;
+		if (element != null ? !element.equals(that.element) : that.element != null) return false;
+		return viewStateName != null ? viewStateName.equals(that.viewStateName) : that.viewStateName == null;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = name != null ? name.hashCode() : 0;
+		result = 31 * result + (element != null ? element.hashCode() : 0);
+		result = 31 * result + (viewStateName != null ? viewStateName.hashCode() : 0);
+		return result;
+	}
 }

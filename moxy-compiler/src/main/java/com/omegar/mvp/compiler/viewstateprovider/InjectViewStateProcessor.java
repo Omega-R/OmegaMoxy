@@ -2,17 +2,16 @@ package com.omegar.mvp.compiler.viewstateprovider;
 
 import com.omegar.mvp.MvpPresenter;
 import com.omegar.mvp.MvpProcessor;
-import com.omegar.mvp.compiler.ElementProcessor;
+import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
+import com.omegar.mvp.compiler.pipeline.Publisher;
+import com.omegar.mvp.compiler.pipeline.PublisherHolder;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -22,23 +21,17 @@ import javax.lang.model.type.TypeMirror;
 
 import static com.omegar.mvp.compiler.Util.fillGenerics;
 
-public class InjectViewStateProcessor extends ElementProcessor<TypeElement, PresenterInfo> {
+public class InjectViewStateProcessor extends ElementProcessor<TypeElement, PresenterInfo> implements PublisherHolder<TypeElement> {
 	private static final String MVP_PRESENTER_CLASS = MvpPresenter.class.getCanonicalName();
 
-	private final Set<TypeElement> usedViews = new HashSet<>();
-	private final List<TypeElement> presenterClassNames = new ArrayList<>();
+	private final Publisher<TypeElement> mUsedViewsPublisher = new Publisher<>();
 
-	public Set<TypeElement> getUsedViews() {
-		return usedViews;
-	}
-
-	public List<TypeElement> getPresenterClassNames() {
-		return presenterClassNames;
+	public Publisher<TypeElement> getPublisher() {
+		return mUsedViewsPublisher;
 	}
 
 	@Override
 	public PresenterInfo process(TypeElement element) {
-		presenterClassNames.add(element);
 		return new PresenterInfo(element, getViewStateClassName(element));
 	}
 
@@ -64,7 +57,8 @@ public class InjectViewStateProcessor extends ElementProcessor<TypeElement, Pres
 			throw new IllegalArgumentException("View \"" + view + "\" for " + typeElement + " cannot be found. \n " + getViewClassFromGeneric(typeElement));
 		}
 
-		usedViews.add(viewTypeElement);
+		mUsedViewsPublisher.next(viewTypeElement);
+
 		return Util.getFullClassName(viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX;
 	}
 

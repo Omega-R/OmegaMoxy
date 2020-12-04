@@ -3,7 +3,7 @@ package com.omegar.mvp.compiler.viewstateprovider;
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.MvpView;
 import com.omegar.mvp.ViewStateProvider;
-import com.omegar.mvp.compiler.JavaFilesGenerator;
+import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
 import com.omegar.mvp.viewstate.MvpViewState;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -11,9 +11,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.WildcardTypeName;
-
-import java.util.Collections;
-import java.util.List;
 
 import javax.lang.model.element.Modifier;
 
@@ -23,10 +20,10 @@ import javax.lang.model.element.Modifier;
  *
  * @author Alexander Blinov
  */
-public final class ViewStateProviderClassGenerator extends JavaFilesGenerator<PresenterInfo> {
+public final class ViewStateProviderClassGenerator extends JavaFileProcessor<PresenterInfo> {
 
 	@Override
-	public List<JavaFile> generate(PresenterInfo presenterInfo) {
+	public JavaFile process(PresenterInfo presenterInfo) {
 		TypeSpec typeSpec = TypeSpec.classBuilder(presenterInfo.getName().simpleName() + MvpProcessor.VIEW_STATE_PROVIDER_SUFFIX)
 				.addOriginatingElement(presenterInfo.getElement())
 				.addModifiers(Modifier.PUBLIC)
@@ -34,11 +31,9 @@ public final class ViewStateProviderClassGenerator extends JavaFilesGenerator<Pr
 				.addMethod(generateGetViewStateMethod(presenterInfo.getName(), presenterInfo.getViewStateName()))
 				.build();
 
-		JavaFile javaFile = JavaFile.builder(presenterInfo.getName().packageName(), typeSpec)
+		return JavaFile.builder(presenterInfo.getName().packageName(), typeSpec)
 				.indent("\t")
 				.build();
-
-		return Collections.singletonList(javaFile);
 	}
 
 

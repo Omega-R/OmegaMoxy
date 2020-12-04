@@ -2,9 +2,10 @@ package com.omegar.mvp.compiler.viewstate;
 
 import com.omegar.mvp.Moxy;
 import com.omegar.mvp.MvpProcessor;
-import com.omegar.mvp.compiler.JavaFilesGenerator;
+import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
+import com.omegar.mvp.compiler.pipeline.Publisher;
 import com.omegar.mvp.viewstate.MvpViewState;
 import com.omegar.mvp.viewstate.ViewCommand;
 import com.squareup.javapoet.AnnotationSpec;
@@ -40,7 +41,7 @@ import static com.omegar.mvp.compiler.Util.decapitalizeString;
  *
  * @author Yuri Shmakov
  */
-public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewInterfaceInfo>> {
+public final class ViewStateJavaFileProcessor extends JavaFileProcessor<ViewInterfaceInfo> {
 
     private static final String VIEW = "Omega$$View";
     private static final TypeVariableName GENERIC_TYPE_VARIABLE_NAME = TypeVariableName.get(VIEW);
@@ -51,38 +52,20 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
     private static final ParameterizedTypeName MVP_VIEW_STATE_TYPE_NAME
             = ParameterizedTypeName.get(MVP_VIEW_STATE_CLASS_NAME, GENERIC_TYPE_VARIABLE_NAME);
 
-    private final Map<ViewInterfaceInfo, JavaFile> filesMap = new HashMap<>();
     private final String currentMoxyReflectorPackage;
-    private Set<String> reflectorPackages = new HashSet<>();
 
-    public ViewStateClassGenerator(String currentMoxyReflectorPackage) {
+    private final Publisher<String> reflectorPackagesPublisher = new Publisher<>(new HashSet<>());
+
+    public ViewStateJavaFileProcessor(String currentMoxyReflectorPackage) {
         this.currentMoxyReflectorPackage = currentMoxyReflectorPackage;
     }
 
-    public Collection<String> getReflectorPackages() {
-        return reflectorPackages;
+    public Publisher<String> getReflectorPackages() {
+        return reflectorPackagesPublisher;
     }
 
     @Override
-    public List<JavaFile> generate(List<ViewInterfaceInfo> list) {
-        if (list.isEmpty()) return Collections.emptyList();
-        List<JavaFile> fileList = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            ViewInterfaceInfo info = list.get(i);
-
-            JavaFile javaFile = filesMap.get(info);
-            if (javaFile == null) {
-                javaFile = generate(info, currentMoxyReflectorPackage);
-                filesMap.put(info, javaFile);
-            }
-
-            fileList.add(javaFile);
-        }
-
-        return fileList;
-    }
-
-    private JavaFile generate(ViewInterfaceInfo viewInterfaceInfo, String moxyReflectorPackage) {
+    public JavaFile process(ViewInterfaceInfo viewInterfaceInfo) {
         ClassName viewName = viewInterfaceInfo.getName();
 
         TypeName nameWithTypeVariables = viewInterfaceInfo.getNameWithTypeVariables();
@@ -93,7 +76,7 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
                 .addOriginatingElement(viewInterfaceInfo.getElement())
                 .addAnnotation(
                         AnnotationSpec.builder(Moxy.class)
-                                .addMember("reflectorPackage", "\""+ moxyReflectorPackage +"\"")
+                                .addMember("reflectorPackage", "\""+ currentMoxyReflectorPackage +"\"")
                                 .build()
                 )
                 .addModifiers(Modifier.PUBLIC)
@@ -132,7 +115,7 @@ public final class ViewStateClassGenerator extends JavaFilesGenerator<List<ViewI
             Moxy[] moxies = typeElement.getAnnotationsByType(Moxy.class);
             if (moxies != null) {
                 for (Moxy moxy : moxies) {
-                    reflectorPackages.add(moxy.reflectorPackage());
+                    reflectorPackagesPublisher.next(moxy.reflectorPackage());
                 }
 
             }

@@ -1,8 +1,10 @@
 package com.omegar.mvp.compiler.viewstate;
 
-import com.omegar.mvp.compiler.ElementProcessor;
+import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
+import com.omegar.mvp.compiler.pipeline.Publisher;
+import com.omegar.mvp.compiler.pipeline.PublisherHolder;
 import com.omegar.mvp.viewstate.strategy.StrategyType;
 import com.omegar.mvp.viewstate.strategy.StateStrategyType;
 import com.squareup.javapoet.ParameterSpec;
@@ -38,15 +40,18 @@ import static com.omegar.mvp.compiler.Util.isMvpElement;
  *
  * @author Evgeny Kursakov
  */
-public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<ViewInterfaceInfo>> {
+public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<ViewInterfaceInfo>> implements PublisherHolder<TypeElement> {
 	private static final String STATE_STRATEGY_TYPE_ANNOTATION = StateStrategyType.class.getName();
 
 	private TypeElement viewInterfaceElement;
 	private String viewInterfaceName;
-	private Set<TypeElement> usedStrategies = new HashSet<>();
 
-	public List<TypeElement> getUsedStrategies() {
-		return new ArrayList<>(usedStrategies);
+	private Publisher<TypeElement> usedStrategiesPublisher = new Publisher<>(new HashSet<>());
+
+
+	@Override
+	public Publisher<TypeElement> getPublisher() {
+		return usedStrategiesPublisher;
 	}
 
 	@Override
@@ -219,7 +224,7 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 			}
 
 			// add strategy to list
-			usedStrategies.add(strategyClass);
+			usedStrategiesPublisher.next(strategyClass);
 
 			final ViewMethod method = new ViewMethod(
 					(DeclaredType) viewInterfaceElement.asType(), methodElement, strategyClass, methodTag

@@ -3,7 +3,7 @@ package com.omegar.mvp.compiler.presenterbinder;
 import com.omegar.mvp.MvpPresenter;
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.PresenterBinder;
-import com.omegar.mvp.compiler.JavaFilesGenerator;
+import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
 import com.omegar.mvp.compiler.Util;
 import com.omegar.mvp.presenter.PresenterField;
 import com.squareup.javapoet.ClassName;
@@ -48,10 +48,10 @@ import javax.lang.model.type.DeclaredType;
  * @author Yuri Shmakov
  * @author Alexander Blinov
  */
-public final class PresenterBinderClassGenerator extends JavaFilesGenerator<TargetClassInfo> {
+public final class PresenterBinderClassGenerator extends JavaFileProcessor<TargetClassInfo> {
 
 	@Override
-	public List<JavaFile> generate(TargetClassInfo targetClassInfo) {
+	public JavaFile process(TargetClassInfo targetClassInfo) {
 		ClassName targetClassName = targetClassInfo.getName();
 		TypeElement element = targetClassInfo.getElement();
 		List<TargetPresenterField> fields = targetClassInfo.getFields();
@@ -69,10 +69,9 @@ public final class PresenterBinderClassGenerator extends JavaFilesGenerator<Targ
 
 		classBuilder.addMethod(generateGetPresentersMethod(fields, targetClassName));
 
-		JavaFile javaFile = JavaFile.builder(targetClassName.packageName(), classBuilder.build())
+		return JavaFile.builder(targetClassName.packageName(), classBuilder.build())
 				.indent("\t")
 				.build();
-		return Collections.singletonList(javaFile);
 	}
 
 	private static MethodSpec generateGetPresentersMethod(List<TargetPresenterField> fields,

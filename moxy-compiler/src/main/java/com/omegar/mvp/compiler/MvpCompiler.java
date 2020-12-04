@@ -2,11 +2,13 @@ package com.omegar.mvp.compiler;
 
 import com.google.auto.service.AutoService;
 import com.omegar.mvp.RegisterMoxyReflectorPackages;
+import com.omegar.mvp.compiler.pipeline.ElementProcessor;
+import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
 import com.omegar.mvp.compiler.presenterbinder.InjectPresenterProcessor;
 import com.omegar.mvp.compiler.presenterbinder.PresenterBinderClassGenerator;
 import com.omegar.mvp.compiler.reflector.MoxyReflectorGenerator;
 import com.omegar.mvp.compiler.viewstate.ViewInterfaceProcessor;
-import com.omegar.mvp.compiler.viewstate.ViewStateClassGenerator;
+import com.omegar.mvp.compiler.viewstate.ViewStateJavaFileProcessor;
 import com.omegar.mvp.compiler.viewstateprovider.InjectViewStateProcessor;
 import com.omegar.mvp.compiler.viewstateprovider.ViewStateProviderClassGenerator;
 import com.omegar.mvp.presenter.InjectPresenter;
@@ -159,7 +161,7 @@ public class MvpCompiler extends AbstractProcessor {
 		PresenterBinderClassGenerator presenterBinderClassGenerator = new PresenterBinderClassGenerator();
 
 		ViewInterfaceProcessor viewInterfaceProcessor = new ViewInterfaceProcessor();
-		ViewStateClassGenerator viewStateClassGenerator = new ViewStateClassGenerator(moxyReflectorPackage);
+		ViewStateJavaFileProcessor viewStateClassGenerator = new ViewStateJavaFileProcessor(moxyReflectorPackage);
 
 		processInjectors(
 				roundEnv,
@@ -176,18 +178,8 @@ public class MvpCompiler extends AbstractProcessor {
 		generateCode(injectViewStateProcessor.getUsedViews(), ElementKind.INTERFACE,
 				viewInterfaceProcessor, viewStateClassGenerator);
 
-		String moxyRegisterReflectorPackage = sOptions.get(OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES);
 
-		List<String> additionalMoxyReflectorPackages = new ArrayList<>();
-
-		if (moxyRegisterReflectorPackage != null) {
-			String[] strings = moxyRegisterReflectorPackage.split(",");
-			additionalMoxyReflectorPackages.addAll(Arrays.asList(strings));
-		}
-
-		additionalMoxyReflectorPackages.addAll(getAdditionalMoxyReflectorPackages(roundEnv));
-		additionalMoxyReflectorPackages.addAll(viewStateClassGenerator.getReflectorPackages());
-		additionalMoxyReflectorPackages.remove(MOXY_REFLECTOR_DEFAULT_PACKAGE);
+		List<String> additionalMoxyReflectorPackages = getAdditionalMoxyReflectorPackages(roundEnv, viewStateClassGenerator);
 
 		JavaFile moxyReflector = MoxyReflectorGenerator.generate(
 				moxyReflectorPackage,
@@ -202,7 +194,16 @@ public class MvpCompiler extends AbstractProcessor {
 		return true;
 	}
 
-	private List<String> getAdditionalMoxyReflectorPackages(RoundEnvironment roundEnv) {
+	private List<String> getAdditionalMoxyReflectorPackages(RoundEnvironment roundEnv, ViewStateJavaFileProcessor viewStateClassGenerator) {
+		List<String> result = new ArrayList<>();
+		result.addAll(getOptionsAdditionalReflectorPackages());
+		result.addAll(getRegisterAdditionalMoxyReflectorPackages(roundEnv));
+		result.addAll(viewStateClassGenerator.getReflectorPackages());
+		result.remove(MOXY_REFLECTOR_DEFAULT_PACKAGE);
+		return result;
+	}
+
+	private List<String> getRegisterAdditionalMoxyReflectorPackages(RoundEnvironment roundEnv) {
 		List<String> result = new ArrayList<>();
 
 		for (Element element : roundEnv.getElementsAnnotatedWith(RegisterMoxyReflectorPackages.class)) {
@@ -216,6 +217,16 @@ public class MvpCompiler extends AbstractProcessor {
 		}
 
 		return result;
+	}
+
+	private List<String> getOptionsAdditionalReflectorPackages() {
+		String moxyRegisterReflectorPackage = sOptions.get(OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES);
+
+		if (moxyRegisterReflectorPackage != null) {
+			String[] strings = moxyRegisterReflectorPackage.split(",");
+			return Arrays.asList(strings);
+		}
+		return Collections.emptyList();
 	}
 
 
@@ -233,8 +244,8 @@ public class MvpCompiler extends AbstractProcessor {
 	private <E extends Element, R> void processInjectors(RoundEnvironment roundEnv,
 	                                                     TypeElement annotationClass,
 	                                                     ElementKind kind,
-	                                                     ElementProcessor<E, R> processor,
-	                                                     JavaFilesGenerator<R> classGenerator) {
+	                                                     com.omegar.mvp.compiler.pipeline.ElementProcessor<E, R> processor,
+	                                                     JavaFileProcessor<R> classGenerator) {
 		for (Element element : roundEnv.getElementsAnnotatedWith(annotationClass)) {
 			if (element.getKind() != kind) {
 				getMessager().printMessage(Diagnostic.Kind.ERROR,
@@ -247,8 +258,8 @@ public class MvpCompiler extends AbstractProcessor {
 
     private <E extends Element, R> void generateCode(Set<TypeElement> elementSet,
                                                      ElementKind kind,
-                                                     ElementProcessor<E, List<R>> processor,
-                                                     JavaFilesGenerator<List<R>> classGenerator) {
+                                                     com.omegar.mvp.compiler.pipeline.ElementProcessor<E, List<R>> processor,
+                                                     JavaFileProcessor<List<R>> classGenerator) {
         Set<JavaFile> fileSet = new HashSet<>();
         for (Element element : elementSet) {
             List<R> list = generateCode(element, kind, processor);
@@ -261,8 +272,8 @@ public class MvpCompiler extends AbstractProcessor {
 
 	private <E extends Element, R> void generateCode(Element element,
 													 ElementKind kind,
-													 ElementProcessor<E, R> processor,
-													 JavaFilesGenerator<R> classGenerator) {
+													 com.omegar.mvp.compiler.pipeline.ElementProcessor<E, R> processor,
+													 JavaFileProcessor<R> classGenerator) {
 		R result = generateCode(element, kind, processor);
 		if (result == null) return;
 		for (JavaFile file : classGenerator.generate(result)) {
