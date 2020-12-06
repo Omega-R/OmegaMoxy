@@ -4,15 +4,15 @@ import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
 import com.omegar.mvp.compiler.pipeline.Publisher;
-import com.omegar.mvp.compiler.pipeline.PublisherHolder;
+import com.omegar.mvp.compiler.pipeline.PipelineContext;
 import com.omegar.mvp.viewstate.strategy.StrategyType;
 import com.omegar.mvp.viewstate.strategy.StateStrategyType;
 import com.squareup.javapoet.ParameterSpec;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,26 +40,24 @@ import static com.omegar.mvp.compiler.Util.isMvpElement;
  *
  * @author Evgeny Kursakov
  */
-public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<ViewInterfaceInfo>> implements PublisherHolder<TypeElement> {
+public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeElement, ViewInterfaceInfo> {
 	private static final String STATE_STRATEGY_TYPE_ANNOTATION = StateStrategyType.class.getName();
 
-	private TypeElement viewInterfaceElement;
-	private String viewInterfaceName;
+	private final Publisher<TypeElement> mUsedStrategiesPublisher;
 
-	private Publisher<TypeElement> usedStrategiesPublisher = new Publisher<>(new HashSet<>());
+	private TypeElement mViewInterfaceElement;
+	private String mViewInterfaceName;
 
-
-	@Override
-	public Publisher<TypeElement> getPublisher() {
-		return usedStrategiesPublisher;
+	public ElementToViewInterfaceInfoProcessor(Publisher<TypeElement> usedStrategiesPublisher) {
+		mUsedStrategiesPublisher = usedStrategiesPublisher;
 	}
 
 	@Override
-	public List<ViewInterfaceInfo> process(TypeElement element) {
-		List<ViewInterfaceInfo> list = new ArrayList<>(generateInfos(element));
-		// TODO add nonfirst method
-//		fillWithNotInheredMethods(list);
-		return list;
+	public void process(TypeElement element, PipelineContext<ViewInterfaceInfo> context) {
+		Collection<ViewInterfaceInfo> list = generateInfos(element);
+		for (ViewInterfaceInfo info: list) {
+			context.next(info);
+		}
 	}
 
 	private void fillWithNotInheredMethods(List<ViewInterfaceInfo> list) {
@@ -116,8 +114,8 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 
 	private Set<ViewInterfaceInfo> generateInfos(TypeElement element) {
 		Set<ViewInterfaceInfo> interfaceInfos = new LinkedHashSet<>();
-		this.viewInterfaceElement = element;
-		viewInterfaceName = element.getSimpleName().toString();
+		this.mViewInterfaceElement = element;
+		mViewInterfaceName = element.getSimpleName().toString();
 
 		List<ViewMethod> methods = new ArrayList<>();
 
@@ -224,10 +222,10 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 			}
 
 			// add strategy to list
-			usedStrategiesPublisher.next(strategyClass);
+			mUsedStrategiesPublisher.next(strategyClass);
 
 			final ViewMethod method = new ViewMethod(
-					(DeclaredType) viewInterfaceElement.asType(), methodElement, strategyClass, methodTag
+					(DeclaredType) mViewInterfaceElement.asType(), methodElement, strategyClass, methodTag
 			);
 
 			if (rootMethods.contains(method)) {
@@ -263,10 +261,13 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 					" and " + method.getEnclosedClassName() +
 					" has method " + method.getName() + "(" + arguments + ")" +
 					" with different " + parts + "." +
-					" Override this method in " + viewInterfaceName + " or make " + parts + " equals");
+					" Override this method in " + mViewInterfaceName + " or make " + parts + " equals");
 		}
 	}
 
-
-
+	@Override
+	protected void finish(PipelineContext<ViewInterfaceInfo> nextContext) {
+		mUsedStrategiesPublisher.finish();
+		super.finish(nextContext);
+	}
 }

@@ -14,8 +14,12 @@ public abstract class Processor<I,O> {
         return (O) input;
     }
 
-    protected void finish() {
-        // nothing
+    protected void finish(PipelineContext<O> nextContext) {
+        nextContext.finish();
+    }
+
+    public Processor<I, O> withCache() {
+        return new CacheWrapperProcessor<>(this);
     }
 
 }

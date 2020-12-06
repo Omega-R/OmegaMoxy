@@ -1,4 +1,6 @@
-package com.omegar.mvp.compiler.pipeline;
+package com.omegar.mvp.compiler.presenterbinder;
+
+import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -7,7 +9,7 @@ import javax.lang.model.element.VariableElement;
 /**
  * Created by Anton Knyazev on 04.12.2020.
  */
-class InjectPresenterVariableProcessor extends ElementProcessor<VariableElement, TypeElement> {
+public class VariableToContainerElementProcessor extends ElementProcessor<VariableElement, TypeElement> {
 
     @Override
     protected TypeElement process(VariableElement variableElement) {

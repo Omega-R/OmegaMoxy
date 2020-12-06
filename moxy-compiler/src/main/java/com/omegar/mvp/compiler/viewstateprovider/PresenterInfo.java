@@ -10,7 +10,7 @@ import javax.lang.model.element.TypeElement;
  *
  * @author Evgeny Kursakov
  */
-class PresenterInfo {
+public class PresenterInfo {
 	private final ClassName name;
 	private final TypeElement element;
 	private final ClassName viewStateName;

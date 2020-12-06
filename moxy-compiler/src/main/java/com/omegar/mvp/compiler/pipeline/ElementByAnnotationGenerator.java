@@ -13,31 +13,31 @@ import javax.tools.Diagnostic;
 /**
  * Created by Anton Knyazev on 03.12.2020.
  */
-class ElementSourceProcessor extends Publisher<Element> {
+public class ElementByAnnotationGenerator<T extends Element> extends Publisher<T> {
 
     private final RoundEnvironment mRoundEnv;
     private final TypeElement mAnnotationClass;
     private final ElementKind mKind;
 
-    public ElementSourceProcessor(RoundEnvironment roundEnv, TypeElement annotationClass, ElementKind kind) {
-        super(null);
+    public ElementByAnnotationGenerator(RoundEnvironment roundEnv, TypeElement annotationClass, ElementKind kind) {
         mRoundEnv = roundEnv;
         mAnnotationClass = annotationClass;
         mKind = kind;
     }
 
     @Override
-    public synchronized void publish(PipelineContext<Element> context) {
+    public synchronized void publish(PipelineContext<T> context) {
         Set<? extends Element> allElements = mRoundEnv.getElementsAnnotatedWith(mAnnotationClass);
         for (Element element : allElements) {
             if (element.getKind() != mKind) {
                 MvpCompiler.getMessager().printMessage(Diagnostic.Kind.ERROR,
                         element + " must be " + mKind.name() + ", or not mark it as @" + mAnnotationClass.getSimpleName());
             } else {
-                context.next(element);
+                //noinspection unchecked
+                context.next((T) element);
             }
         }
-        context.finish();
+        finish(context);
     }
 
 }

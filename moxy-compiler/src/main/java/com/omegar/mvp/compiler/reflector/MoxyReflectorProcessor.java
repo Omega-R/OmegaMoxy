@@ -4,6 +4,8 @@ import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.ViewStateProvider;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
+import com.omegar.mvp.compiler.pipeline.Processor;
+import com.omegar.mvp.compiler.pipeline.Quad;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
@@ -38,7 +40,7 @@ import static com.omegar.mvp.compiler.MvpCompiler.MOXY_REFLECTOR_DEFAULT_PACKAGE
  * @author Yuri Shmakov
  */
 
-public class MoxyReflectorGenerator {
+public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>>, JavaFile> {
 	private static final Comparator<TypeElement> TYPE_ELEMENT_COMPARATOR = Comparator.comparing(Object::toString);
 
 	private static final TypeName CLASS_WILDCARD_TYPE_NAME // Class<*>
@@ -50,19 +52,33 @@ public class MoxyReflectorGenerator {
 	private static final TypeName MAP_CLASS_TO_LIST_OF_OBJECT_TYPE_NAME // Map<Class<*>, List<Object>>
 			= ParameterizedTypeName.get(ClassName.get(Map.class), CLASS_WILDCARD_TYPE_NAME, LIST_OF_OBJECT_TYPE_NAME);
 
+	private final String mDestinationPackage;
+
+	public MoxyReflectorProcessor(String destinationPackage) {
+		mDestinationPackage = destinationPackage;
+	}
+
+	@Override
+	protected JavaFile process(Quad<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>> input) {
+		return generate(mDestinationPackage, input.getFirst(), input.getSecond(), input.getThird(), input.getFourth());
+	}
 
 	public static JavaFile generate(String destinationPackage,
-	                                List<TypeElement> presenterClassNames,
-	                                List<TypeElement> presentersContainers,
-	                                List<TypeElement> strategyClasses,
-	                                List<String> additionalMoxyReflectorsPackages) {
+									List<TypeElement> presenterClassNames,
+									List<TypeElement> presentersContainers,
+									List<TypeElement> strategyClasses,
+									List<String> additionalMoxyReflectorsPackages) {
 		TypeSpec.Builder classBuilder = TypeSpec.classBuilder("MoxyReflector")
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
 				.addField(MAP_CLASS_TO_OBJECT_TYPE_NAME, "sViewStateProviders", Modifier.PRIVATE, Modifier.STATIC)
 				.addField(MAP_CLASS_TO_LIST_OF_OBJECT_TYPE_NAME, "sPresenterBinders", Modifier.PRIVATE, Modifier.STATIC)
 				.addField(MAP_CLASS_TO_OBJECT_TYPE_NAME, "sStrategies", Modifier.PRIVATE, Modifier.STATIC);
 
-		for (Element element : MvpCompiler.getUsedElements()) {
+		for (Element element : presentersContainers) {
+			classBuilder.addOriginatingElement(element);
+		}
+
+		for (Element element : presenterClassNames) {
 			classBuilder.addOriginatingElement(element);
 		}
 

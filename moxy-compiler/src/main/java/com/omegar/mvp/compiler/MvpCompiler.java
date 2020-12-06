@@ -2,15 +2,21 @@ package com.omegar.mvp.compiler;
 
 import com.google.auto.service.AutoService;
 import com.omegar.mvp.RegisterMoxyReflectorPackages;
+import com.omegar.mvp.compiler.pipeline.ElementByAnnotationGenerator;
 import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
-import com.omegar.mvp.compiler.presenterbinder.InjectPresenterProcessor;
-import com.omegar.mvp.compiler.presenterbinder.PresenterBinderClassGenerator;
-import com.omegar.mvp.compiler.reflector.MoxyReflectorGenerator;
-import com.omegar.mvp.compiler.viewstate.ViewInterfaceProcessor;
-import com.omegar.mvp.compiler.viewstate.ViewStateJavaFileProcessor;
-import com.omegar.mvp.compiler.viewstateprovider.InjectViewStateProcessor;
-import com.omegar.mvp.compiler.viewstateprovider.ViewStateProviderClassGenerator;
+import com.omegar.mvp.compiler.pipeline.JavaFileWriter;
+import com.omegar.mvp.compiler.pipeline.Pipeline;
+import com.omegar.mvp.compiler.pipeline.Publisher;
+import com.omegar.mvp.compiler.pipeline.QuadPublisher;
+import com.omegar.mvp.compiler.presenterbinder.ElementToTargetClassInfoProcessor;
+import com.omegar.mvp.compiler.presenterbinder.TargetClassInfoToPresenterBinderJavaFileProcessor;
+import com.omegar.mvp.compiler.presenterbinder.VariableToContainerElementProcessor;
+import com.omegar.mvp.compiler.reflector.MoxyReflectorProcessor;
+import com.omegar.mvp.compiler.viewstate.ElementToViewInterfaceInfoProcessor;
+import com.omegar.mvp.compiler.viewstate.ViewInterfaceInfoToViewStateJavaFileProcessor;
+import com.omegar.mvp.compiler.viewstateprovider.ElementToPresenterInfoProcessor;
+import com.omegar.mvp.compiler.viewstateprovider.PresenterInfoToViewStateProviderJavaFileProcessor;
 import com.omegar.mvp.presenter.InjectPresenter;
 import com.squareup.javapoet.JavaFile;
 
@@ -37,6 +43,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
@@ -147,58 +154,65 @@ public class MvpCompiler extends AbstractProcessor {
 	private boolean throwableProcess(RoundEnvironment roundEnv) {
 		sUsedElements.clear();
 
-		String moxyReflectorPackage = sOptions.get(OPTION_MOXY_REFLECTOR_PACKAGE);
-		if (moxyReflectorPackage == null) {
-			moxyReflectorPackage = MOXY_REFLECTOR_DEFAULT_PACKAGE;
+		String currentMoxyReflectorPackage = sOptions.get(OPTION_MOXY_REFLECTOR_PACKAGE);
+		if (currentMoxyReflectorPackage == null) {
+			currentMoxyReflectorPackage = MOXY_REFLECTOR_DEFAULT_PACKAGE;
 		}
 
 		checkInjectors(roundEnv, InjectPresenter.class, new PresenterInjectorRules(ElementKind.FIELD, Modifier.PUBLIC, Modifier.DEFAULT));
 
-		InjectViewStateProcessor injectViewStateProcessor = new InjectViewStateProcessor();
-		ViewStateProviderClassGenerator viewStateProviderClassGenerator = new ViewStateProviderClassGenerator();
+		Publisher<TypeElement> presenterContainerElementPublisher = new Publisher<>();
 
-		InjectPresenterProcessor injectPresenterProcessor = new InjectPresenterProcessor();
-		PresenterBinderClassGenerator presenterBinderClassGenerator = new PresenterBinderClassGenerator();
+		Pipeline presenterBinderPipeline =
+				new Pipeline.Builder<>(new ElementByAnnotationGenerator<VariableElement>(roundEnv, getElementUtils().getTypeElement(InjectPresenter.class.getCanonicalName()), ElementKind.FIELD))
+						.addProcessor(new VariableToContainerElementProcessor())
+						.unique()
+						.copyToPublisher(presenterContainerElementPublisher)
+						.addProcessor(new ElementToTargetClassInfoProcessor())
+						.addProcessor(new TargetClassInfoToPresenterBinderJavaFileProcessor())
+						.buildPipeline(new JavaFileWriter(processingEnv));
 
-		ViewInterfaceProcessor viewInterfaceProcessor = new ViewInterfaceProcessor();
-		ViewStateJavaFileProcessor viewStateClassGenerator = new ViewStateJavaFileProcessor(moxyReflectorPackage);
-
-		processInjectors(
-				roundEnv,
-				getElementUtils().getTypeElement(MOXY_ANNOTATION_INJECT_VIEW_STATE),
-				ElementKind.CLASS,
-				injectViewStateProcessor,
-				viewStateProviderClassGenerator
-		);
-		processInjectors(roundEnv,
-				getElementUtils().getTypeElement(InjectPresenter.class.getCanonicalName()),
-				ElementKind.FIELD,
-				injectPresenterProcessor, presenterBinderClassGenerator);
-
-		generateCode(injectViewStateProcessor.getUsedViews(), ElementKind.INTERFACE,
-				viewInterfaceProcessor, viewStateClassGenerator);
+		Publisher<TypeElement> presenterElementPublisher = new Publisher<>();
+		Publisher<TypeElement> viewElementPublisher = new Publisher<>();
+		Pipeline viewStateProviderPipeline =
+				new Pipeline.Builder<>(new ElementByAnnotationGenerator<TypeElement>(roundEnv, getElementUtils().getTypeElement(MOXY_ANNOTATION_INJECT_VIEW_STATE), ElementKind.CLASS))
+						.copyToPublisher(presenterElementPublisher)
+						.addProcessor(new ElementToPresenterInfoProcessor(viewElementPublisher))
+						.addProcessor(new PresenterInfoToViewStateProviderJavaFileProcessor().withCache())
+						.buildPipeline(new JavaFileWriter(processingEnv));
 
 
-		List<String> additionalMoxyReflectorPackages = getAdditionalMoxyReflectorPackages(roundEnv, viewStateClassGenerator);
+		Publisher<TypeElement> strategiesElementPublisher = new Publisher<>();
+		Publisher<String> reflectorPackagesPublisher = new Publisher<>(getAdditionalMoxyReflectorPackages(roundEnv));
+		Pipeline viewStatePipeline =
+				new Pipeline.Builder<>(viewElementPublisher)
+						.addProcessor(new ElementToViewInterfaceInfoProcessor(strategiesElementPublisher))
+						.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(currentMoxyReflectorPackage, reflectorPackagesPublisher))
+						.buildPipeline(new JavaFileWriter(processingEnv));
 
-		JavaFile moxyReflector = MoxyReflectorGenerator.generate(
-				moxyReflectorPackage,
-				injectViewStateProcessor.getPresenterClassNames(),
-				injectPresenterProcessor.getPresentersContainers(),
-				viewInterfaceProcessor.getUsedStrategies(),
-				additionalMoxyReflectorPackages
-		);
 
-		createSourceFile(moxyReflector);
+		QuadPublisher<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>> reflectorPublisher = presenterElementPublisher
+				.collect()
+				.quad(presenterContainerElementPublisher.collect(),
+						strategiesElementPublisher.collect(),
+						reflectorPackagesPublisher.collect());
+
+		Pipeline moxyReflectorPipeline = new Pipeline.Builder<>(reflectorPublisher)
+				.addProcessor(new MoxyReflectorProcessor(currentMoxyReflectorPackage))
+				.buildPipeline(new JavaFileWriter(processingEnv));
+
+		presenterBinderPipeline.start();
+		viewStateProviderPipeline.start();
+		viewStatePipeline.start();
+		moxyReflectorPipeline.start();
 
 		return true;
 	}
 
-	private List<String> getAdditionalMoxyReflectorPackages(RoundEnvironment roundEnv, ViewStateJavaFileProcessor viewStateClassGenerator) {
+	private List<String> getAdditionalMoxyReflectorPackages(RoundEnvironment roundEnv) {
 		List<String> result = new ArrayList<>();
 		result.addAll(getOptionsAdditionalReflectorPackages());
 		result.addAll(getRegisterAdditionalMoxyReflectorPackages(roundEnv));
-		result.addAll(viewStateClassGenerator.getReflectorPackages());
 		result.remove(MOXY_REFLECTOR_DEFAULT_PACKAGE);
 		return result;
 	}
@@ -241,61 +255,4 @@ public class MvpCompiler extends AbstractProcessor {
 		}
 	}
 
-	private <E extends Element, R> void processInjectors(RoundEnvironment roundEnv,
-	                                                     TypeElement annotationClass,
-	                                                     ElementKind kind,
-	                                                     com.omegar.mvp.compiler.pipeline.ElementProcessor<E, R> processor,
-	                                                     JavaFileProcessor<R> classGenerator) {
-		for (Element element : roundEnv.getElementsAnnotatedWith(annotationClass)) {
-			if (element.getKind() != kind) {
-				getMessager().printMessage(Diagnostic.Kind.ERROR,
-						element + " must be " + kind.name() + ", or not mark it as @" + annotationClass.getSimpleName());
-			}
-			sUsedElements.add(element);
-			generateCode(element, kind, processor, classGenerator);
-		}
-	}
-
-    private <E extends Element, R> void generateCode(Set<TypeElement> elementSet,
-                                                     ElementKind kind,
-                                                     com.omegar.mvp.compiler.pipeline.ElementProcessor<E, List<R>> processor,
-                                                     JavaFileProcessor<List<R>> classGenerator) {
-        Set<JavaFile> fileSet = new HashSet<>();
-        for (Element element : elementSet) {
-            List<R> list = generateCode(element, kind, processor);
-            if (list != null) fileSet.addAll(classGenerator.generate(list));
-        }
-        for (JavaFile file : fileSet) {
-            createSourceFile(file);
-        }
-    }
-
-	private <E extends Element, R> void generateCode(Element element,
-													 ElementKind kind,
-													 com.omegar.mvp.compiler.pipeline.ElementProcessor<E, R> processor,
-													 JavaFileProcessor<R> classGenerator) {
-		R result = generateCode(element, kind, processor);
-		if (result == null) return;
-		for (JavaFile file : classGenerator.generate(result)) {
-			createSourceFile(file);
-		}
-	}
-
-	private <E extends Element, R> R generateCode(Element element,
-                                                  ElementKind kind,
-                                                  ElementProcessor<E, R> processor) {
-		if (element.getKind() != kind) {
-			getMessager().printMessage(Diagnostic.Kind.ERROR, element + " must be " + kind.name());
-		}
-		//noinspection unchecked
-		return processor.process((E) element);
-	}
-
-	private void createSourceFile(JavaFile file) {
-		try {
-			file.writeTo(processingEnv.getFiler());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 }

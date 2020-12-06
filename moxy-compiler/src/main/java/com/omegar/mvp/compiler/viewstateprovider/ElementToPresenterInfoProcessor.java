@@ -5,8 +5,8 @@ import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
+import com.omegar.mvp.compiler.pipeline.PipelineContext;
 import com.omegar.mvp.compiler.pipeline.Publisher;
-import com.omegar.mvp.compiler.pipeline.PublisherHolder;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,13 +21,13 @@ import javax.lang.model.type.TypeMirror;
 
 import static com.omegar.mvp.compiler.Util.fillGenerics;
 
-public class InjectViewStateProcessor extends ElementProcessor<TypeElement, PresenterInfo> implements PublisherHolder<TypeElement> {
+public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElement, PresenterInfo>  {
 	private static final String MVP_PRESENTER_CLASS = MvpPresenter.class.getCanonicalName();
 
-	private final Publisher<TypeElement> mUsedViewsPublisher = new Publisher<>();
+	private final Publisher<TypeElement> mUsedViewsPublisher;
 
-	public Publisher<TypeElement> getPublisher() {
-		return mUsedViewsPublisher;
+	public ElementToPresenterInfoProcessor(Publisher<TypeElement> usedViewsPublisher) {
+		mUsedViewsPublisher = usedViewsPublisher;
 	}
 
 	@Override
@@ -95,5 +95,11 @@ public class InjectViewStateProcessor extends ElementProcessor<TypeElement, Pres
 		}
 
 		return "";
+	}
+
+	@Override
+	protected void finish(PipelineContext<PresenterInfo> nextContext) {
+		mUsedViewsPublisher.finish();
+		super.finish(nextContext);
 	}
 }

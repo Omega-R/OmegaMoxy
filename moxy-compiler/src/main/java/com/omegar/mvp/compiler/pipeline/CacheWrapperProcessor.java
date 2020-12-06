@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CacheWrapperProcessor<I, O> extends Processor<I, O> {
 
     private final Processor<I, O> mProcessor;
-    private Map<I, O> mCacheMap = new ConcurrentHashMap<>();
+    private final Map<I, O> mCacheMap = new ConcurrentHashMap<>();
 
     public CacheWrapperProcessor(Processor<I,O> processor) {
         mProcessor = processor;

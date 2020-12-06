@@ -2,9 +2,6 @@ package com.omegar.mvp.compiler.presenterbinder;
 
 import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.Util;
-import com.omegar.mvp.compiler.pipeline.PipelineContext;
-import com.omegar.mvp.compiler.pipeline.Publisher;
-import com.omegar.mvp.compiler.pipeline.PublisherHolder;
 import com.omegar.mvp.presenter.InjectPresenter;
 import com.omegar.mvp.presenter.ProvidePresenter;
 import com.omegar.mvp.presenter.ProvidePresenterTag;
@@ -21,40 +18,19 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-public class InjectPresenterProcessor extends ElementProcessor<VariableElement, TargetClassInfo> implements PublisherHolder<TypeElement> {
+public class ElementToTargetClassInfoProcessor extends ElementProcessor<TypeElement, TargetClassInfo> {
 	private static final String PRESENTER_FIELD_ANNOTATION = InjectPresenter.class.getName();
 	private static final String PROVIDE_PRESENTER_ANNOTATION = ProvidePresenter.class.getName();
 	private static final String PROVIDE_PRESENTER_TAG_ANNOTATION = ProvidePresenterTag.class.getName();
 
-	private final Publisher<TypeElement> mPresentersPublisher = new Publisher<>();
-
 	@Override
-	public Publisher<TypeElement> getPublisher() {
-		return mPresentersPublisher;
-	}
-
-	@Override
-	public void process(VariableElement variableElement, PipelineContext<TargetClassInfo> context) {
-		final Element enclosingElement = variableElement.getEnclosingElement();
-
-		if (!(enclosingElement instanceof TypeElement)) {
-			throw new RuntimeException("Only class fields could be annotated as @InjectPresenter: " +
-					variableElement + " at " + enclosingElement);
-		}
-
-		if (presentersContainers.contains(enclosingElement)) {
-			return;
-		}
-
-		final TypeElement presentersContainer = (TypeElement) enclosingElement;
-		mPresentersPublisher.add(presentersContainer);
-
+	protected TargetClassInfo process(TypeElement presentersContainer) {
 		// gather presenter fields info
 		List<TargetPresenterField> fields = collectFields(presentersContainer);
 		bindProvidersToFields(fields, collectPresenterProviders(presentersContainer));
 		bindTagProvidersToFields(fields, collectTagProviders(presentersContainer));
 
-		context.next(new TargetClassInfo(presentersContainer, fields));
+		return new TargetClassInfo(presentersContainer, fields);
 	}
 
 	private static List<TargetPresenterField> collectFields(TypeElement presentersContainer) {
@@ -203,8 +179,4 @@ public class InjectPresenterProcessor extends ElementProcessor<VariableElement, 
 		}
 	}
 
-	@Override
-	public TargetClassInfo process(VariableElement element) {
-		return null;
-	}
 }

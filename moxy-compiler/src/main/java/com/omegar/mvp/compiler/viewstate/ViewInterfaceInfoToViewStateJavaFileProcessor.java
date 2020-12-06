@@ -5,6 +5,7 @@ import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
+import com.omegar.mvp.compiler.pipeline.PipelineContext;
 import com.omegar.mvp.compiler.pipeline.Publisher;
 import com.omegar.mvp.viewstate.MvpViewState;
 import com.omegar.mvp.viewstate.ViewCommand;
@@ -19,14 +20,8 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -41,7 +36,7 @@ import static com.omegar.mvp.compiler.Util.decapitalizeString;
  *
  * @author Yuri Shmakov
  */
-public final class ViewStateJavaFileProcessor extends JavaFileProcessor<ViewInterfaceInfo> {
+public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFileProcessor<ViewInterfaceInfo> {
 
     private static final String VIEW = "Omega$$View";
     private static final TypeVariableName GENERIC_TYPE_VARIABLE_NAME = TypeVariableName.get(VIEW);
@@ -54,14 +49,12 @@ public final class ViewStateJavaFileProcessor extends JavaFileProcessor<ViewInte
 
     private final String currentMoxyReflectorPackage;
 
-    private final Publisher<String> reflectorPackagesPublisher = new Publisher<>(new HashSet<>());
+    private final Publisher<String> reflectorPackagesPublisher;
 
-    public ViewStateJavaFileProcessor(String currentMoxyReflectorPackage) {
+    public ViewInterfaceInfoToViewStateJavaFileProcessor(String currentMoxyReflectorPackage,
+                                                         Publisher<String> reflectorPackagesPublisher) {
         this.currentMoxyReflectorPackage = currentMoxyReflectorPackage;
-    }
-
-    public Publisher<String> getReflectorPackages() {
-        return reflectorPackagesPublisher;
+        this.reflectorPackagesPublisher = reflectorPackagesPublisher;
     }
 
     @Override
@@ -76,7 +69,7 @@ public final class ViewStateJavaFileProcessor extends JavaFileProcessor<ViewInte
                 .addOriginatingElement(viewInterfaceInfo.getElement())
                 .addAnnotation(
                         AnnotationSpec.builder(Moxy.class)
-                                .addMember("reflectorPackage", "\""+ currentMoxyReflectorPackage +"\"")
+                                .addMember("reflectorPackage", "\"" + currentMoxyReflectorPackage + "\"")
                                 .build()
                 )
                 .addModifiers(Modifier.PUBLIC)
@@ -139,7 +132,7 @@ public final class ViewStateJavaFileProcessor extends JavaFileProcessor<ViewInte
         return parentClassTypeVariables.toArray(new TypeVariableName[parentClassTypeVariables.size()]);
     }
 
-    private TypeSpec generateCommandClass(ViewMethod method, TypeVariableName variableName ) {
+    private TypeSpec generateCommandClass(ViewMethod method, TypeVariableName variableName) {
         MethodSpec applyMethod = MethodSpec.methodBuilder("apply")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -211,4 +204,9 @@ public final class ViewStateJavaFileProcessor extends JavaFileProcessor<ViewInte
         return builder.build();
     }
 
+    @Override
+    protected void finish(PipelineContext<JavaFile> nextContext) {
+        reflectorPackagesPublisher.finish();
+        super.finish(nextContext);
+    }
 }

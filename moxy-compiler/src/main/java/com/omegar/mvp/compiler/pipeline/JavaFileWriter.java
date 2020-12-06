@@ -9,11 +9,11 @@ import javax.annotation.processing.ProcessingEnvironment;
 /**
  * Created by Anton Knyazev on 03.12.2020.
  */
-class FileWriterProcessor extends Receiver<JavaFile> {
+public class JavaFileWriter extends Receiver<JavaFile> {
 
     private final ProcessingEnvironment mProcessingEnv;
 
-    public FileWriterProcessor(ProcessingEnvironment processingEnvironment) {
+    public JavaFileWriter(ProcessingEnvironment processingEnvironment) {
         mProcessingEnv = processingEnvironment;
     }
 

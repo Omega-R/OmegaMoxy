@@ -20,7 +20,7 @@ import javax.lang.model.element.Modifier;
  *
  * @author Alexander Blinov
  */
-public final class ViewStateProviderClassGenerator extends JavaFileProcessor<PresenterInfo> {
+public final class PresenterInfoToViewStateProviderJavaFileProcessor extends JavaFileProcessor<PresenterInfo> {
 
 	@Override
 	public JavaFile process(PresenterInfo presenterInfo) {

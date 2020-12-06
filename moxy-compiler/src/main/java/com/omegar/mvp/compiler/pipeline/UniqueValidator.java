@@ -3,10 +3,6 @@ package com.omegar.mvp.compiler.pipeline;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-
 /**
  * Created by Anton Knyazev on 04.12.2020.
  */
@@ -24,8 +20,8 @@ public class UniqueValidator<T> extends Validator<T> {
     }
 
     @Override
-    protected synchronized void finish() {
-        super.finish();
+    protected void finish(PipelineContext<T> nextContext) {
+        super.finish(nextContext);
         mList.clear();
     }
 

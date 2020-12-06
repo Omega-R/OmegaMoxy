@@ -48,7 +48,7 @@ import javax.lang.model.type.DeclaredType;
  * @author Yuri Shmakov
  * @author Alexander Blinov
  */
-public final class PresenterBinderClassGenerator extends JavaFileProcessor<TargetClassInfo> {
+public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends JavaFileProcessor<TargetClassInfo> {
 
 	@Override
 	public JavaFile process(TargetClassInfo targetClassInfo) {
