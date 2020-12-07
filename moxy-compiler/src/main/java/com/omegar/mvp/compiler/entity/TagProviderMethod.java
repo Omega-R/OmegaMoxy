@@ -1,16 +1,16 @@
-package com.omegar.mvp.compiler.presenterbinder;
+package com.omegar.mvp.compiler.entity;
 
 import com.omegar.mvp.presenter.PresenterType;
 
 import javax.lang.model.type.TypeMirror;
 
-class TagProviderMethod {
+public class TagProviderMethod {
 	private final TypeMirror presenterClass;
 	private final String methodName;
 	private final PresenterType type;
 	private final String presenterId;
 
-	TagProviderMethod(TypeMirror presenterClass, String methodName, String type, String presenterId) {
+	public TagProviderMethod(TypeMirror presenterClass, String methodName, String type, String presenterId) {
 		this.presenterClass = presenterClass;
 		this.methodName = methodName;
 		if (type == null) {
@@ -21,19 +21,19 @@ class TagProviderMethod {
 		this.presenterId = presenterId;
 	}
 
-	TypeMirror getPresenterClass() {
+	public TypeMirror getPresenterClass() {
 		return presenterClass;
 	}
 
-	String getMethodName() {
+	public String getMethodName() {
 		return methodName;
 	}
 
-	PresenterType getType() {
+	public PresenterType getType() {
 		return type;
 	}
 
-	String getPresenterId() {
+	public String getPresenterId() {
 		return presenterId;
 	}
 }

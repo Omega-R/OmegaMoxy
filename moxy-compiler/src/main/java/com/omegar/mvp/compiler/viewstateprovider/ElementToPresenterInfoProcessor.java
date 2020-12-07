@@ -2,6 +2,7 @@ package com.omegar.mvp.compiler.viewstateprovider;
 
 import com.omegar.mvp.MvpPresenter;
 import com.omegar.mvp.MvpProcessor;
+import com.omegar.mvp.compiler.entity.PresenterInfo;
 import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
@@ -21,7 +22,7 @@ import javax.lang.model.type.TypeMirror;
 
 import static com.omegar.mvp.compiler.Util.fillGenerics;
 
-public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElement, PresenterInfo>  {
+public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElement, com.omegar.mvp.compiler.entity.PresenterInfo>  {
 	private static final String MVP_PRESENTER_CLASS = MvpPresenter.class.getCanonicalName();
 
 	private final Publisher<TypeElement> mUsedViewsPublisher;
@@ -31,7 +32,7 @@ public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElemen
 	}
 
 	@Override
-	public PresenterInfo process(TypeElement element) {
+	public com.omegar.mvp.compiler.entity.PresenterInfo process(TypeElement element) {
 		return new PresenterInfo(element, getViewStateClassName(element));
 	}
 

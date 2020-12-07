@@ -1,5 +1,7 @@
 package com.omegar.mvp.compiler;
 
+import com.omegar.mvp.compiler.entity.AnnotationInfo;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,16 +17,16 @@ import javax.lang.model.element.Modifier;
  * @author esorokin
  */
 public abstract class AnnotationRule {
-	protected final ElementKind mValidKind;
 	protected final Set<Modifier> mValidModifiers;
+	protected final AnnotationInfo<?> mAnnotationInfo;
 	protected StringBuilder mErrorBuilder;
 
-	public AnnotationRule(ElementKind validKind, Modifier... validModifiers) {
+	public AnnotationRule(AnnotationInfo<?> annotationInfo, Modifier... validModifiers) {
+		mAnnotationInfo = annotationInfo;
 		if (validModifiers == null || validModifiers.length == 0) {
 			throw new RuntimeException("Valid modifiers cant be empty or null.");
 		}
 
-		mValidKind = validKind;
 		mValidModifiers = new HashSet<>(Arrays.asList(validModifiers));
 		mErrorBuilder = new StringBuilder();
 	}

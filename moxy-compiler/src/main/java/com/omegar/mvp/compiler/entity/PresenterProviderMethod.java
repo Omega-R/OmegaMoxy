@@ -1,17 +1,17 @@
-package com.omegar.mvp.compiler.presenterbinder;
+package com.omegar.mvp.compiler.entity;
 
 import com.omegar.mvp.presenter.PresenterType;
 
 import javax.lang.model.type.DeclaredType;
 
-class PresenterProviderMethod {
+public class PresenterProviderMethod {
 	private final DeclaredType clazz;
 	private final String name;
 	private final PresenterType presenterType;
 	private final String tag;
 	private final String presenterId;
 
-	PresenterProviderMethod(DeclaredType clazz, String name, String type, String tag, String presenterId) {
+	public PresenterProviderMethod(DeclaredType clazz, String name, String type, String tag, String presenterId) {
 		this.clazz = clazz;
 		this.name = name;
 		if (type == null) {
@@ -23,23 +23,23 @@ class PresenterProviderMethod {
 		this.presenterId = presenterId;
 	}
 
-	DeclaredType getClazz() {
+	public DeclaredType getClazz() {
 		return clazz;
 	}
 
-	String getName() {
+	public String getName() {
 		return name;
 	}
 
-	PresenterType getPresenterType() {
+	public PresenterType getPresenterType() {
 		return presenterType;
 	}
 
-	String getTag() {
+	public String getTag() {
 		return tag;
 	}
 
-	String getPresenterId() {
+	public String getPresenterId() {
 		return presenterId;
 	}
 }

@@ -3,6 +3,8 @@ package com.omegar.mvp.compiler.pipeline;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.lang.model.element.TypeElement;
+
 /**
  * Created by Anton Knyazev on 03.12.2020.
  */
@@ -79,13 +81,21 @@ public class Pipeline {
             return (Builder<T, ?>) this;
         }
 
+        public Builder<I, O> addValidator(Validator<I> validator) {
+            return (Builder<I, O>) addProcessor(validator);
+        }
+
         public Builder<I, O> unique() {
             processors.add(new UniqueValidator<I>());
             return this;
         }
 
-        public Builder<I, O> copyToPublisher(Publisher<I> publisher) {
+        public Builder<I, O> copyPublishTo(Publisher<I> publisher) {
             return addProcessor(new CopyToPublisherProcessor(publisher));
+        }
+
+        public Builder<I, O> copyTypeElementTo(Publisher<TypeElement> publisher) {
+            return addProcessor(new CopyTypeElementHolderProcessor(publisher));
         }
 
         public Pipeline buildPipeline(Receiver<I> receiver) {

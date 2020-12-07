@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import javafx.util.Pair;
-
 /**
  * Created by Anton Knyazev on 03.12.2020.
  */
@@ -13,6 +11,7 @@ public class Publisher<O> extends Processor<Void, O> {
 
     private final Collection<O> mCache = new LinkedHashSet<>();
     private PipelineContext<O> mContext;
+    private boolean mFinished;
 
     public Publisher() {
         // nothing
@@ -35,6 +34,9 @@ public class Publisher<O> extends Processor<Void, O> {
             mCache.clear();
         }
         mContext = context;
+        if (mFinished) {
+            finish();
+        }
     }
 
     public synchronized void next(O input) {
@@ -49,14 +51,11 @@ public class Publisher<O> extends Processor<Void, O> {
         if (mContext != null) {
             finish(mContext);
         }
+        mFinished = true;
     }
 
     public Publisher<List<O>> collect() {
         return new CollectListPublisher<>(this);
-    }
-
-    public <T>Publisher<Pair<O, T>> pair(Publisher<T> publisher) {
-        return new PairPublisher<>(this, publisher);
     }
 
     public <SE, TH, FO>QuadPublisher<O, SE, TH, FO> quad(Publisher<SE> publisher2, Publisher<TH> publisher3, Publisher<FO> publisher4) {

@@ -1,4 +1,4 @@
-package com.omegar.mvp.compiler.viewstate;
+package com.omegar.mvp.compiler.entity;
 
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.squareup.javapoet.ParameterSpec;
@@ -23,7 +23,7 @@ import javax.lang.model.util.Types;
  *
  * @author Evgeny Kursakov
  */
-class ViewMethod {
+public class ViewMethod {
 	private final ExecutableElement methodElement;
 	private final String name;
 	private final TypeElement strategy;
@@ -35,7 +35,7 @@ class ViewMethod {
 
 	private String uniqueSuffix;
 
-	ViewMethod(DeclaredType targetInterfaceElement, ViewMethod method) {
+	public ViewMethod(DeclaredType targetInterfaceElement, ViewMethod method) {
         this.methodElement = method.getElement();
         this.name = method.name;
         this.strategy = method.strategy;
@@ -47,7 +47,7 @@ class ViewMethod {
         this.uniqueSuffix = method.uniqueSuffix;
     }
 
-	ViewMethod(DeclaredType targetInterfaceElement,
+	public ViewMethod(DeclaredType targetInterfaceElement,
 	           ExecutableElement methodElement,
 	           TypeElement strategy,
 	           String tag) {
@@ -106,52 +106,52 @@ class ViewMethod {
 		return list;
 	}
 
-	ExecutableElement getElement() {
+	public ExecutableElement getElement() {
 		return methodElement;
 	}
 
-	String getName() {
+	public String getName() {
 		return name;
 	}
 
-	TypeElement getStrategy() {
+	public TypeElement getStrategy() {
 		return strategy;
 	}
 
-	String getTag() {
+	public String getTag() {
 		return tag;
 	}
 
-	List<ParameterSpec> getParameterSpecs() {
+	public List<ParameterSpec> getParameterSpecs() {
 		return parameterSpecs;
 	}
 
-	List<TypeName> getExceptions() {
+	public List<TypeName> getExceptions() {
 		return exceptions;
 	}
 
-	List<TypeVariableName> getTypeVariables() {
+	public List<TypeVariableName> getTypeVariables() {
 		return typeVariables;
 	}
 
-	String getArgumentsString() {
+	public String getArgumentsString() {
 		return argumentsString;
 	}
 
-	String getCommandClassName() {
+	public String getCommandClassName() {
 		return name.substring(0, 1).toUpperCase() + name.substring(1) + uniqueSuffix + "Command";
 	}
 
-	String getEnclosedClassName() {
+	public String getEnclosedClassName() {
 		TypeElement typeElement = (TypeElement) methodElement.getEnclosingElement();
 		return typeElement.getQualifiedName().toString();
 	}
 
-	String getUniqueSuffix() {
+	public String getUniqueSuffix() {
 		return uniqueSuffix;
 	}
 
-	void setUniqueSuffix(String uniqueSuffix) {
+	public void setUniqueSuffix(String uniqueSuffix) {
 		this.uniqueSuffix = uniqueSuffix;
 	}
 

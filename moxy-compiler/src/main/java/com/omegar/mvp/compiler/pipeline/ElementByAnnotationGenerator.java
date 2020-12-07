@@ -1,13 +1,12 @@
 package com.omegar.mvp.compiler.pipeline;
 
 import com.omegar.mvp.compiler.MvpCompiler;
+import com.omegar.mvp.compiler.entity.AnnotationInfo;
 
 import java.util.Set;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /**
@@ -16,22 +15,21 @@ import javax.tools.Diagnostic;
 public class ElementByAnnotationGenerator<T extends Element> extends Publisher<T> {
 
     private final RoundEnvironment mRoundEnv;
-    private final TypeElement mAnnotationClass;
-    private final ElementKind mKind;
+    private final AnnotationInfo<T> mAnnotationInfo;
 
-    public ElementByAnnotationGenerator(RoundEnvironment roundEnv, TypeElement annotationClass, ElementKind kind) {
+    public ElementByAnnotationGenerator(RoundEnvironment roundEnv, AnnotationInfo<T> annotationInfo) {
         mRoundEnv = roundEnv;
-        mAnnotationClass = annotationClass;
-        mKind = kind;
+        mAnnotationInfo = annotationInfo;
     }
 
     @Override
     public synchronized void publish(PipelineContext<T> context) {
-        Set<? extends Element> allElements = mRoundEnv.getElementsAnnotatedWith(mAnnotationClass);
+        Set<? extends Element> allElements = mRoundEnv.getElementsAnnotatedWith(mAnnotationInfo.getAnnotationTypeElement());
         for (Element element : allElements) {
-            if (element.getKind() != mKind) {
+            if (element.getKind() != mAnnotationInfo.getElementKind()) {
                 MvpCompiler.getMessager().printMessage(Diagnostic.Kind.ERROR,
-                        element + " must be " + mKind.name() + ", or not mark it as @" + mAnnotationClass.getSimpleName());
+                        element + " must be " + mAnnotationInfo.getElementKind().name()
+                                + ", or not mark it as @" + mAnnotationInfo.getAnnotationTypeElement().getSimpleName());
             } else {
                 //noinspection unchecked
                 context.next((T) element);

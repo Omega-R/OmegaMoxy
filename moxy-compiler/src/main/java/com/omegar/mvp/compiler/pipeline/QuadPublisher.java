@@ -8,8 +8,6 @@ import java.util.List;
 
 import javax.tools.Diagnostic;
 
-import javafx.util.Pair;
-
 /**
  * Created by Anton Knyazev on 05.12.2020.
  */
@@ -45,6 +43,7 @@ public class QuadPublisher<FI, SE, TH, FO> extends Publisher<Quad<FI, SE, TH, FO
     }
 
     private void maybePublisherNext() {
+
         if (!mFirsts.isEmpty() && !mSeconds.isEmpty() && !mThirds.isEmpty() && !mFourths.isEmpty()) {
             Iterator<FI> firstIterator = mFirsts.iterator();
             Iterator<SE> secondIterator = mSeconds.iterator();
@@ -56,6 +55,7 @@ public class QuadPublisher<FI, SE, TH, FO> extends Publisher<Quad<FI, SE, TH, FO
                 SE second = secondIterator.next();
                 TH third = thirdIterator.next();
                 FO fourth = fourthIterator.next();
+
                 next(new Quad<>(first, second, third, fourth));
                 firstIterator.remove();
                 secondIterator.remove();
@@ -77,7 +77,6 @@ public class QuadPublisher<FI, SE, TH, FO> extends Publisher<Quad<FI, SE, TH, FO
         public void next(T nextData) {
             list.add(nextData);
             maybePublisherNext();
-            MvpCompiler.getMessager().printMessage(Diagnostic.Kind.WARNING, "Quaded NEXT " + nextData);
         }
 
         @Override

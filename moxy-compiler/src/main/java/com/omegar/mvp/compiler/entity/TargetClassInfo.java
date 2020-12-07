@@ -1,4 +1,4 @@
-package com.omegar.mvp.compiler.presenterbinder;
+package com.omegar.mvp.compiler.entity;
 
 import com.squareup.javapoet.ClassName;
 
@@ -6,26 +6,27 @@ import java.util.List;
 
 import javax.lang.model.element.TypeElement;
 
-class TargetClassInfo {
+public class TargetClassInfo implements TypeElementHolder {
 	private final ClassName name;
 	private final TypeElement element;
 	private final List<TargetPresenterField> fields;
 
-	TargetClassInfo(TypeElement element, List<TargetPresenterField> fields) {
+	public TargetClassInfo(TypeElement element, List<TargetPresenterField> fields) {
 		this.element = element;
 		this.name = ClassName.get(element);
 		this.fields = fields;
 	}
 
-	TypeElement getElement() {
+	@Override
+	public TypeElement getTypeElement() {
 		return element;
 	}
 
-	ClassName getName() {
+	public ClassName getName() {
 		return name;
 	}
 
-	List<TargetPresenterField> getFields() {
+	public List<TargetPresenterField> getFields() {
 		return fields;
 	}
 }

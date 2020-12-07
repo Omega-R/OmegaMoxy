@@ -32,13 +32,10 @@ public class CollectListPublisher<I> extends Publisher<List<I>>{
         @Override
         public void next(I nextData) {
             mResult.add(nextData);
-            MvpCompiler.getMessager().printMessage(Diagnostic.Kind.WARNING, "Collect NEXT " + nextData);
         }
 
         @Override
         public void finish() {
-            MvpCompiler.getMessager().printMessage(Diagnostic.Kind.WARNING, "Collect Finish");
-
             CollectListPublisher.this.next(new ArrayList<>(mResult));
             mResult.clear();
             CollectListPublisher.this.finish();

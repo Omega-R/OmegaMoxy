@@ -2,7 +2,6 @@ package com.omegar.mvp.compiler.reflector;
 
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.ViewStateProvider;
-import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
 import com.omegar.mvp.compiler.pipeline.Processor;
 import com.omegar.mvp.compiler.pipeline.Quad;
@@ -31,7 +30,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-import static com.omegar.mvp.compiler.MvpCompiler.MOXY_REFLECTOR_DEFAULT_PACKAGE;
+import static com.omegar.mvp.compiler.MvpCompiler.DEFAULT_MOXY_REFLECTOR_PACKAGE;
 
 /**
  * Date: 07.12.2016
@@ -60,6 +59,7 @@ public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, Li
 
 	@Override
 	protected JavaFile process(Quad<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>> input) {
+
 		return generate(mDestinationPackage, input.getFirst(), input.getSecond(), input.getThird(), input.getFourth());
 	}
 
@@ -86,7 +86,7 @@ public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, Li
 
 		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage, presenterClassNames, presentersContainers, strategyClasses, additionalMoxyReflectorsPackages));
 
-		if (destinationPackage.equals(MOXY_REFLECTOR_DEFAULT_PACKAGE)) {
+		if (destinationPackage.equals(DEFAULT_MOXY_REFLECTOR_PACKAGE)) {
 			classBuilder.addMethod(MethodSpec.methodBuilder("getViewState")
 					.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
 					.returns(Object.class)

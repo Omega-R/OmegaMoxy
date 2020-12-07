@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.omegar.mvp.MvpPresenter;
 import com.omegar.mvp.MvpView;
+import com.omegar.mvp.compiler.entity.AnnotationInfo;
 import com.omegar.mvp.presenter.InjectPresenter;
 
 import javax.lang.model.element.Element;
@@ -34,8 +35,8 @@ import static com.omegar.mvp.compiler.Util.fillGenerics;
  */
 public class PresenterInjectorRules extends AnnotationRule {
 
-	public PresenterInjectorRules(ElementKind validKind, Modifier... validModifiers) {
-		super(validKind, validModifiers);
+	public PresenterInjectorRules(AnnotationInfo<?> annotationInfo, Modifier... validModifiers) {
+		super(annotationInfo, validModifiers);
 	}
 
 	@SuppressWarnings("StringConcatenationInsideStringBufferAppend")
@@ -43,8 +44,10 @@ public class PresenterInjectorRules extends AnnotationRule {
 	public void checkAnnotation(Element annotatedField) {
 		checkEnvironment(annotatedField);
 
-		if (annotatedField.getKind() != mValidKind) {
-			mErrorBuilder.append("Field " + annotatedField + " of " + annotatedField.getEnclosingElement().getSimpleName() + " should be " + mValidKind.name() + ", or not mark it as @" + InjectPresenter.class.getSimpleName()).append("\n");
+		ElementKind validKind = mAnnotationInfo.getElementKind();
+
+		if (annotatedField.getKind() != validKind) {
+			mErrorBuilder.append("Field " + annotatedField + " of " + annotatedField.getEnclosingElement().getSimpleName() + " should be " + validKind.name() + ", or not mark it as @" + InjectPresenter.class.getSimpleName()).append("\n");
 		}
 
 		for (Modifier modifier : annotatedField.getModifiers()) {

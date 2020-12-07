@@ -1,7 +1,6 @@
 package example.com.moxy_androidx_sample;
 
-public class NotMainPresenter  {
-
+public abstract class NotMainPresenter extends BasePresenter<BaseView> {
 
 
 }

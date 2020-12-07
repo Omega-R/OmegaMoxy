@@ -1,7 +1,10 @@
-package com.omegar.mvp.compiler.viewstateprovider;
+package com.omegar.mvp.compiler.entity;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 /**
@@ -10,26 +13,40 @@ import javax.lang.model.element.TypeElement;
  *
  * @author Evgeny Kursakov
  */
-public class PresenterInfo {
+public class PresenterInfo implements TypeElementHolder {
 	private final ClassName name;
 	private final TypeElement element;
 	private final ClassName viewStateName;
+	private final boolean isViewParametrized;
+	private final boolean isAbstracted;
 
-	PresenterInfo(TypeElement name, String viewStateName) {
+
+	public PresenterInfo(TypeElement name, String viewStateName) {
 		this.name = ClassName.get(name);
 		element = name;
 		this.viewStateName = ClassName.bestGuess(viewStateName);
+		isViewParametrized = TypeName.get(name.asType()) instanceof ParameterizedTypeName;
+		isAbstracted = name.getModifiers().contains(Modifier.ABSTRACT);
 	}
 
-	TypeElement getElement() {
+	public boolean isParametrized() {
+		return isViewParametrized;
+	}
+
+	public boolean isAbstracted() {
+		return isAbstracted;
+	}
+
+	@Override
+	public TypeElement getTypeElement() {
 		return element;
 	}
 
-	ClassName getName() {
+	public ClassName getName() {
 		return name;
 	}
 
-	ClassName getViewStateName() {
+	public ClassName getViewStateName() {
 		return viewStateName;
 	}
 

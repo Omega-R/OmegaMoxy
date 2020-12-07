@@ -1,5 +1,7 @@
 package com.omegar.mvp.compiler.viewstate;
 
+import com.omegar.mvp.compiler.entity.ViewInterfaceInfo;
+import com.omegar.mvp.compiler.entity.ViewMethod;
 import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
@@ -40,7 +42,7 @@ import static com.omegar.mvp.compiler.Util.isMvpElement;
  *
  * @author Evgeny Kursakov
  */
-public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeElement, ViewInterfaceInfo> {
+public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeElement, com.omegar.mvp.compiler.entity.ViewInterfaceInfo> {
 	private static final String STATE_STRATEGY_TYPE_ANNOTATION = StateStrategyType.class.getName();
 
 	private final Publisher<TypeElement> mUsedStrategiesPublisher;
@@ -53,49 +55,49 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 	}
 
 	@Override
-	public void process(TypeElement element, PipelineContext<ViewInterfaceInfo> context) {
-		Collection<ViewInterfaceInfo> list = generateInfos(element);
-		for (ViewInterfaceInfo info: list) {
+	public void process(TypeElement element, PipelineContext<com.omegar.mvp.compiler.entity.ViewInterfaceInfo> context) {
+		Collection<com.omegar.mvp.compiler.entity.ViewInterfaceInfo> list = generateInfos(element);
+		for (com.omegar.mvp.compiler.entity.ViewInterfaceInfo info: list) {
 			context.next(info);
 		}
 	}
 
-	private void fillWithNotInheredMethods(List<ViewInterfaceInfo> list) {
-		for (ViewInterfaceInfo info : list) {
-			TypeElement element = info.getElement();
-			List<ViewMethod> infoMethods = info.getMethods();
+	private void fillWithNotInheredMethods(List<com.omegar.mvp.compiler.entity.ViewInterfaceInfo> list) {
+		for (com.omegar.mvp.compiler.entity.ViewInterfaceInfo info : list) {
+			TypeElement element = info.getTypeElement();
+			List<com.omegar.mvp.compiler.entity.ViewMethod> infoMethods = info.getMethods();
 
 			if (info.getSuperTypeMvpElements().size() > 1) {
-				List<ViewMethod> inheredMethods = getInheredMethods(info);
-				for (ViewMethod method : getNotInheredMethods(info, list)) {
+				List<com.omegar.mvp.compiler.entity.ViewMethod> inheredMethods = getInheredMethods(info);
+				for (com.omegar.mvp.compiler.entity.ViewMethod method : getNotInheredMethods(info, list)) {
 					if (!inheredMethods.contains(method)) {
-						infoMethods.add(new ViewMethod((DeclaredType) element.asType(), method));
+						infoMethods.add(new com.omegar.mvp.compiler.entity.ViewMethod((DeclaredType) element.asType(), method));
 					}
 				}
 			}
 		}
 	}
 
-	private List<ViewMethod> getInheredMethods(ViewInterfaceInfo info) {
-		List<ViewMethod> methods = new ArrayList<>(info.getMethods());
+	private List<com.omegar.mvp.compiler.entity.ViewMethod> getInheredMethods(com.omegar.mvp.compiler.entity.ViewInterfaceInfo info) {
+		List<com.omegar.mvp.compiler.entity.ViewMethod> methods = new ArrayList<>(info.getMethods());
 
-		ViewInterfaceInfo superInterfaceInfo = info.getSuperInterfaceInfo();
+		com.omegar.mvp.compiler.entity.ViewInterfaceInfo superInterfaceInfo = info.getSuperInterfaceInfo();
 		if (superInterfaceInfo != null) methods.addAll(getInheredMethods(superInterfaceInfo));
 
 		return methods;
 	}
 
-	private Set<ViewMethod> getNotInheredMethods(ViewInterfaceInfo info, List<ViewInterfaceInfo> infoList) {
+	private Set<com.omegar.mvp.compiler.entity.ViewMethod> getNotInheredMethods(com.omegar.mvp.compiler.entity.ViewInterfaceInfo info, List<com.omegar.mvp.compiler.entity.ViewInterfaceInfo> infoList) {
 		List<TypeElement> elements = info.getSuperTypeMvpElements();
 		if (elements.size() <= 1) return Collections.emptySet();
 
 		assert info.getSuperInterfaceInfo() != null;
-		TypeElement superClassElement = info.getSuperInterfaceInfo().getElement();
+		TypeElement superClassElement = info.getSuperInterfaceInfo().getTypeElement();
 
-		Set<ViewMethod> methodSet = new LinkedHashSet<>();
+		Set<com.omegar.mvp.compiler.entity.ViewMethod> methodSet = new LinkedHashSet<>();
 		for (TypeElement element : elements) {
 			if (!element.equals(superClassElement)) {
-				ViewInterfaceInfo infoByType = getViewInterfaceInfoByTypeElement(infoList, element);
+				com.omegar.mvp.compiler.entity.ViewInterfaceInfo infoByType = getViewInterfaceInfoByTypeElement(infoList, element);
 				if (infoByType != null) {
 					methodSet.addAll(getInheredMethods(infoByType));
 					methodSet.addAll(getNotInheredMethods(infoByType, infoList));
@@ -105,29 +107,29 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 		return methodSet;
 	}
 
-	private ViewInterfaceInfo getViewInterfaceInfoByTypeElement(List<ViewInterfaceInfo> list, TypeElement element) {
-		for (ViewInterfaceInfo info : list) {
-			if (info.getElement().equals(element)) return info;
+	private com.omegar.mvp.compiler.entity.ViewInterfaceInfo getViewInterfaceInfoByTypeElement(List<com.omegar.mvp.compiler.entity.ViewInterfaceInfo> list, TypeElement element) {
+		for (com.omegar.mvp.compiler.entity.ViewInterfaceInfo info : list) {
+			if (info.getTypeElement().equals(element)) return info;
 		}
 		return null;
 	}
 
-	private Set<ViewInterfaceInfo> generateInfos(TypeElement element) {
-		Set<ViewInterfaceInfo> interfaceInfos = new LinkedHashSet<>();
+	private Set<com.omegar.mvp.compiler.entity.ViewInterfaceInfo> generateInfos(TypeElement element) {
+		Set<com.omegar.mvp.compiler.entity.ViewInterfaceInfo> interfaceInfos = new LinkedHashSet<>();
 		this.mViewInterfaceElement = element;
 		mViewInterfaceName = element.getSimpleName().toString();
 
-		List<ViewMethod> methods = new ArrayList<>();
+		List<com.omegar.mvp.compiler.entity.ViewMethod> methods = new ArrayList<>();
 
 		// Get methods for input class
 		getMethods(element, new ArrayList<>(), methods);
 
         // Add methods from super interfaces
-		ViewInterfaceInfo superInterfaceInfo = null;
+		com.omegar.mvp.compiler.entity.ViewInterfaceInfo superInterfaceInfo = null;
 		for (TypeMirror typeMirror : element.getInterfaces()) {
 			final TypeElement interfaceElement = asElement(typeMirror);
 			if (isMvpElement(interfaceElement)) {
-				Set<ViewInterfaceInfo> parentInfos = generateInfos(interfaceElement);
+				Set<com.omegar.mvp.compiler.entity.ViewInterfaceInfo> parentInfos = generateInfos(interfaceElement);
 				if (superInterfaceInfo == null) {
 					superInterfaceInfo = Util.lastOrNull(parentInfos);
 				}
@@ -136,7 +138,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 
 		// Allow methods be with same names
 		Map<String, Integer> methodsCounter = new HashMap<>();
-		for (ViewMethod method : methods) {
+		for (com.omegar.mvp.compiler.entity.ViewMethod method : methods) {
 			Integer counter = methodsCounter.get(method.getName());
 
 			if (counter != null && counter > 0) {
@@ -149,15 +151,15 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 			methodsCounter.put(method.getName(), counter);
 		}
 
-		ViewInterfaceInfo info = new ViewInterfaceInfo(superInterfaceInfo, element, methods);
+		com.omegar.mvp.compiler.entity.ViewInterfaceInfo info = new com.omegar.mvp.compiler.entity.ViewInterfaceInfo(superInterfaceInfo, element, methods);
 		if (!info.getName().equals(MVP_VIEW_CLASS_NAME)) interfaceInfos.add(info);
 
 		return interfaceInfos;
 	}
 
 	private void getMethods(TypeElement typeElement,
-							List<ViewMethod> rootMethods,
-							List<ViewMethod> superinterfacesMethods) {
+							List<com.omegar.mvp.compiler.entity.ViewMethod> rootMethods,
+							List<com.omegar.mvp.compiler.entity.ViewMethod> superinterfacesMethods) {
 
 
 		for (Element element : typeElement.getEnclosedElements()) {
@@ -224,7 +226,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 			// add strategy to list
 			mUsedStrategiesPublisher.next(strategyClass);
 
-			final ViewMethod method = new ViewMethod(
+			final com.omegar.mvp.compiler.entity.ViewMethod method = new com.omegar.mvp.compiler.entity.ViewMethod(
 					(DeclaredType) mViewInterfaceElement.asType(), methodElement, strategyClass, methodTag
 			);
 
@@ -241,7 +243,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 		}
 	}
 
-	private void checkStrategyAndTagEquals(ViewMethod method, ViewMethod existingMethod) {
+	private void checkStrategyAndTagEquals(com.omegar.mvp.compiler.entity.ViewMethod method, ViewMethod existingMethod) {
 		List<String> differentParts = new ArrayList<>();
 		if (!existingMethod.getStrategy().equals(method.getStrategy())) {
 			differentParts.add("strategies");
