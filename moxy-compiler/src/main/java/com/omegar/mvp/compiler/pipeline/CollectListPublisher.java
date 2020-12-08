@@ -22,7 +22,7 @@ public class CollectListPublisher<I> extends Publisher<List<I>>{
     }
 
     @Override
-    public synchronized void publish(PipelineContext<List<I>> context) {
+    public void publish(PipelineContext<List<I>> context) {
         super.publish(context);
         mPublisher.publish(new LocalContext());
     }

@@ -33,7 +33,7 @@ public class QuadPublisher<FI, SE, TH, FO> extends Publisher<Quad<FI, SE, TH, FO
     }
 
     @Override
-    public synchronized void publish(PipelineContext<Quad<FI, SE, TH, FO>> context) {
+    public void publish(PipelineContext<Quad<FI, SE, TH, FO>> context) {
         super.publish(context);
 
         mPublisher1.publish(new LocalContext<>(mFirsts));

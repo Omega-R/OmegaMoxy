@@ -263,7 +263,12 @@ public final class Util {
 	}
 
 	public static <E> List<E> newDistinctList(List<E> list) {
-		return new ArrayList<E>(new LinkedHashSet<E>(list));
+		return new ArrayList<>(new LinkedHashSet<>(list));
+	}
+
+	public static String substringBefore(String string, char beforeChar) {
+		int beforeIndex = string.indexOf(beforeChar);
+		if (beforeIndex >= 0) return string.substring(0, beforeIndex); else return string;
 	}
 
 }

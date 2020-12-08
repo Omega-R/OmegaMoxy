@@ -85,7 +85,7 @@ public class Pipeline {
             return (Builder<I, O>) addProcessor(validator);
         }
 
-        public Builder<I, O> unique() {
+        public Builder<I, O> uniqueFilter() {
             processors.add(new UniqueValidator<I>());
             return this;
         }

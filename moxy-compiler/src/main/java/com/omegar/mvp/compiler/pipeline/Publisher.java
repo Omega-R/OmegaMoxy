@@ -26,7 +26,7 @@ public class Publisher<O> extends Processor<Void, O> {
         publish(context);
     }
 
-    public synchronized void publish(PipelineContext<O> context) {
+    public void publish(PipelineContext<O> context) {
         if (!mCache.isEmpty()) {
             for (O input : mCache) {
                 context.next(input);
@@ -39,7 +39,7 @@ public class Publisher<O> extends Processor<Void, O> {
         }
     }
 
-    public synchronized void next(O input) {
+    public void next(O input) {
         if (mContext != null) {
             mContext.next(input);
         } else {

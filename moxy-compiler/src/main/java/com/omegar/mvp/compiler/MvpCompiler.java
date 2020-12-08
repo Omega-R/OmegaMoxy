@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
@@ -163,29 +164,33 @@ public class MvpCompiler extends AbstractProcessor {
 		Publisher<TypeElement> strategiesElementPublisher = new Publisher<>();
 		Publisher<String> reflectorPackagesPublisher = new Publisher<>(getAdditionalMoxyReflectorPackages(roundEnv));
 
-		Pipeline presenterBinderPipeline =
-				new Pipeline.Builder<>(new ElementByAnnotationGenerator<>(roundEnv, mInjectPresenterAnnotationInfo))
-						.addProcessor(new VariableToContainerElementProcessor())
-						.unique()
-						.copyPublishTo(presenterContainerElementPublisher)
-						.addProcessor(new ElementToTargetClassInfoProcessor())
-						.addProcessor(new TargetClassInfoToPresenterBinderJavaFileProcessor())
-						.buildPipeline(new JavaFileWriter(processingEnv));
+		Filer filer = processingEnv.getFiler();
 
-		Pipeline viewStateProviderPipeline =
-				new Pipeline.Builder<>(new ElementByAnnotationGenerator<>(roundEnv, mInjectViewStateAnnotationInfo))
-						.addProcessor(new ElementToPresenterInfoProcessor(viewElementPublisher))
-						.addValidator(new NormalPresenterValidator())
-						.copyTypeElementTo(presenterElementPublisher)
-						.addProcessor(new PresenterInfoToViewStateProviderJavaFileProcessor().withCache())
-						.buildPipeline(new JavaFileWriter(processingEnv));
+		// presenterBinderPipeline
+		new Pipeline.Builder<>(new ElementByAnnotationGenerator<>(roundEnv, mInjectPresenterAnnotationInfo))
+				.addProcessor(new VariableToContainerElementProcessor())
+				.uniqueFilter()
+				.copyPublishTo(presenterContainerElementPublisher)
+				.addProcessor(new ElementToTargetClassInfoProcessor())
+				.addProcessor(new TargetClassInfoToPresenterBinderJavaFileProcessor())
+				.buildPipeline(new JavaFileWriter(filer))
+				.start();
 
+		// viewStateProviderPipeline
+		new Pipeline.Builder<>(new ElementByAnnotationGenerator<>(roundEnv, mInjectViewStateAnnotationInfo))
+				.addProcessor(new ElementToPresenterInfoProcessor(viewElementPublisher))
+				.addValidator(new NormalPresenterValidator())
+				.copyTypeElementTo(presenterElementPublisher)
+				.addProcessor(new PresenterInfoToViewStateProviderJavaFileProcessor().withCache())
+				.buildPipeline(new JavaFileWriter(filer))
+				.start();
 
-		Pipeline viewStatePipeline =
-				new Pipeline.Builder<>(viewElementPublisher)
-						.addProcessor(new ElementToViewInterfaceInfoProcessor(strategiesElementPublisher))
-						.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(currentMoxyReflectorPackage, reflectorPackagesPublisher))
-						.buildPipeline(new JavaFileWriter(processingEnv));
+		// viewStatePipeline
+		new Pipeline.Builder<>(viewElementPublisher)
+				.addProcessor(new ElementToViewInterfaceInfoProcessor(strategiesElementPublisher))
+				.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(currentMoxyReflectorPackage, reflectorPackagesPublisher))
+				.buildPipeline(new JavaFileWriter(filer))
+				.start();
 
 
 		QuadPublisher<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>> reflectorPublisher = presenterElementPublisher
@@ -194,14 +199,12 @@ public class MvpCompiler extends AbstractProcessor {
 						strategiesElementPublisher.collect(),
 						reflectorPackagesPublisher.collect());
 
-		Pipeline moxyReflectorPipeline = new Pipeline.Builder<>(reflectorPublisher)
+		// moxyReflectorPipeline
+		new Pipeline.Builder<>(reflectorPublisher)
 				.addProcessor(new MoxyReflectorProcessor(currentMoxyReflectorPackage))
-				.buildPipeline(new JavaFileWriter(processingEnv));
+				.buildPipeline(new JavaFileWriter(filer))
+				.start();
 
-		presenterBinderPipeline.start();
-		viewStateProviderPipeline.start();
-		viewStatePipeline.start();
-		moxyReflectorPipeline.start();
 
 		return true;
 	}

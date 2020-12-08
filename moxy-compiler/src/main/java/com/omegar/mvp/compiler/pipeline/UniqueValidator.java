@@ -11,7 +11,7 @@ public class UniqueValidator<T> extends Validator<T> {
     private final List<T> mList = new ArrayList<>();
 
     @Override
-    public synchronized boolean validate(T input) {
+    public boolean validate(T input) {
         if (mList.contains(input)) {
             return false;
         }

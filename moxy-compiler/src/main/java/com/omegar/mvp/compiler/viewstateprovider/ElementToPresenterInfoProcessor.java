@@ -32,7 +32,7 @@ public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElemen
 	}
 
 	@Override
-	public com.omegar.mvp.compiler.entity.PresenterInfo process(TypeElement element) {
+	public PresenterInfo process(TypeElement element) {
 		return new PresenterInfo(element, getViewStateClassName(element));
 	}
 
@@ -40,17 +40,13 @@ public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElemen
 		String view = getViewClassFromGeneric(typeElement);
 
 		// Remove generic from view class name
-		if (view.contains("<")) {
-			view = view.substring(0, view.indexOf("<"));
-		}
+		view = Util.substringBefore(view, '<');
 
 		TypeElement viewTypeElement = MvpCompiler.getElementUtils().getTypeElement(view);
 
 		if (viewTypeElement == null) {
 			view = getViewClassFromGeneric(typeElement);
-			if (view.contains("<")) {
-				view = view.substring(0, view.indexOf("<"));
-			}
+			view = Util.substringBefore(view, '<');
 			viewTypeElement = MvpCompiler.getElementUtils().getTypeElement(view);
 		}
 

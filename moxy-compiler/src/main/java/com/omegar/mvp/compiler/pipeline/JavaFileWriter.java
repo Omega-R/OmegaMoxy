@@ -4,6 +4,7 @@ import com.squareup.javapoet.JavaFile;
 
 import java.io.IOException;
 
+import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 
 /**
@@ -11,16 +12,16 @@ import javax.annotation.processing.ProcessingEnvironment;
  */
 public class JavaFileWriter extends Receiver<JavaFile> {
 
-    private final ProcessingEnvironment mProcessingEnv;
+    private final Filer mFiler;
 
-    public JavaFileWriter(ProcessingEnvironment processingEnvironment) {
-        mProcessingEnv = processingEnvironment;
+    public JavaFileWriter(Filer Filer) {
+        mFiler = Filer;
     }
 
     @Override
     public void receive(JavaFile file) {
         try {
-            file.writeTo(mProcessingEnv.getFiler());
+            file.writeTo(mFiler);
         } catch (IOException e) {
             e.printStackTrace();
         }

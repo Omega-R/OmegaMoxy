@@ -23,7 +23,7 @@ public class ElementByAnnotationGenerator<T extends Element> extends Publisher<T
     }
 
     @Override
-    public synchronized void publish(PipelineContext<T> context) {
+    public void publish(PipelineContext<T> context) {
         Set<? extends Element> allElements = mRoundEnv.getElementsAnnotatedWith(mAnnotationInfo.getAnnotationTypeElement());
         for (Element element : allElements) {
             if (element.getKind() != mAnnotationInfo.getElementKind()) {
