@@ -142,7 +142,7 @@ public class MvpCompiler extends AbstractProcessor {
 		}
 
 		try {
-			return throwableProcess(roundEnv);
+			return throwableProcess(annotations, roundEnv);
 		} catch (RuntimeException e) {
 			getMessager().printMessage(Diagnostic.Kind.OTHER, "Moxy compilation failed. Could you copy stack trace above and write us (or make issue on Github)?");
 			e.printStackTrace();
@@ -151,8 +151,7 @@ public class MvpCompiler extends AbstractProcessor {
 		return true;
 	}
 
-	private boolean throwableProcess(RoundEnvironment roundEnv) {
-
+	private boolean throwableProcess(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
 		String currentMoxyReflectorPackage = sOptions.getOrDefault(OPTION_MOXY_REFLECTOR_PACKAGE, DEFAULT_MOXY_REFLECTOR_PACKAGE);
 
@@ -166,15 +165,19 @@ public class MvpCompiler extends AbstractProcessor {
 
 		Filer filer = processingEnv.getFiler();
 
-		// presenterBinderPipeline
-		new Pipeline.Builder<>(new ElementByAnnotationGenerator<>(roundEnv, mInjectPresenterAnnotationInfo))
-				.addProcessor(new VariableToContainerElementProcessor())
-				.uniqueFilter()
-				.copyPublishTo(presenterContainerElementPublisher)
-				.addProcessor(new ElementToTargetClassInfoProcessor())
-				.addProcessor(new TargetClassInfoToPresenterBinderJavaFileProcessor())
-				.buildPipeline(new JavaFileWriter(filer))
-				.start();
+		if (mInjectPresenterAnnotationInfo.contains(annotations)) {
+			// presenterBinderPipeline
+			new Pipeline.Builder<>(new ElementByAnnotationGenerator<>(roundEnv, mInjectPresenterAnnotationInfo))
+					.addProcessor(new VariableToContainerElementProcessor())
+					.uniqueFilter()
+					.copyPublishTo(presenterContainerElementPublisher)
+					.addProcessor(new ElementToTargetClassInfoProcessor())
+					.addProcessor(new TargetClassInfoToPresenterBinderJavaFileProcessor())
+					.buildPipeline(new JavaFileWriter(filer))
+					.start();
+		} else {
+			presenterContainerElementPublisher.finish();
+		}
 
 		// viewStateProviderPipeline
 		new Pipeline.Builder<>(new ElementByAnnotationGenerator<>(roundEnv, mInjectViewStateAnnotationInfo))
@@ -213,7 +216,6 @@ public class MvpCompiler extends AbstractProcessor {
 		List<String> result = new ArrayList<>();
 		result.addAll(getOptionsAdditionalReflectorPackages());
 		result.addAll(getRegisterAdditionalMoxyReflectorPackages(roundEnv));
-		result.remove(DEFAULT_MOXY_REFLECTOR_PACKAGE);
 		return result;
 	}
 

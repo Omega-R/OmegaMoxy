@@ -1,5 +1,7 @@
 package com.omegar.mvp.compiler.entity;
 
+import java.util.Collection;
+
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
@@ -22,6 +24,10 @@ public class AnnotationInfo<T extends Element> {
 
     public ElementKind getElementKind() {
         return mElementKind;
+    }
+
+    public boolean contains(Collection<? extends Element> collection) {
+        return collection.contains(mTypeElement);
     }
 
     @Override

@@ -82,6 +82,8 @@ public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, Li
 			classBuilder.addOriginatingElement(element);
 		}
 
+		additionalMoxyReflectorsPackages.remove(destinationPackage);
+
 		additionalMoxyReflectorsPackages = Util.newDistinctList(additionalMoxyReflectorsPackages);
 
 		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage, presenterClassNames, presentersContainers, strategyClasses, additionalMoxyReflectorsPackages));
