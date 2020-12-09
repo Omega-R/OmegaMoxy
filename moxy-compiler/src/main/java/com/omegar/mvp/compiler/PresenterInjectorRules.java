@@ -13,6 +13,7 @@ import com.omegar.mvp.MvpView;
 import com.omegar.mvp.compiler.entity.AnnotationInfo;
 import com.omegar.mvp.presenter.InjectPresenter;
 
+import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
@@ -22,6 +23,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
+import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
 
@@ -35,8 +37,13 @@ import static com.omegar.mvp.compiler.Util.fillGenerics;
  */
 public class PresenterInjectorRules extends AnnotationRule {
 
-	public PresenterInjectorRules(AnnotationInfo<?> annotationInfo, Modifier... validModifiers) {
+	private final Elements mElements;
+	private final Messager mMessager;
+
+	public PresenterInjectorRules(Elements elements, Messager messager, AnnotationInfo<?> annotationInfo, Modifier... validModifiers) {
 		super(annotationInfo, validModifiers);
+		mElements = elements;
+		mMessager = messager;
 	}
 
 	@SuppressWarnings("StringConcatenationInsideStringBufferAppend")
@@ -80,13 +87,13 @@ public class PresenterInjectorRules extends AnnotationRule {
 		boolean result = false;
 
 		for (TypeMirror typeMirror : viewsType) {
-			if (Util.getFullClassName(typeMirror).equals(viewClassFromGeneric) || Util.fillGenerics(Collections.<String, String>emptyMap(), typeMirror).equals(viewClassFromGeneric)) {
+			if (Util.getFullClassName(mElements, typeMirror).equals(viewClassFromGeneric) || Util.fillGenerics(Collections.<String, String>emptyMap(), typeMirror).equals(viewClassFromGeneric)) {
 				result = true;
 				break;
 			}
 		}
 		if (!result) {
-			MvpCompiler.getMessager().printMessage(Diagnostic.Kind.ERROR, "You can not use @InjectPresenter in classes that are not View, which is typified target Presenter", annotatedField);
+			mMessager.printMessage(Diagnostic.Kind.ERROR, "You can not use @InjectPresenter in classes that are not View, which is typified target Presenter", annotatedField);
 		}
 	}
 
@@ -120,7 +127,7 @@ public class PresenterInjectorRules extends AnnotationRule {
 
 						for (Map.Entry<TypeParameterElement, TypeMirror> entry : mTypedMap.entrySet()) {
 							if (entry.getKey().toString().equals(key.toString())) {
-								return Util.getFullClassName(entry.getValue());
+								return Util.getFullClassName(mElements, entry.getValue());
 							}
 						}
 					}

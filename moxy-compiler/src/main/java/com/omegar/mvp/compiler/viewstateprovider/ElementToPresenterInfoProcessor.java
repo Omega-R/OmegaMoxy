@@ -13,21 +13,27 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import javax.annotation.processing.Messager;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.tools.Diagnostic;
 
 import static com.omegar.mvp.compiler.Util.fillGenerics;
 
 public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElement, com.omegar.mvp.compiler.entity.PresenterInfo>  {
 	private static final String MVP_PRESENTER_CLASS = MvpPresenter.class.getCanonicalName();
 
+	private final Elements mElements;
 	private final Publisher<TypeElement> mUsedViewsPublisher;
 
-	public ElementToPresenterInfoProcessor(Publisher<TypeElement> usedViewsPublisher) {
+	public ElementToPresenterInfoProcessor(Elements elements, Publisher<TypeElement> usedViewsPublisher) {
+		mElements = elements;
 		mUsedViewsPublisher = usedViewsPublisher;
 	}
 
@@ -42,12 +48,12 @@ public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElemen
 		// Remove generic from view class name
 		view = Util.substringBefore(view, '<');
 
-		TypeElement viewTypeElement = MvpCompiler.getElementUtils().getTypeElement(view);
+		TypeElement viewTypeElement = mElements.getTypeElement(view);
 
 		if (viewTypeElement == null) {
 			view = getViewClassFromGeneric(typeElement);
 			view = Util.substringBefore(view, '<');
-			viewTypeElement = MvpCompiler.getElementUtils().getTypeElement(view);
+			viewTypeElement = mElements.getTypeElement(view);
 		}
 
 		if (viewTypeElement == null) {
@@ -56,7 +62,7 @@ public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElemen
 
 		mUsedViewsPublisher.next(viewTypeElement);
 
-		return Util.getFullClassName(viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX;
+		return Util.getFullClassName(mElements, viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX;
 	}
 
 
@@ -79,7 +85,6 @@ public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElemen
 			for (int i = 0; i < typeArguments.size(); i++) {
 				types.put(typeParameters.get(i).toString(), fillGenerics(parentTypes, typeArguments.get(i)));
 			}
-
 
 			if (superclassElement.toString().equals(MVP_PRESENTER_CLASS)) {
 				// MvpPresenter is typed only on View class

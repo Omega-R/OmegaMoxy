@@ -49,13 +49,13 @@ import javax.lang.model.type.DeclaredType;
  * @author Yuri Shmakov
  * @author Alexander Blinov
  */
-public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends JavaFileProcessor<com.omegar.mvp.compiler.entity.TargetClassInfo> {
+public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends JavaFileProcessor<TargetClassInfo> {
 
 	@Override
 	public JavaFile process(TargetClassInfo targetClassInfo) {
 		ClassName targetClassName = targetClassInfo.getName();
 		TypeElement element = targetClassInfo.getTypeElement();
-		List<com.omegar.mvp.compiler.entity.TargetPresenterField> fields = targetClassInfo.getFields();
+		List<TargetPresenterField> fields = targetClassInfo.getFields();
 
 		final String containerSimpleName = String.join("$", targetClassName.simpleNames());
 
@@ -64,7 +64,7 @@ public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends Jav
 				.addModifiers(Modifier.PUBLIC)
 				.superclass(ParameterizedTypeName.get(ClassName.get(PresenterBinder.class), targetClassName));
 
-		for (com.omegar.mvp.compiler.entity.TargetPresenterField field : fields) {
+		for (TargetPresenterField field : fields) {
 			classBuilder.addType(generatePresenterBinderClass(element, field, targetClassName));
 		}
 
@@ -75,7 +75,7 @@ public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends Jav
 				.build();
 	}
 
-	private static MethodSpec generateGetPresentersMethod(List<com.omegar.mvp.compiler.entity.TargetPresenterField> fields,
+	private static MethodSpec generateGetPresentersMethod(List<TargetPresenterField> fields,
 	                                                      ClassName containerClassName) {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("getPresenterFields")
 				.addAnnotation(Override.class)
@@ -88,7 +88,7 @@ public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends Jav
 				List.class, PresenterField.class, containerClassName,
 				ArrayList.class, fields.size());
 
-		for (com.omegar.mvp.compiler.entity.TargetPresenterField field : fields) {
+		for (TargetPresenterField field : fields) {
 			builder.addStatement("presenters.add(new $L())", field.getGeneratedClassName());
 		}
 
@@ -97,7 +97,7 @@ public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends Jav
 		return builder.build();
 	}
 
-	private static TypeSpec generatePresenterBinderClass(TypeElement element, com.omegar.mvp.compiler.entity.TargetPresenterField field,
+	private static TypeSpec generatePresenterBinderClass(TypeElement element, TargetPresenterField field,
 														 ClassName targetClassName) {
 		String tag = field.getTag();
 		if (tag == null) tag = field.getName();
@@ -119,7 +119,7 @@ public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends Jav
 		return classBuilder.build();
 	}
 
-	private static MethodSpec generatePresenterBinderConstructor(com.omegar.mvp.compiler.entity.TargetPresenterField field, String tag) {
+	private static MethodSpec generatePresenterBinderConstructor(TargetPresenterField field, String tag) {
 		return MethodSpec.constructorBuilder()
 				.addModifiers(Modifier.PUBLIC)
 				.addStatement("super($S, $T.$L, $S, $T.class)",
@@ -131,7 +131,7 @@ public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends Jav
 				.build();
 	}
 
-	private static MethodSpec generateBindMethod(com.omegar.mvp.compiler.entity.TargetPresenterField field,
+	private static MethodSpec generateBindMethod(TargetPresenterField field,
 												 ClassName targetClassName) {
 		return MethodSpec.methodBuilder("bind")
 				.addAnnotation(Override.class)

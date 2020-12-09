@@ -77,10 +77,6 @@ public class ViewInterfaceInfo implements TypeElementHolder {
     public TypeElement getSuperClassElement() {
         return superInterfaceInfo == null ? null : superInterfaceInfo.getTypeElement();
     }
-    @Deprecated
-    public List<TypeElement> getSuperTypeMvpElements() {
-        return Collections.emptyList();
-    }
 
     @Override
     public boolean equals(Object o) {

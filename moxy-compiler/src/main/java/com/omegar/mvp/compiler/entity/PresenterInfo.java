@@ -14,40 +14,40 @@ import javax.lang.model.element.TypeElement;
  * @author Evgeny Kursakov
  */
 public class PresenterInfo implements TypeElementHolder {
-	private final ClassName name;
-	private final TypeElement element;
-	private final ClassName viewStateName;
-	private final boolean isViewParametrized;
-	private final boolean isAbstracted;
+	private final ClassName mName;
+	private final TypeElement mElement;
+	private final ClassName mViewStateName;
+	private final boolean mIsViewParametrized;
+	private final boolean mIsAbstracted;
 
 
 	public PresenterInfo(TypeElement name, String viewStateName) {
-		this.name = ClassName.get(name);
-		element = name;
-		this.viewStateName = ClassName.bestGuess(viewStateName);
-		isViewParametrized = TypeName.get(name.asType()) instanceof ParameterizedTypeName;
-		isAbstracted = name.getModifiers().contains(Modifier.ABSTRACT);
+		mName = ClassName.get(name);
+		mElement = name;
+		mViewStateName = ClassName.bestGuess(viewStateName);
+		mIsViewParametrized = TypeName.get(name.asType()) instanceof ParameterizedTypeName;
+		mIsAbstracted = name.getModifiers().contains(Modifier.ABSTRACT);
 	}
 
 	public boolean isParametrized() {
-		return isViewParametrized;
+		return mIsViewParametrized;
 	}
 
 	public boolean isAbstracted() {
-		return isAbstracted;
+		return mIsAbstracted;
 	}
 
 	@Override
 	public TypeElement getTypeElement() {
-		return element;
+		return mElement;
 	}
 
 	public ClassName getName() {
-		return name;
+		return mName;
 	}
 
 	public ClassName getViewStateName() {
-		return viewStateName;
+		return mViewStateName;
 	}
 
 	@Override
@@ -57,16 +57,16 @@ public class PresenterInfo implements TypeElementHolder {
 
 		PresenterInfo that = (PresenterInfo) o;
 
-		if (name != null ? !name.equals(that.name) : that.name != null) return false;
-		if (element != null ? !element.equals(that.element) : that.element != null) return false;
-		return viewStateName != null ? viewStateName.equals(that.viewStateName) : that.viewStateName == null;
+		if (mName != null ? !mName.equals(that.mName) : that.mName != null) return false;
+		if (mElement != null ? !mElement.equals(that.mElement) : that.mElement != null) return false;
+		return mViewStateName != null ? mViewStateName.equals(that.mViewStateName) : that.mViewStateName == null;
 	}
 
 	@Override
 	public int hashCode() {
-		int result = name != null ? name.hashCode() : 0;
-		result = 31 * result + (element != null ? element.hashCode() : 0);
-		result = 31 * result + (viewStateName != null ? viewStateName.hashCode() : 0);
+		int result = mName != null ? mName.hashCode() : 0;
+		result = 31 * result + (mElement != null ? mElement.hashCode() : 0);
+		result = 31 * result + (mViewStateName != null ? mViewStateName.hashCode() : 0);
 		return result;
 	}
 }

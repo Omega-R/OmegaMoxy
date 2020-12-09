@@ -4,7 +4,7 @@ import com.google.auto.service.AutoService;
 import com.omegar.mvp.RegisterMoxyReflectorPackages;
 import com.omegar.mvp.compiler.entity.AnnotationInfo;
 import com.omegar.mvp.compiler.entity.AnnotationTarget;
-import com.omegar.mvp.compiler.pipeline.ElementByAnnotationGenerator;
+import com.omegar.mvp.compiler.pipeline.ElementsAnnotatedGenerator;
 import com.omegar.mvp.compiler.pipeline.JavaFileWriter;
 import com.omegar.mvp.compiler.pipeline.Pipeline;
 import com.omegar.mvp.compiler.pipeline.Publisher;
@@ -26,13 +26,11 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessorType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
@@ -56,7 +54,6 @@ import static javax.lang.model.SourceVersion.latestSupported;
  * @author Yuri Shmakov
  */
 
-@SuppressWarnings("unused")
 @AutoService(Processor.class)
 @IncrementalAnnotationProcessor(IncrementalAnnotationProcessorType.DYNAMIC)
 public class MvpCompiler extends AbstractProcessor {
@@ -66,52 +63,39 @@ public class MvpCompiler extends AbstractProcessor {
 	private static final String OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES = "moxyRegisterReflectorPackages";
 	private static final String OPTION_ENABLE_ISOLATING_PROCESSING = "moxyEnableIsolatingProcessing";
 
-	private static Messager sMessager;
-	private static Types sTypeUtils;
-	private static Elements sElementUtils;
-	private static Map<String, String> sOptions;
+	private Messager mMessager;
+	private Types mTypes;
+	private Elements mElements;
+	private Map<String, String> mOptions;
 
-	private AnnotationInfo<TypeElement> mInjectViewStateAnnotationInfo;
-	private AnnotationInfo<VariableElement> mInjectPresenterAnnotationInfo;
-
-	public static Messager getMessager() {
-		return sMessager;
-	}
-
-	public static Types getTypeUtils() {
-		return sTypeUtils;
-	}
-
-	public static Elements getElementUtils() {
-		return sElementUtils;
-	}
+	private AnnotationInfo<TypeElement> mInjectViewStateAnnotation;
+	private AnnotationInfo<VariableElement> mInjectPresenterAnnotation;
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
 
-		sMessager = processingEnv.getMessager();
-		sTypeUtils = processingEnv.getTypeUtils();
-		sElementUtils = processingEnv.getElementUtils();
-		sOptions = processingEnv.getOptions();
+		mMessager = processingEnv.getMessager();
+		mTypes = processingEnv.getTypeUtils();
+		mElements = processingEnv.getElementUtils();
+		mOptions = processingEnv.getOptions();
 
-		mInjectViewStateAnnotationInfo = new AnnotationInfo<>(sElementUtils.getTypeElement(MOXY_ANNOTATION_INJECT_VIEW_STATE), AnnotationTarget.CLASS);
-		mInjectPresenterAnnotationInfo = new AnnotationInfo<>(sElementUtils.getTypeElement(InjectPresenter.class.getCanonicalName()), AnnotationTarget.FIELD);
+		mInjectViewStateAnnotation = AnnotationInfo.create(mElements, MOXY_ANNOTATION_INJECT_VIEW_STATE, AnnotationTarget.CLASS);
+		mInjectPresenterAnnotation = AnnotationInfo.create(mElements, InjectPresenter.class, AnnotationTarget.FIELD);
 	}
 
 	@Override
 	public Set<String> getSupportedOptions() {
-		return new HashSet<>(Arrays.asList(
+		return Util.newHashSet(
 				OPTION_MOXY_REFLECTOR_PACKAGE,
 				OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES,
 				OPTION_ENABLE_ISOLATING_PROCESSING,
 				getCurrentIncrementalAnnotationProcessorType().getProcessorOption()
-		));
+		);
 	}
 
 	private boolean isEnabledIsolatingProcessing() {
-		String s = sOptions.get(OPTION_ENABLE_ISOLATING_PROCESSING);
-		return Boolean.parseBoolean(s);
+		return Boolean.parseBoolean(mOptions.get(OPTION_ENABLE_ISOLATING_PROCESSING));
 	}
 
 	private IncrementalAnnotationProcessorType getCurrentIncrementalAnnotationProcessorType() {
@@ -122,12 +106,11 @@ public class MvpCompiler extends AbstractProcessor {
 
 	@Override
 	public Set<String> getSupportedAnnotationTypes() {
-		Set<String> supportedAnnotationTypes = new HashSet<>();
-		Collections.addAll(supportedAnnotationTypes,
+		return Util.newHashSet(
 				InjectPresenter.class.getCanonicalName(),
 				MOXY_ANNOTATION_INJECT_VIEW_STATE,
-				RegisterMoxyReflectorPackages.class.getCanonicalName());
-		return supportedAnnotationTypes;
+				RegisterMoxyReflectorPackages.class.getCanonicalName()
+		);
 	}
 
 	@Override
@@ -144,18 +127,16 @@ public class MvpCompiler extends AbstractProcessor {
 		try {
 			return throwableProcess(annotations, roundEnv);
 		} catch (RuntimeException e) {
-			getMessager().printMessage(Diagnostic.Kind.OTHER, "Moxy compilation failed. Could you copy stack trace above and write us (or make issue on Github)?");
+			mMessager.printMessage(Diagnostic.Kind.OTHER, "Moxy compilation failed. Could you copy stack trace above and write us (or make issue on Github)?");
 			e.printStackTrace();
+			return true;
 		}
-
-		return true;
 	}
 
 	private boolean throwableProcess(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-		String currentMoxyReflectorPackage = sOptions.getOrDefault(OPTION_MOXY_REFLECTOR_PACKAGE, DEFAULT_MOXY_REFLECTOR_PACKAGE);
+		String currentMoxyReflectorPackage = mOptions.getOrDefault(OPTION_MOXY_REFLECTOR_PACKAGE, DEFAULT_MOXY_REFLECTOR_PACKAGE);
 
-		checkInjectors(roundEnv, new PresenterInjectorRules(mInjectPresenterAnnotationInfo, Modifier.PUBLIC, Modifier.DEFAULT));
 
 		Publisher<TypeElement> presenterContainerElementPublisher = new Publisher<>();
 		Publisher<TypeElement> presenterElementPublisher = new Publisher<>();
@@ -163,49 +144,51 @@ public class MvpCompiler extends AbstractProcessor {
 		Publisher<TypeElement> strategiesElementPublisher = new Publisher<>();
 		Publisher<String> reflectorPackagesPublisher = new Publisher<>(getAdditionalMoxyReflectorPackages(roundEnv));
 
-		Filer filer = processingEnv.getFiler();
+		JavaFileWriter fileWriter = new JavaFileWriter(processingEnv.getFiler());
 
-		if (mInjectPresenterAnnotationInfo.contains(annotations)) {
+		if (mInjectPresenterAnnotation.contains(annotations)) {
+			checkInjectors(roundEnv, new PresenterInjectorRules(mElements, mMessager, mInjectPresenterAnnotation, Modifier.PUBLIC, Modifier.PROTECTED, Modifier.DEFAULT));
+
 			// presenterBinderPipeline
-			new Pipeline.Builder<>(new ElementByAnnotationGenerator<>(roundEnv, mInjectPresenterAnnotationInfo))
+			new Pipeline.Builder<>(new ElementsAnnotatedGenerator<>(roundEnv, mMessager, mInjectPresenterAnnotation))
 					.addProcessor(new VariableToContainerElementProcessor())
 					.uniqueFilter()
 					.copyPublishTo(presenterContainerElementPublisher)
 					.addProcessor(new ElementToTargetClassInfoProcessor())
 					.addProcessor(new TargetClassInfoToPresenterBinderJavaFileProcessor())
-					.buildPipeline(new JavaFileWriter(filer))
+					.buildPipeline(fileWriter)
 					.start();
 		} else {
 			presenterContainerElementPublisher.finish();
 		}
 
 		// viewStateProviderPipeline
-		new Pipeline.Builder<>(new ElementByAnnotationGenerator<>(roundEnv, mInjectViewStateAnnotationInfo))
-				.addProcessor(new ElementToPresenterInfoProcessor(viewElementPublisher))
+		new Pipeline.Builder<>(new ElementsAnnotatedGenerator<>(roundEnv, mMessager, mInjectViewStateAnnotation))
+				.addProcessor(new ElementToPresenterInfoProcessor(mElements, viewElementPublisher))
 				.addValidator(new NormalPresenterValidator())
 				.copyTypeElementTo(presenterElementPublisher)
 				.addProcessor(new PresenterInfoToViewStateProviderJavaFileProcessor().withCache())
-				.buildPipeline(new JavaFileWriter(filer))
+				.buildPipeline(fileWriter)
 				.start();
 
 		// viewStatePipeline
 		new Pipeline.Builder<>(viewElementPublisher)
-				.addProcessor(new ElementToViewInterfaceInfoProcessor(strategiesElementPublisher))
-				.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(currentMoxyReflectorPackage, reflectorPackagesPublisher))
-				.buildPipeline(new JavaFileWriter(filer))
+				.addProcessor(new ElementToViewInterfaceInfoProcessor(mElements, mTypes, mMessager, strategiesElementPublisher))
+				.uniqueFilter()
+				.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(mElements, mTypes, currentMoxyReflectorPackage, reflectorPackagesPublisher))
+				.buildPipeline(fileWriter)
 				.start();
 
 
-		QuadPublisher<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>> reflectorPublisher = presenterElementPublisher
-				.collect()
-				.quad(presenterContainerElementPublisher.collect(),
-						strategiesElementPublisher.collect(),
-						reflectorPackagesPublisher.collect());
-
 		// moxyReflectorPipeline
-		new Pipeline.Builder<>(reflectorPublisher)
+		new Pipeline.Builder<>(
+				QuadPublisher.collectQuad(
+						presenterElementPublisher,
+						presenterContainerElementPublisher,
+						strategiesElementPublisher,
+						reflectorPackagesPublisher))
 				.addProcessor(new MoxyReflectorProcessor(currentMoxyReflectorPackage))
-				.buildPipeline(new JavaFileWriter(filer))
+				.buildPipeline(fileWriter)
 				.start();
 
 
@@ -220,23 +203,21 @@ public class MvpCompiler extends AbstractProcessor {
 	}
 
 	private List<String> getRegisterAdditionalMoxyReflectorPackages(RoundEnvironment roundEnv) {
-		List<String> result = new ArrayList<>();
-
 		for (Element element : roundEnv.getElementsAnnotatedWith(RegisterMoxyReflectorPackages.class)) {
 			if (element.getKind() != ElementKind.CLASS) {
-				getMessager().printMessage(Diagnostic.Kind.ERROR, element + " must be " + ElementKind.CLASS.name() + ", or not mark it as @" + RegisterMoxyReflectorPackages.class.getSimpleName());
+				mMessager.printMessage(Diagnostic.Kind.ERROR, element + " must be " + ElementKind.CLASS.name()
+						+ ", or not mark it as @" + RegisterMoxyReflectorPackages.class.getSimpleName());
 			}
 
 			String[] packages = element.getAnnotation(RegisterMoxyReflectorPackages.class).value();
-
-			Collections.addAll(result, packages);
+			return Arrays.asList(packages);
 		}
 
-		return result;
+		return Collections.emptyList();
 	}
 
 	private List<String> getOptionsAdditionalReflectorPackages() {
-		String moxyRegisterReflectorPackage = sOptions.get(OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES);
+		String moxyRegisterReflectorPackage = mOptions.get(OPTION_MOXY_REGISTER_REFLECTOR_PACKAGES);
 
 		if (moxyRegisterReflectorPackage != null) {
 			String[] strings = moxyRegisterReflectorPackage.split(",");
@@ -254,7 +235,7 @@ public class MvpCompiler extends AbstractProcessor {
 
 		String errorStack = annotationRule.getErrorStack();
 		if (errorStack != null && errorStack.length() > 0) {
-			getMessager().printMessage(Diagnostic.Kind.ERROR, errorStack);
+			mMessager.printMessage(Diagnostic.Kind.ERROR, errorStack);
 		}
 	}
 

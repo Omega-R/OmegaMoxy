@@ -29,6 +29,8 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 import static com.omegar.mvp.compiler.Util.decapitalizeString;
 
@@ -38,7 +40,7 @@ import static com.omegar.mvp.compiler.Util.decapitalizeString;
  *
  * @author Yuri Shmakov
  */
-public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFileProcessor<com.omegar.mvp.compiler.entity.ViewInterfaceInfo> {
+public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFileProcessor<ViewInterfaceInfo> {
 
     private static final String VIEW = "Omega$$View";
     private static final TypeVariableName GENERIC_TYPE_VARIABLE_NAME = TypeVariableName.get(VIEW);
@@ -49,29 +51,35 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
     private static final ParameterizedTypeName MVP_VIEW_STATE_TYPE_NAME
             = ParameterizedTypeName.get(MVP_VIEW_STATE_CLASS_NAME, GENERIC_TYPE_VARIABLE_NAME);
 
-    private final String currentMoxyReflectorPackage;
+    private final Elements mElements;
+    private final Types mTypes;
+    private final String mCurrentMoxyReflectorPackage;
 
-    private final Publisher<String> reflectorPackagesPublisher;
+    private final Publisher<String> mReflectorPackagesPublisher;
 
-    public ViewInterfaceInfoToViewStateJavaFileProcessor(String currentMoxyReflectorPackage,
+    public ViewInterfaceInfoToViewStateJavaFileProcessor(Elements elements,
+                                                         Types types,
+                                                         String currentMoxyReflectorPackage,
                                                          Publisher<String> reflectorPackagesPublisher) {
-        this.currentMoxyReflectorPackage = currentMoxyReflectorPackage;
-        this.reflectorPackagesPublisher = reflectorPackagesPublisher;
+        mElements = elements;
+        mTypes = types;
+        mCurrentMoxyReflectorPackage = currentMoxyReflectorPackage;
+        mReflectorPackagesPublisher = reflectorPackagesPublisher;
     }
 
     @Override
-    public JavaFile process(com.omegar.mvp.compiler.entity.ViewInterfaceInfo viewInterfaceInfo) {
+    public JavaFile process(ViewInterfaceInfo viewInterfaceInfo) {
         ClassName viewName = viewInterfaceInfo.getName();
 
         TypeName nameWithTypeVariables = viewInterfaceInfo.getNameWithTypeVariables();
         DeclaredType viewInterfaceType = (DeclaredType) viewInterfaceInfo.getTypeElement().asType();
         TypeVariableName variableName = TypeVariableName.get(VIEW, nameWithTypeVariables);
 
-        TypeSpec.Builder classBuilder = TypeSpec.classBuilder(Util.getSimpleClassName(viewInterfaceInfo.getTypeElement()) + MvpProcessor.VIEW_STATE_SUFFIX)
+        TypeSpec.Builder classBuilder = TypeSpec.classBuilder(Util.getSimpleClassName(mElements, viewInterfaceInfo.getTypeElement()) + MvpProcessor.VIEW_STATE_SUFFIX)
                 .addOriginatingElement(viewInterfaceInfo.getTypeElement())
                 .addAnnotation(
                         AnnotationSpec.builder(Moxy.class)
-                                .addMember("reflectorPackage", "\"" + currentMoxyReflectorPackage + "\"")
+                                .addMember("reflectorPackage", "\"" + mCurrentMoxyReflectorPackage + "\"")
                                 .build()
                 )
                 .addModifiers(Modifier.PUBLIC)
@@ -80,12 +88,12 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
                     add(0, variableName);
                 }});
 
-        com.omegar.mvp.compiler.entity.ViewInterfaceInfo superInfo = viewInterfaceInfo.getSuperInterfaceInfo();
+        ViewInterfaceInfo superInfo = viewInterfaceInfo.getSuperInterfaceInfo();
 
         if (superInfo == null || superInfo.getTypeElement().getSimpleName().equals(MVP_VIEW_STATE_TYPE_NAME)) {
             classBuilder.superclass(MVP_VIEW_STATE_TYPE_NAME);
         } else {
-            String superViewState = Util.getFullClassName(superInfo.getTypeElement()) + MvpProcessor.VIEW_STATE_SUFFIX;
+            String superViewState = Util.getFullClassName(mElements, superInfo.getTypeElement()) + MvpProcessor.VIEW_STATE_SUFFIX;
             ClassName superClassName = ClassName.bestGuess(superViewState);
             checkReflectorPackages(superViewState);
             classBuilder.superclass(
@@ -93,7 +101,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
             );
         }
 
-        for (com.omegar.mvp.compiler.entity.ViewMethod method : viewInterfaceInfo.getMethods()) {
+        for (ViewMethod method : viewInterfaceInfo.getMethods()) {
             TypeSpec commandClass = generateCommandClass(method, variableName);
             classBuilder.addType(commandClass);
             classBuilder.addMethod(generateMethod(viewInterfaceType, method, nameWithTypeVariables, commandClass));
@@ -105,12 +113,12 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
     }
 
     private void checkReflectorPackages(CharSequence superViewState) {
-        TypeElement typeElement = MvpCompiler.getElementUtils().getTypeElement(superViewState);
+        TypeElement typeElement = mElements.getTypeElement(superViewState);
         if (typeElement != null) {
             Moxy[] moxies = typeElement.getAnnotationsByType(Moxy.class);
             if (moxies != null) {
                 for (Moxy moxy : moxies) {
-                    reflectorPackagesPublisher.next(moxy.reflectorPackage());
+                    mReflectorPackagesPublisher.next(moxy.reflectorPackage());
                 }
 
             }
@@ -134,7 +142,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         return parentClassTypeVariables.toArray(new TypeVariableName[parentClassTypeVariables.size()]);
     }
 
-    private TypeSpec generateCommandClass(com.omegar.mvp.compiler.entity.ViewMethod method, TypeVariableName variableName) {
+    private TypeSpec generateCommandClass(ViewMethod method, TypeVariableName variableName) {
         MethodSpec applyMethod = MethodSpec.methodBuilder("apply")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -160,7 +168,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         return classBuilder.build();
     }
 
-    private MethodSpec generateMethod(DeclaredType enclosingType, com.omegar.mvp.compiler.entity.ViewMethod method,
+    private MethodSpec generateMethod(DeclaredType enclosingType, ViewMethod method,
                                       TypeName viewTypeName, TypeSpec commandClass) {
         // TODO: String commandFieldName = "$cmd";
         String commandFieldName = decapitalizeString(method.getCommandClassName());
@@ -171,7 +179,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
             commandFieldName += random.nextInt(10);
         }
 
-        return MethodSpec.overriding(method.getElement(), enclosingType, MvpCompiler.getTypeUtils())
+        return MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
                 .addStatement("$1N $2L = new $1N<$4L>($3L)", commandClass, commandFieldName, method.getArgumentsString(), VIEW)
                 .addStatement("mViewCommands.beforeApply($L)", commandFieldName)
                 .addCode("\n")
@@ -208,7 +216,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
 
     @Override
     protected void finish(PipelineContext<JavaFile> nextContext) {
-        reflectorPackagesPublisher.finish();
+        mReflectorPackagesPublisher.finish();
         super.finish(nextContext);
     }
 }

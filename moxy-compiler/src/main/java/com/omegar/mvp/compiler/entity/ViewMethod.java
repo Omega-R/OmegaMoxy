@@ -35,19 +35,19 @@ public class ViewMethod {
 
 	private String uniqueSuffix;
 
-	public ViewMethod(DeclaredType targetInterfaceElement, ViewMethod method) {
+	public ViewMethod(Types types, DeclaredType targetInterfaceElement, ViewMethod method) {
         this.methodElement = method.getElement();
         this.name = method.name;
         this.strategy = method.strategy;
         this.tag = method.tag;
-        this.parameterSpecs = formatParameters(targetInterfaceElement, method.methodElement, method.parameterSpecs);
+        this.parameterSpecs = formatParameters(types, targetInterfaceElement, method.methodElement, method.parameterSpecs);
         this.exceptions = method.exceptions;
         this.typeVariables = method.typeVariables;
         this.argumentsString = method.argumentsString;
         this.uniqueSuffix = method.uniqueSuffix;
     }
 
-	public ViewMethod(DeclaredType targetInterfaceElement,
+	public ViewMethod(Types types, DeclaredType targetInterfaceElement,
 	           ExecutableElement methodElement,
 	           TypeElement strategy,
 	           String tag) {
@@ -58,8 +58,7 @@ public class ViewMethod {
 
 		this.parameterSpecs = new ArrayList<>();
 
-		Types typeUtils = MvpCompiler.getTypeUtils();
-		ExecutableType executableType = (ExecutableType) typeUtils.asMemberOf(targetInterfaceElement, methodElement);
+		ExecutableType executableType = (ExecutableType) types.asMemberOf(targetInterfaceElement, methodElement);
 		List<? extends VariableElement> parameters = methodElement.getParameters();
 		List<? extends TypeMirror> resolvedParameterTypes = executableType.getParameterTypes();
 
@@ -90,11 +89,11 @@ public class ViewMethod {
 		this.uniqueSuffix = "";
 	}
 
-	private List<ParameterSpec> formatParameters(DeclaredType enclosingType, ExecutableElement element,
+	private List<ParameterSpec> formatParameters(Types types, DeclaredType enclosingType, ExecutableElement element,
 												 List<ParameterSpec> parameterSpecs) {
 		List<ParameterSpec> list = new ArrayList<>();
 
-		ExecutableType executableType = (ExecutableType) MvpCompiler.getTypeUtils().asMemberOf(enclosingType, element);
+		ExecutableType executableType = (ExecutableType) types.asMemberOf(enclosingType, element);
 		List<? extends TypeMirror> resolvedParameterTypes = executableType.getParameterTypes();
 
 		for (int i = 0; i < parameterSpecs.size(); i++) {

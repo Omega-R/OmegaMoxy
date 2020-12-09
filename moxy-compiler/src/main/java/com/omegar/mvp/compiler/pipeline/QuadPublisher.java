@@ -1,12 +1,8 @@
 package com.omegar.mvp.compiler.pipeline;
 
-import com.omegar.mvp.compiler.MvpCompiler;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.tools.Diagnostic;
 
 /**
  * Created by Anton Knyazev on 05.12.2020.
@@ -63,6 +59,18 @@ public class QuadPublisher<FI, SE, TH, FO> extends Publisher<Quad<FI, SE, TH, FO
                 fourthIterator.remove();
             }
         }
+    }
+
+    public static <FI, SE, TH, FO> QuadPublisher<List<FI>, List<SE>, List<TH>, List<FO>> collectQuad(Publisher<FI> publisher1,
+                                                                                                     Publisher<SE> publisher2,
+                                                                                                     Publisher<TH> publisher3,
+                                                                                                     Publisher<FO> publisher4) {
+        return new QuadPublisher<>(
+                publisher1.collect(),
+                publisher2.collect(),
+                publisher3.collect(),
+                publisher4.collect()
+        );
     }
 
     private class LocalContext<T> implements PipelineContext<T> {
