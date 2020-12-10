@@ -46,18 +46,12 @@ public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElemen
 		String view = getViewClassFromGeneric(typeElement);
 
 		// Remove generic from view class name
-		view = Util.substringBefore(view, '<');
+		String viewWithoutGeneric = Util.substringBefore(view, '<');
 
-		TypeElement viewTypeElement = mElements.getTypeElement(view);
-
-		if (viewTypeElement == null) {
-			view = getViewClassFromGeneric(typeElement);
-			view = Util.substringBefore(view, '<');
-			viewTypeElement = mElements.getTypeElement(view);
-		}
+		TypeElement viewTypeElement = mElements.getTypeElement(viewWithoutGeneric);
 
 		if (viewTypeElement == null) {
-			throw new IllegalArgumentException("View \"" + view + "\" for " + typeElement + " cannot be found. \n " + getViewClassFromGeneric(typeElement));
+			throw new IllegalArgumentException("View \"" + view + "\" for " + typeElement + " cannot be found. \n " + viewWithoutGeneric);
 		}
 
 		mUsedViewsPublisher.next(viewTypeElement);
