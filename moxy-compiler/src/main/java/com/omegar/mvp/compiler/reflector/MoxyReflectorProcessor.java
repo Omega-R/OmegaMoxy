@@ -2,6 +2,9 @@ package com.omegar.mvp.compiler.reflector;
 
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.ViewStateProvider;
+import com.omegar.mvp.compiler.Util;
+import com.omegar.mvp.compiler.pipeline.Processor;
+import com.omegar.mvp.compiler.pipeline.Quad;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
@@ -20,13 +23,14 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-import static com.omegar.mvp.compiler.MvpCompiler.MOXY_REFLECTOR_DEFAULT_PACKAGE;
+import static com.omegar.mvp.compiler.MvpCompiler.DEFAULT_MOXY_REFLECTOR_PACKAGE;
 
 /**
  * Date: 07.12.2016
@@ -35,7 +39,7 @@ import static com.omegar.mvp.compiler.MvpCompiler.MOXY_REFLECTOR_DEFAULT_PACKAGE
  * @author Yuri Shmakov
  */
 
-public class MoxyReflectorGenerator {
+public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>>, JavaFile> {
 	private static final Comparator<TypeElement> TYPE_ELEMENT_COMPARATOR = Comparator.comparing(Object::toString);
 
 	private static final TypeName CLASS_WILDCARD_TYPE_NAME // Class<*>
@@ -47,21 +51,44 @@ public class MoxyReflectorGenerator {
 	private static final TypeName MAP_CLASS_TO_LIST_OF_OBJECT_TYPE_NAME // Map<Class<*>, List<Object>>
 			= ParameterizedTypeName.get(ClassName.get(Map.class), CLASS_WILDCARD_TYPE_NAME, LIST_OF_OBJECT_TYPE_NAME);
 
+	private final String mDestinationPackage;
+
+	public MoxyReflectorProcessor(String destinationPackage) {
+		mDestinationPackage = destinationPackage;
+	}
+
+	@Override
+	protected JavaFile process(Quad<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>> input) {
+
+		return generate(mDestinationPackage, input.getFirst(), input.getSecond(), input.getThird(), input.getFourth());
+	}
 
 	public static JavaFile generate(String destinationPackage,
-	                                List<TypeElement> presenterClassNames,
-	                                List<TypeElement> presentersContainers,
-	                                List<TypeElement> strategyClasses,
-	                                List<String> additionalMoxyReflectorsPackages) {
+									List<TypeElement> presenterClassNames,
+									List<TypeElement> presentersContainers,
+									List<TypeElement> strategyClasses,
+									List<String> additionalMoxyReflectorsPackages) {
 		TypeSpec.Builder classBuilder = TypeSpec.classBuilder("MoxyReflector")
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
 				.addField(MAP_CLASS_TO_OBJECT_TYPE_NAME, "sViewStateProviders", Modifier.PRIVATE, Modifier.STATIC)
 				.addField(MAP_CLASS_TO_LIST_OF_OBJECT_TYPE_NAME, "sPresenterBinders", Modifier.PRIVATE, Modifier.STATIC)
 				.addField(MAP_CLASS_TO_OBJECT_TYPE_NAME, "sStrategies", Modifier.PRIVATE, Modifier.STATIC);
 
-		classBuilder.addStaticBlock(generateStaticInitializer(presenterClassNames, presentersContainers, strategyClasses, additionalMoxyReflectorsPackages));
+		for (Element element : presentersContainers) {
+			classBuilder.addOriginatingElement(element);
+		}
 
-		if (destinationPackage.equals(MOXY_REFLECTOR_DEFAULT_PACKAGE)) {
+		for (Element element : presenterClassNames) {
+			classBuilder.addOriginatingElement(element);
+		}
+
+		additionalMoxyReflectorsPackages.remove(destinationPackage);
+
+		additionalMoxyReflectorsPackages = Util.newDistinctList(additionalMoxyReflectorsPackages);
+
+		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage, presenterClassNames, presentersContainers, strategyClasses, additionalMoxyReflectorsPackages));
+
+		if (destinationPackage.equals(DEFAULT_MOXY_REFLECTOR_PACKAGE)) {
 			classBuilder.addMethod(MethodSpec.methodBuilder("getViewState")
 					.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
 					.returns(Object.class)
@@ -85,7 +112,27 @@ public class MoxyReflectorGenerator {
 					.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
 					.returns(Object.class)
 					.addParameter(CLASS_WILDCARD_TYPE_NAME, "strategyClass")
-					.addStatement("return sStrategies.get(strategyClass)")
+					.addStatement("Object stateStrategy = sStrategies.get(strategyClass)")
+					.beginControlFlow("if (stateStrategy == null)")
+					.addStatement("stateStrategy = newStrategy(strategyClass)")
+					.addStatement("sStrategies.put(strategyClass, stateStrategy)")
+					.endControlFlow()
+					.addStatement("return stateStrategy")
+					.build());
+
+			classBuilder.addMethod(MethodSpec.methodBuilder("newStrategy")
+					.addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+					.returns(Object.class)
+					.addParameter(CLASS_WILDCARD_TYPE_NAME, "strategyClass")
+					.beginControlFlow("try")
+					.addStatement("return strategyClass.newInstance()")
+					.endControlFlow()
+					.beginControlFlow("catch (InstantiationException e)")
+					.addStatement("throw new IllegalArgumentException(\"Unable to create state strategy: \" + strategyClass)")
+					.endControlFlow()
+					.beginControlFlow("catch (IllegalAccessException e)")
+					.addStatement("throw new IllegalArgumentException(\"Unable to create state strategy: \" + strategyClass)")
+					.endControlFlow()
 					.build());
 		} else {
 			classBuilder.addMethod(MethodSpec.methodBuilder("getViewStateProviders")
@@ -113,7 +160,8 @@ public class MoxyReflectorGenerator {
 				.build();
 	}
 
-	private static CodeBlock generateStaticInitializer(List<TypeElement> presenterClassNames,
+	private static CodeBlock generateStaticInitializer(String destinationPackage,
+													   List<TypeElement> presenterClassNames,
 	                                                   List<TypeElement> presentersContainers,
 	                                                   List<TypeElement> strategyClasses,
 	                                                   List<String> additionalMoxyReflectorsPackages) {
@@ -125,7 +173,8 @@ public class MoxyReflectorGenerator {
 
 		CodeBlock.Builder builder = CodeBlock.builder();
 
-		builder.addStatement("sViewStateProviders = new $T<>()", HashMap.class);
+		String viewStateInitMap = getInitMap(presenterClassNames.size(), !additionalMoxyReflectorsPackages.isEmpty());
+		builder.addStatement("sViewStateProviders = new $T<>(" + viewStateInitMap + ")", HashMap.class);
 		for (TypeElement presenter : presenterClassNames) {
 			ClassName presenterClassName = ClassName.get(presenter);
 			ClassName viewStateProvider = ClassName.get(presenterClassName.packageName(),
@@ -135,7 +184,8 @@ public class MoxyReflectorGenerator {
 
 		builder.add("\n");
 
-		builder.addStatement("sPresenterBinders = new $T<>()", HashMap.class);
+		String presenterBindersMapInit = getInitMap(presenterBinders.size(), !additionalMoxyReflectorsPackages.isEmpty());
+		builder.addStatement("sPresenterBinders = new $T<>(" + presenterBindersMapInit + ")", HashMap.class);
 		for (Map.Entry<TypeElement, List<TypeElement>> keyValue : presenterBinders.entrySet()) {
 			builder.add("sPresenterBinders.put($T.class, $T.<Object>asList(", keyValue.getKey(), Arrays.class);
 
@@ -157,7 +207,8 @@ public class MoxyReflectorGenerator {
 
 		builder.add("\n");
 
-		builder.addStatement("sStrategies = new $T<>()", HashMap.class);
+		String strategiesMapInit = getInitMap(strategyClasses.size(), !additionalMoxyReflectorsPackages.isEmpty());
+		builder.addStatement("sStrategies = new $T<>(" + strategiesMapInit + ")", HashMap.class);
 		for (TypeElement strategyClass : strategyClasses) {
 			builder.addStatement("sStrategies.put($1T.class, new $1T())", strategyClass);
 		}
@@ -173,6 +224,10 @@ public class MoxyReflectorGenerator {
 
 
 		return builder.build();
+	}
+
+	private static String getInitMap(int size, boolean additionalPackages) {
+		return !additionalPackages ? String.valueOf(size) : "";
 	}
 
 	/**

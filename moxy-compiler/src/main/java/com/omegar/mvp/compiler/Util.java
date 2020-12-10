@@ -16,12 +16,17 @@
  */
 package com.omegar.mvp.compiler;
 
+import com.google.common.collect.Iterables;
 import com.omegar.mvp.MvpView;
+import com.omegar.mvp.viewstate.strategy.StrategyType;
 import com.squareup.javapoet.ClassName;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +44,8 @@ import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 /**
  * Utilities for handling types in annotation processors
@@ -49,6 +56,7 @@ import javax.lang.model.type.WildcardType;
 public final class Util {
 
 	public static final ClassName MVP_VIEW_CLASS_NAME = ClassName.get(MvpView.class);
+
 
 	public static String fillGenerics(Map<String, String> types, TypeMirror param) {
 		return fillGenerics(types, Collections.singletonList(param));
@@ -111,17 +119,17 @@ public final class Util {
 		return result.toString();
 	}
 
-	public static String getFullClassName(TypeMirror typeMirror) {
+	public static String getFullClassName(Elements elements, TypeMirror typeMirror) {
 		if (!(typeMirror instanceof DeclaredType)) {
 			return "";
 		}
 
 		TypeElement typeElement = (TypeElement) ((DeclaredType) typeMirror).asElement();
-		return getFullClassName(typeElement);
+		return getFullClassName(elements, typeElement);
 	}
 
-	public static String getFullClassName(TypeElement typeElement) {
-		String packageName = MvpCompiler.getElementUtils().getPackageOf(typeElement).getQualifiedName().toString();
+	public static String getFullClassName(Elements elements, TypeElement typeElement) {
+		String packageName = elements.getPackageOf(typeElement).getQualifiedName().toString();
 		if (packageName.length() > 0) {
 			packageName += ".";
 		}
@@ -130,8 +138,8 @@ public final class Util {
 		return packageName + className.replaceAll("\\.", "\\$");
 	}
 
-    public static String getSimpleClassName(TypeElement typeElement) {
-        String packageName = MvpCompiler.getElementUtils().getPackageOf(typeElement).getQualifiedName().toString();
+    public static String getSimpleClassName(Elements elements, TypeElement typeElement) {
+        String packageName = elements.getPackageOf(typeElement).getQualifiedName().toString();
         if (packageName.length() > 0) {
             packageName += ".";
         }
@@ -154,6 +162,17 @@ public final class Util {
 
 		if (av != null) {
 			return (TypeMirror) av.getValue();
+		} else {
+			return null;
+		}
+	}
+
+	public static StrategyType getAnnotationValueAsStrategyType(AnnotationMirror annotationMirror, String key) {
+		AnnotationValue av = getAnnotationValue(annotationMirror, key);
+
+		if (av != null) {
+			String enumString = av.getValue().toString();
+			return StrategyType.valueOf(enumString);
 		} else {
 			return null;
 		}
@@ -237,7 +256,7 @@ public final class Util {
 
 	public static <E> E lastOrNull(@Nullable Set<E> set) {
 		if (set == null || set.isEmpty()) return null;
-		return lastOrNull(new ArrayList<>(set));
+		return last(set.iterator());
 	}
 
 	public static <E> E lastOrNull(@Nullable List<E> list) {
@@ -245,8 +264,32 @@ public final class Util {
 		return list.get(list.size() - 1);
 	}
 
+	public static <T> T last(Iterator<T> iterator) {
+		while (true) {
+			T current = iterator.next();
+			if (!iterator.hasNext()) {
+				return current;
+			}
+		}
+	}
+
 	public static TypeElement asElement(TypeMirror mirror) {
 		return (TypeElement) ((DeclaredType) mirror).asElement();
+	}
+
+	public static <E> List<E> newDistinctList(List<E> list) {
+		return new ArrayList<>(new LinkedHashSet<>(list));
+	}
+
+	public static String substringBefore(String string, char beforeChar) {
+		int beforeIndex = string.indexOf(beforeChar);
+		if (beforeIndex >= 0) return string.substring(0, beforeIndex); else return string;
+	}
+
+	public static <E> HashSet<E> newHashSet(E... elements) {
+		HashSet<E> set = new HashSet<>(elements.length);
+		Collections.addAll(set, elements);
+		return set;
 	}
 
 }

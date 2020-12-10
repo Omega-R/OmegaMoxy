@@ -1,4 +1,4 @@
-package com.omegar.mvp.compiler.viewstate;
+package com.omegar.mvp.compiler.entity;
 
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.squareup.javapoet.ParameterSpec;
@@ -23,7 +23,7 @@ import javax.lang.model.util.Types;
  *
  * @author Evgeny Kursakov
  */
-class ViewMethod {
+public class ViewMethod {
 	private final ExecutableElement methodElement;
 	private final String name;
 	private final TypeElement strategy;
@@ -35,19 +35,19 @@ class ViewMethod {
 
 	private String uniqueSuffix;
 
-	ViewMethod(DeclaredType targetInterfaceElement, ViewMethod method) {
+	public ViewMethod(Types types, DeclaredType targetInterfaceElement, ViewMethod method) {
         this.methodElement = method.getElement();
         this.name = method.name;
         this.strategy = method.strategy;
         this.tag = method.tag;
-        this.parameterSpecs = formatParameters(targetInterfaceElement, method.methodElement, method.parameterSpecs);
+        this.parameterSpecs = formatParameters(types, targetInterfaceElement, method.methodElement, method.parameterSpecs);
         this.exceptions = method.exceptions;
         this.typeVariables = method.typeVariables;
         this.argumentsString = method.argumentsString;
         this.uniqueSuffix = method.uniqueSuffix;
     }
 
-	ViewMethod(DeclaredType targetInterfaceElement,
+	public ViewMethod(Types types, DeclaredType targetInterfaceElement,
 	           ExecutableElement methodElement,
 	           TypeElement strategy,
 	           String tag) {
@@ -58,8 +58,7 @@ class ViewMethod {
 
 		this.parameterSpecs = new ArrayList<>();
 
-		Types typeUtils = MvpCompiler.getTypeUtils();
-		ExecutableType executableType = (ExecutableType) typeUtils.asMemberOf(targetInterfaceElement, methodElement);
+		ExecutableType executableType = (ExecutableType) types.asMemberOf(targetInterfaceElement, methodElement);
 		List<? extends VariableElement> parameters = methodElement.getParameters();
 		List<? extends TypeMirror> resolvedParameterTypes = executableType.getParameterTypes();
 
@@ -90,11 +89,11 @@ class ViewMethod {
 		this.uniqueSuffix = "";
 	}
 
-	private List<ParameterSpec> formatParameters(DeclaredType enclosingType, ExecutableElement element,
+	private List<ParameterSpec> formatParameters(Types types, DeclaredType enclosingType, ExecutableElement element,
 												 List<ParameterSpec> parameterSpecs) {
 		List<ParameterSpec> list = new ArrayList<>();
 
-		ExecutableType executableType = (ExecutableType) MvpCompiler.getTypeUtils().asMemberOf(enclosingType, element);
+		ExecutableType executableType = (ExecutableType) types.asMemberOf(enclosingType, element);
 		List<? extends TypeMirror> resolvedParameterTypes = executableType.getParameterTypes();
 
 		for (int i = 0; i < parameterSpecs.size(); i++) {
@@ -106,52 +105,52 @@ class ViewMethod {
 		return list;
 	}
 
-	ExecutableElement getElement() {
+	public ExecutableElement getElement() {
 		return methodElement;
 	}
 
-	String getName() {
+	public String getName() {
 		return name;
 	}
 
-	TypeElement getStrategy() {
+	public TypeElement getStrategy() {
 		return strategy;
 	}
 
-	String getTag() {
+	public String getTag() {
 		return tag;
 	}
 
-	List<ParameterSpec> getParameterSpecs() {
+	public List<ParameterSpec> getParameterSpecs() {
 		return parameterSpecs;
 	}
 
-	List<TypeName> getExceptions() {
+	public List<TypeName> getExceptions() {
 		return exceptions;
 	}
 
-	List<TypeVariableName> getTypeVariables() {
+	public List<TypeVariableName> getTypeVariables() {
 		return typeVariables;
 	}
 
-	String getArgumentsString() {
+	public String getArgumentsString() {
 		return argumentsString;
 	}
 
-	String getCommandClassName() {
+	public String getCommandClassName() {
 		return name.substring(0, 1).toUpperCase() + name.substring(1) + uniqueSuffix + "Command";
 	}
 
-	String getEnclosedClassName() {
+	public String getEnclosedClassName() {
 		TypeElement typeElement = (TypeElement) methodElement.getEnclosingElement();
 		return typeElement.getQualifiedName().toString();
 	}
 
-	String getUniqueSuffix() {
+	public String getUniqueSuffix() {
 		return uniqueSuffix;
 	}
 
-	void setUniqueSuffix(String uniqueSuffix) {
+	public void setUniqueSuffix(String uniqueSuffix) {
 		this.uniqueSuffix = uniqueSuffix;
 	}
 

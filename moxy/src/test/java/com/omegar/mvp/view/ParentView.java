@@ -13,9 +13,9 @@ import com.omegar.mvp.viewstate.strategy.StateStrategyType;
 public interface ParentView extends MvpView {
 	void withoutStrategyMethod();
 
-	@StateStrategyType(AddToEndSingleStrategy.class)
+	@StateStrategyType(ADD_TO_END_SINGLE)
 	void customStrategyMethod();
 
-	@StateStrategyType(AddToEndSingleStrategy.class)
+	@StateStrategyType(ADD_TO_END_SINGLE)
 	void parentOverrideMethodWithCustomStrategy();
 }

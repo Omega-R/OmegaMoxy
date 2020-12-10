@@ -11,11 +11,11 @@ import com.omegar.mvp.viewstate.strategy.StateStrategy;
  */
 public abstract class ViewCommand<View extends MvpView> {
 	private final String mTag;
-	private final Class<? extends StateStrategy> mStateStrategyType;
+	private final Class<? extends StateStrategy> mStateStrategyClass;
 
-	protected ViewCommand(String tag, Class<? extends StateStrategy> stateStrategyType) {
+	protected ViewCommand(String tag, Class<? extends StateStrategy> stateStrategyClass) {
 		mTag = tag;
-		mStateStrategyType = stateStrategyType;
+		mStateStrategyClass = stateStrategyClass;
 	}
 
 	public abstract void apply(View view);
@@ -24,7 +24,7 @@ public abstract class ViewCommand<View extends MvpView> {
 		return mTag;
 	}
 
-	public Class<? extends StateStrategy> getStrategyType() {
-		return mStateStrategyType;
+	public Class<? extends StateStrategy> getStrategyClass() {
+		return mStateStrategyClass;
 	}
 }

@@ -1,4 +1,4 @@
-package com.omegar.mvp.compiler.presenterbinder;
+package com.omegar.mvp.compiler.entity;
 
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.compiler.Util;
@@ -8,7 +8,7 @@ import com.squareup.javapoet.TypeName;
 
 import javax.lang.model.type.TypeMirror;
 
-class TargetPresenterField {
+public class TargetPresenterField {
 	private final TypeMirror clazz;
 	private final boolean isParametrized;
 	private final TypeName typeName;
@@ -20,7 +20,7 @@ class TargetPresenterField {
 	private String presenterProviderMethodName;
 	private String presenterTagProviderMethodName;
 
-	TargetPresenterField(TypeMirror clazz,
+	public TargetPresenterField(TypeMirror clazz,
 	                     String name,
 	                     String presenterType,
 	                     String tag,
@@ -40,47 +40,51 @@ class TargetPresenterField {
 		this.presenterId = presenterId;
 	}
 
-	TypeMirror getClazz() {
+	public boolean isParametrized() {
+		return isParametrized;
+	}
+
+	public TypeMirror getClazz() {
 		return clazz;
 	}
 
-	TypeName getTypeName() {
+	public TypeName getTypeName() {
 		return typeName;
 	}
 
-	String getGeneratedClassName() {
+	public String getGeneratedClassName() {
 		return Util.capitalizeString(name) + MvpProcessor.PRESENTER_BINDER_INNER_SUFFIX;
 	}
 
-	String getTag() {
+	public String getTag() {
 		return tag;
 	}
 
-	String getName() {
+	public String getName() {
 		return name;
 	}
 
-	PresenterType getPresenterType() {
+	public PresenterType getPresenterType() {
 		return presenterType;
 	}
 
-	String getPresenterId() {
+	public String getPresenterId() {
 		return presenterId;
 	}
 
-	String getPresenterProviderMethodName() {
+	public String getPresenterProviderMethodName() {
 		return presenterProviderMethodName;
 	}
 
-	void setPresenterProviderMethodName(String presenterProviderMethodName) {
+	public void setPresenterProviderMethodName(String presenterProviderMethodName) {
 		this.presenterProviderMethodName = presenterProviderMethodName;
 	}
 
-	String getPresenterTagProviderMethodName() {
+	public String getPresenterTagProviderMethodName() {
 		return presenterTagProviderMethodName;
 	}
 
-	void setPresenterTagProviderMethodName(String presenterTagProviderMethodName) {
+	public void setPresenterTagProviderMethodName(String presenterTagProviderMethodName) {
 		this.presenterTagProviderMethodName = presenterTagProviderMethodName;
 	}
 }

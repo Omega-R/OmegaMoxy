@@ -6,7 +6,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatDialogFragment;
 import androidx.fragment.app.Fragment;
 
-public class MvpAppCompatDialogFragment extends AppCompatDialogFragment {
+public class MvpAppCompatDialogFragment extends AppCompatDialogFragment implements MvpDelegateHolder {
 
     private boolean mIsStateSaved;
     private MvpDelegate<? extends MvpAppCompatDialogFragment> mMvpDelegate;
@@ -85,6 +85,7 @@ public class MvpAppCompatDialogFragment extends AppCompatDialogFragment {
     /**
      * @return The {@link MvpDelegate} being used by this Fragment.
      */
+    @Override
     public MvpDelegate getMvpDelegate() {
         if (mMvpDelegate == null) {
             mMvpDelegate = new MvpDelegate<>(this);

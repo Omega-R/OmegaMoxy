@@ -1,9 +1,7 @@
 package com.omegar.mvp.viewstate;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.omegar.mvp.MoxyReflector;
@@ -16,10 +14,8 @@ import com.omegar.mvp.viewstate.strategy.StateStrategy;
  *
  * @author Yuri Shmakov
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
 public class ViewCommands<View extends MvpView> {
-	private List<ViewCommand<View>> mState = new ArrayList<>();
-	private Map<Class<? extends StateStrategy>, StateStrategy> mStrategies = new HashMap<>();
+	private final List<ViewCommand<View>> mState = new ArrayList<>();
 
 	public void beforeApply(ViewCommand<View> viewCommand) {
 		StateStrategy stateStrategy = getStateStrategy(viewCommand);
@@ -34,21 +30,7 @@ public class ViewCommands<View extends MvpView> {
 	}
 
 	private StateStrategy getStateStrategy(ViewCommand<View> viewCommand) {
-		StateStrategy stateStrategy = (StateStrategy) MoxyReflector.getStrategy(viewCommand.getStrategyType());
-		if (stateStrategy == null) {
-			//noinspection TryWithIdenticalCatches
-			try {
-				stateStrategy = viewCommand.getStrategyType().newInstance();
-			} catch (InstantiationException e) {
-				throw new IllegalArgumentException("Unable to create state strategy: " + viewCommand.toString());
-			} catch (IllegalAccessException e) {
-				throw new IllegalArgumentException("Unable to create state strategy: " + viewCommand.toString());
-			}
-
-			mStrategies.put(viewCommand.getStrategyType(), stateStrategy);
-		}
-
-		return stateStrategy;
+		return (StateStrategy) MoxyReflector.getStrategy(viewCommand.getStrategyClass());
 	}
 
 	public boolean isEmpty() {

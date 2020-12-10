@@ -9,6 +9,7 @@ import com.omegar.mvp.MvpPresenter;
  * @author Alexander Blinov
  * @author Yuri Shmakov
  */
+@SuppressWarnings("rawtypes")
 public abstract class PresenterField<PresentersContainer> {
 	protected final String tag;
 	protected final PresenterType presenterType;
@@ -25,6 +26,7 @@ public abstract class PresenterField<PresentersContainer> {
 	public abstract void bind(PresentersContainer container, MvpPresenter presenter);
 
 	// Delegated may be used from generated code if user plane to generate tag at runtime
+	@SuppressWarnings("unused")
 	public String getTag(PresentersContainer delegated) {
 		return tag;
 	}

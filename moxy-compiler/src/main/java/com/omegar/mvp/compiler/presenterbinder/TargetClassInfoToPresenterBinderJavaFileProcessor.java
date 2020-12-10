@@ -3,7 +3,9 @@ package com.omegar.mvp.compiler.presenterbinder;
 import com.omegar.mvp.MvpPresenter;
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.PresenterBinder;
-import com.omegar.mvp.compiler.JavaFilesGenerator;
+import com.omegar.mvp.compiler.entity.TargetClassInfo;
+import com.omegar.mvp.compiler.entity.TargetPresenterField;
+import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
 import com.omegar.mvp.compiler.Util;
 import com.omegar.mvp.presenter.PresenterField;
 import com.squareup.javapoet.ClassName;
@@ -14,7 +16,6 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.WildcardTypeName;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.lang.model.element.Modifier;
@@ -48,29 +49,30 @@ import javax.lang.model.type.DeclaredType;
  * @author Yuri Shmakov
  * @author Alexander Blinov
  */
-public final class PresenterBinderClassGenerator extends JavaFilesGenerator<TargetClassInfo> {
+public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends JavaFileProcessor<TargetClassInfo> {
 
 	@Override
-	public List<JavaFile> generate(TargetClassInfo targetClassInfo) {
+	public JavaFile process(TargetClassInfo targetClassInfo) {
 		ClassName targetClassName = targetClassInfo.getName();
+		TypeElement element = targetClassInfo.getTypeElement();
 		List<TargetPresenterField> fields = targetClassInfo.getFields();
 
 		final String containerSimpleName = String.join("$", targetClassName.simpleNames());
 
 		TypeSpec.Builder classBuilder = TypeSpec.classBuilder(containerSimpleName + MvpProcessor.PRESENTER_BINDER_SUFFIX)
+				.addOriginatingElement(targetClassInfo.getTypeElement())
 				.addModifiers(Modifier.PUBLIC)
 				.superclass(ParameterizedTypeName.get(ClassName.get(PresenterBinder.class), targetClassName));
 
 		for (TargetPresenterField field : fields) {
-			classBuilder.addType(generatePresenterBinderClass(field, targetClassName));
+			classBuilder.addType(generatePresenterBinderClass(element, field, targetClassName));
 		}
 
 		classBuilder.addMethod(generateGetPresentersMethod(fields, targetClassName));
 
-		JavaFile javaFile = JavaFile.builder(targetClassName.packageName(), classBuilder.build())
+		return JavaFile.builder(targetClassName.packageName(), classBuilder.build())
 				.indent("\t")
 				.build();
-		return Collections.singletonList(javaFile);
 	}
 
 	private static MethodSpec generateGetPresentersMethod(List<TargetPresenterField> fields,
@@ -95,12 +97,13 @@ public final class PresenterBinderClassGenerator extends JavaFilesGenerator<Targ
 		return builder.build();
 	}
 
-	private static TypeSpec generatePresenterBinderClass(TargetPresenterField field,
-	                                                     ClassName targetClassName) {
+	private static TypeSpec generatePresenterBinderClass(TypeElement element, TargetPresenterField field,
+														 ClassName targetClassName) {
 		String tag = field.getTag();
 		if (tag == null) tag = field.getName();
 
 		TypeSpec.Builder classBuilder = TypeSpec.classBuilder(field.getGeneratedClassName())
+				.addOriginatingElement(element)
 				.addModifiers(Modifier.PUBLIC)
 				.superclass(ParameterizedTypeName.get(
 						ClassName.get(PresenterField.class), targetClassName))
@@ -129,7 +132,7 @@ public final class PresenterBinderClassGenerator extends JavaFilesGenerator<Targ
 	}
 
 	private static MethodSpec generateBindMethod(TargetPresenterField field,
-	                                             ClassName targetClassName) {
+												 ClassName targetClassName) {
 		return MethodSpec.methodBuilder("bind")
 				.addAnnotation(Override.class)
 				.addModifiers(Modifier.PUBLIC)
@@ -140,7 +143,7 @@ public final class PresenterBinderClassGenerator extends JavaFilesGenerator<Targ
 	}
 
 	private static MethodSpec generateProvidePresenterMethod(TargetPresenterField field,
-	                                                         ClassName targetClassName) {
+															 ClassName targetClassName) {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("providePresenter")
 				.addAnnotation(Override.class)
 				.addModifiers(Modifier.PUBLIC)

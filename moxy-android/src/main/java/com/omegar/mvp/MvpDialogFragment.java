@@ -12,7 +12,7 @@ import android.os.Bundle;
  * @author Konstantin Tckhovrebov
  */
 @SuppressWarnings("ConstantConditions")
-public class MvpDialogFragment extends DialogFragment {
+public class MvpDialogFragment extends DialogFragment implements MvpDelegateHolder {
 
 	private boolean mIsStateSaved;
 	private MvpDelegate<? extends MvpDialogFragment> mMvpDelegate;
@@ -91,6 +91,7 @@ public class MvpDialogFragment extends DialogFragment {
 	/**
 	 * @return The {@link MvpDelegate} being used by this Fragment.
 	 */
+	@Override
 	public MvpDelegate getMvpDelegate() {
 		if (mMvpDelegate == null) {
 			mMvpDelegate = new MvpDelegate<>(this);

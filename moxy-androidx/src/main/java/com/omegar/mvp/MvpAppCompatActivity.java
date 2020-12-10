@@ -13,8 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
  *
  * @author Vova Stelmashchuk
  */
-@SuppressWarnings("unused")
-public class MvpAppCompatActivity extends AppCompatActivity {
+@SuppressWarnings({"unused", "rawtypes"})
+public class MvpAppCompatActivity extends AppCompatActivity implements MvpDelegateHolder {
     private MvpDelegate<? extends MvpAppCompatActivity> mMvpDelegate;
 
     public MvpAppCompatActivity() { super(); }
@@ -72,6 +72,7 @@ public class MvpAppCompatActivity extends AppCompatActivity {
     /**
      * @return The {@link MvpDelegate} being used by this Activity.
      */
+    @Override
     public MvpDelegate getMvpDelegate() {
         if (mMvpDelegate == null) {
             mMvpDelegate = new MvpDelegate<>(this);

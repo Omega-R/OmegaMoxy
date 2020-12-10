@@ -1,18 +1,16 @@
-package com.omegar.mvp.compiler.viewstate;
+package com.omegar.mvp.compiler.entity;
 
-import com.omegar.mvp.compiler.Util;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Date: 27-Jul-2017
@@ -20,20 +18,19 @@ import javax.lang.model.type.TypeMirror;
  *
  * @author Evgeny Kursakov
  */
-class ViewInterfaceInfo {
+public class ViewInterfaceInfo implements TypeElementHolder {
     @Nullable
     private final ViewInterfaceInfo superInterfaceInfo;
     private final TypeElement element;
     private final ClassName name;
     private final List<TypeVariableName> typeVariables;
     private final List<ViewMethod> methods;
-    private final List<TypeElement> superTypeMvpElements;
 
-    ViewInterfaceInfo(TypeElement element, List<ViewMethod> methods) {
+    public ViewInterfaceInfo(TypeElement element, List<ViewMethod> methods) {
         this(null, element, methods);
     }
 
-    ViewInterfaceInfo(@Nullable ViewInterfaceInfo superInterfaceInfo, TypeElement element, List<ViewMethod> methods) {
+    public ViewInterfaceInfo(@Nullable ViewInterfaceInfo superInterfaceInfo, TypeElement element, List<ViewMethod> methods) {
         this.superInterfaceInfo = superInterfaceInfo;
         this.element = element;
         this.name = ClassName.get(element);
@@ -42,26 +39,23 @@ class ViewInterfaceInfo {
         this.typeVariables = element.getTypeParameters().stream()
                 .map(TypeVariableName::get)
                 .collect(Collectors.toList());
-        superTypeMvpElements = element.getInterfaces().stream()
-                .map((Function<TypeMirror, TypeElement>) Util::asElement)
-                .filter(Util::isMvpElement)
-                .collect(Collectors.toList());
+
     }
 
     @Nullable
-    ViewInterfaceInfo getSuperInterfaceInfo() {
+    public ViewInterfaceInfo getSuperInterfaceInfo() {
         return superInterfaceInfo;
     }
 
-    public TypeElement getElement() {
+    public TypeElement getTypeElement() {
         return element;
     }
 
-    ClassName getName() {
+    public ClassName getName() {
         return name;
     }
 
-    TypeName getNameWithTypeVariables() {
+    public TypeName getNameWithTypeVariables() {
         if (typeVariables.isEmpty()) {
             return name;
         } else {
@@ -72,20 +66,16 @@ class ViewInterfaceInfo {
         }
     }
 
-    List<TypeVariableName> getTypeVariables() {
+    public List<TypeVariableName> getTypeVariables() {
         return typeVariables;
     }
 
-    List<ViewMethod> getMethods() {
+    public List<ViewMethod> getMethods() {
         return methods;
     }
 
-    TypeElement getSuperClassElement() {
-        return superInterfaceInfo == null ? null : superInterfaceInfo.getElement();
-    }
-
-    List<TypeElement> getSuperTypeMvpElements() {
-        return superTypeMvpElements;
+    public TypeElement getSuperClassElement() {
+        return superInterfaceInfo == null ? null : superInterfaceInfo.getTypeElement();
     }
 
     @Override

@@ -1,4 +1,4 @@
-apply plugin: 'java'
+apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 apply plugin: 'maven'
 
@@ -16,6 +16,7 @@ configurations {
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
+
 
 task clearPublishDir(type: Delete) {
     delete publishDir
@@ -249,12 +250,12 @@ assemble.dependsOn copyVersion
 dependencies {
     implementation project(':moxy')
     implementation deps.javapoet
+    implementation deps.gradleIncapHelperAnnotations
 
     compileOnly deps.autocommon
     compileOnly deps.autoserviceAnnotations
     annotationProcessor deps.autoservice
     compileOnly deps.guava
-    compileOnly deps.gradleIncapHelperAnnotations
     annotationProcessor deps.gradleIncapHelperProcessor
 
     javadocDeps project(':moxy')

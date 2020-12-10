@@ -1,21 +1,26 @@
 package com.omegar.mvp.compiler.viewstate;
 
-import com.omegar.mvp.compiler.ElementProcessor;
-import com.omegar.mvp.compiler.MvpCompiler;
+import com.omegar.mvp.MvpView;
+import com.omegar.mvp.compiler.entity.ViewInterfaceInfo;
+import com.omegar.mvp.compiler.entity.ViewMethod;
+import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.Util;
+import com.omegar.mvp.compiler.pipeline.Publisher;
+import com.omegar.mvp.compiler.pipeline.PipelineContext;
+import com.omegar.mvp.viewstate.strategy.StrategyType;
 import com.omegar.mvp.viewstate.strategy.StateStrategyType;
 import com.squareup.javapoet.ParameterSpec;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -25,6 +30,8 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 import static com.omegar.mvp.compiler.Util.MVP_VIEW_CLASS_NAME;
@@ -37,96 +44,50 @@ import static com.omegar.mvp.compiler.Util.isMvpElement;
  *
  * @author Evgeny Kursakov
  */
-public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<ViewInterfaceInfo>> {
+public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeElement, ViewInterfaceInfo> {
 	private static final String STATE_STRATEGY_TYPE_ANNOTATION = StateStrategyType.class.getName();
 
-	private TypeElement viewInterfaceElement;
-	private String viewInterfaceName;
-	private Set<TypeElement> usedStrategies = new HashSet<>();
+	private final Elements mElements;
+	private final Types mTypes;
+	private final Messager mMessager;
+	private final Publisher<TypeElement> mUsedStrategiesPublisher;
+	private final TypeMirror mMvpViewTypeMirror;
 
-	public List<TypeElement> getUsedStrategies() {
-		return new ArrayList<>(usedStrategies);
+
+	public ElementToViewInterfaceInfoProcessor(Elements elements, Types types, Messager messager, Publisher<TypeElement> usedStrategiesPublisher) {
+		mElements = elements;
+		mTypes = types;
+		mMessager = messager;
+		mUsedStrategiesPublisher = usedStrategiesPublisher;
+		mMvpViewTypeMirror = elements.getTypeElement(MvpView.class.getCanonicalName()).asType();
 	}
 
 	@Override
-	public List<ViewInterfaceInfo> process(TypeElement element) {
-		List<ViewInterfaceInfo> list = new ArrayList<>(generateInfos(element));
-		fillWithNotInheredMethods(list);
-		return list;
-	}
-
-	private void fillWithNotInheredMethods(List<ViewInterfaceInfo> list) {
-		for (ViewInterfaceInfo info : list) {
-			TypeElement element = info.getElement();
-			List<ViewMethod> infoMethods = info.getMethods();
-
-			if (info.getSuperTypeMvpElements().size() > 1) {
-				List<ViewMethod> inheredMethods = getInheredMethods(info);
-				for (ViewMethod method : getNotInheredMethods(info, list)) {
-					if (!inheredMethods.contains(method)) {
-						infoMethods.add(new ViewMethod((DeclaredType) element.asType(), method));
-					}
-				}
-			}
+	public void process(TypeElement element, PipelineContext<ViewInterfaceInfo> context) {
+		Collection<ViewInterfaceInfo> list = generateInfos(element);
+		for (ViewInterfaceInfo info: list) {
+			context.next(info);
 		}
-	}
-
-	private List<ViewMethod> getInheredMethods(ViewInterfaceInfo info) {
-		List<ViewMethod> methods = new ArrayList<>(info.getMethods());
-
-		ViewInterfaceInfo superInterfaceInfo = info.getSuperInterfaceInfo();
-		if (superInterfaceInfo != null) methods.addAll(getInheredMethods(superInterfaceInfo));
-
-		return methods;
-	}
-
-	private Set<ViewMethod> getNotInheredMethods(ViewInterfaceInfo info, List<ViewInterfaceInfo> infoList) {
-		List<TypeElement> elements = info.getSuperTypeMvpElements();
-		if (elements.size() <= 1) return Collections.emptySet();
-
-		assert info.getSuperInterfaceInfo() != null;
-		TypeElement superClassElement = info.getSuperInterfaceInfo().getElement();
-
-		Set<ViewMethod> methodSet = new LinkedHashSet<>();
-		for (TypeElement element : elements) {
-			if (!element.equals(superClassElement)) {
-				ViewInterfaceInfo infoByType = getViewInterfaceInfoByTypeElement(infoList, element);
-				if (infoByType != null) {
-					methodSet.addAll(getInheredMethods(infoByType));
-					methodSet.addAll(getNotInheredMethods(infoByType, infoList));
-				}
-			}
-		}
-		return methodSet;
-	}
-
-	private ViewInterfaceInfo getViewInterfaceInfoByTypeElement(List<ViewInterfaceInfo> list, TypeElement element) {
-		for (ViewInterfaceInfo info : list) {
-			if (info.getElement().equals(element)) return info;
-		}
-		return null;
 	}
 
 	private Set<ViewInterfaceInfo> generateInfos(TypeElement element) {
 		Set<ViewInterfaceInfo> interfaceInfos = new LinkedHashSet<>();
-		this.viewInterfaceElement = element;
-		viewInterfaceName = element.getSimpleName().toString();
 
 		List<ViewMethod> methods = new ArrayList<>();
 
 		// Get methods for input class
-		getMethods(element, new ArrayList<>(), methods);
+		getMethods(element, new ArrayList<>(), methods, element);
 
         // Add methods from super interfaces
 		ViewInterfaceInfo superInterfaceInfo = null;
 		for (TypeMirror typeMirror : element.getInterfaces()) {
 			final TypeElement interfaceElement = asElement(typeMirror);
-			if (isMvpElement(interfaceElement)) {
+
+			if (interfaceElement == null || mTypes.isAssignable(interfaceElement.asType(), mMvpViewTypeMirror)) {
 				Set<ViewInterfaceInfo> parentInfos = generateInfos(interfaceElement);
 				if (superInterfaceInfo == null) {
 					superInterfaceInfo = Util.lastOrNull(parentInfos);
 				}
-				interfaceInfos.addAll(parentInfos);
             }
 		}
 
@@ -152,8 +113,11 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 	}
 
 	private void getMethods(TypeElement typeElement,
-	                        List<ViewMethod> rootMethods,
-	                        List<ViewMethod> superinterfacesMethods) {
+							List<ViewMethod> rootMethods,
+							List<ViewMethod> superinterfacesMethods,
+							TypeElement viewInterfaceElement) {
+
+
 		for (Element element : typeElement.getEnclosedElements()) {
 			// ignore all but non-static methods
 			if (element.getKind() != ElementKind.METHOD || element.getModifiers().contains(Modifier.STATIC)) {
@@ -171,31 +135,38 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 						methodElement.getSimpleName(),
 						methodElement.getReturnType()
 				);
-				MvpCompiler.getMessager().printMessage(Diagnostic.Kind.ERROR, message);
+				mMessager.printMessage(Diagnostic.Kind.ERROR, message);
 			}
 
 			AnnotationMirror annotation = Util.getAnnotation(methodElement, STATE_STRATEGY_TYPE_ANNOTATION);
 
-			// get strategy from annotation
-			TypeMirror strategyClassFromAnnotation = Util.getAnnotationValueAsTypeMirror(annotation, "value");
+			StrategyType type = Util.getAnnotationValueAsStrategyType(annotation, "value");
 
-			TypeElement strategyClass;
-			if (strategyClassFromAnnotation != null) {
-				strategyClass = (TypeElement) ((DeclaredType) strategyClassFromAnnotation).asElement();
+			TypeElement strategyClass = null;
+
+			if (type == StrategyType.CUSTOM || type == null) {
+				// get strategy from annotation
+				TypeMirror strategyClassFromAnnotation = Util.getAnnotationValueAsTypeMirror(annotation, "custom");
+				if (strategyClassFromAnnotation != null) {
+					strategyClass = (TypeElement) ((DeclaredType) strategyClassFromAnnotation).asElement();
+				}
 			} else {
-				String message = String.format("You are trying generate ViewState for %s. " +
+				strategyClass = mElements.getTypeElement(type.getStrategyClass().getCanonicalName());
+			}
+
+			if (strategyClass == null) {
+				String message = String.format("\nYou are trying generate ViewState for %s. " +
 								"But %s interface and \"%s\" method don't provide Strategy type. " +
 								"Please annotate your %s interface or method with Strategy." + "\n\n" +
-								"For example:\n@StateStrategyType(AddToEndSingleStrategy::class)" + "\n" + "fun %s",
+								"For example:\n@StateStrategyType(ADD_TO_END_SINGLE)" + "\n" + "fun %s()\n\n",
 						typeElement.getSimpleName(),
 						typeElement.getSimpleName(),
 						methodElement.getSimpleName(),
 						typeElement.getSimpleName(),
 						methodElement.getSimpleName()
 				);
-				MvpCompiler.getMessager().printMessage(Diagnostic.Kind.ERROR, message);
+				mMessager.printMessage(Diagnostic.Kind.ERROR, message);
 				return;
-
 			}
 
 			// get tag from annotation
@@ -209,9 +180,9 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 			}
 
 			// add strategy to list
-			usedStrategies.add(strategyClass);
+			mUsedStrategiesPublisher.next(strategyClass);
 
-			final ViewMethod method = new ViewMethod(
+			final ViewMethod method = new ViewMethod(mTypes,
 					(DeclaredType) viewInterfaceElement.asType(), methodElement, strategyClass, methodTag
 			);
 
@@ -220,7 +191,7 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 			}
 
 			if (superinterfacesMethods.contains(method)) {
-				checkStrategyAndTagEquals(method, superinterfacesMethods.get(superinterfacesMethods.indexOf(method)));
+				checkStrategyAndTagEquals(method, superinterfacesMethods.get(superinterfacesMethods.indexOf(method)), viewInterfaceElement);
 				continue;
 			}
 
@@ -228,7 +199,7 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 		}
 	}
 
-	private void checkStrategyAndTagEquals(ViewMethod method, ViewMethod existingMethod) {
+	private void checkStrategyAndTagEquals(ViewMethod method, ViewMethod existingMethod, TypeElement viewInterfaceName) {
 		List<String> differentParts = new ArrayList<>();
 		if (!existingMethod.getStrategy().equals(method.getStrategy())) {
 			differentParts.add("strategies");
@@ -248,10 +219,13 @@ public class ViewInterfaceProcessor extends ElementProcessor<TypeElement, List<V
 					" and " + method.getEnclosedClassName() +
 					" has method " + method.getName() + "(" + arguments + ")" +
 					" with different " + parts + "." +
-					" Override this method in " + viewInterfaceName + " or make " + parts + " equals");
+					" Override this method in " + viewInterfaceName.getSimpleName().toString() + " or make " + parts + " equals");
 		}
 	}
 
-
-
+	@Override
+	protected void finish(PipelineContext<ViewInterfaceInfo> nextContext) {
+		mUsedStrategiesPublisher.finish();
+		super.finish(nextContext);
+	}
 }

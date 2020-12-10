@@ -3,9 +3,11 @@ package com.omegar.mvp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import android.os.Bundle;
 
+import com.omegar.mvp.presenter.PresenterField;
 import com.omegar.mvp.presenter.PresenterType;
 
 /**
@@ -31,9 +33,12 @@ import com.omegar.mvp.presenter.PresenterType;
  * @author Alexander Blinov
  * @author Konstantin Tckhovrebov
  */
+@SuppressWarnings("rawtypes")
 public class MvpDelegate<Delegated> {
 	private static final String KEY_TAG = "MvpDelegate.KEY_TAG";
 	public static final String MOXY_DELEGATE_TAGS_KEY = "MoxyDelegateBundle";
+
+	private final List<PresenterField<Delegated>> mCustomPresenterFields = new ArrayList<>();
 
 	private String mKeyTag = KEY_TAG;
 	private String mDelegateTag;
@@ -49,6 +54,7 @@ public class MvpDelegate<Delegated> {
 		mChildDelegates = new ArrayList<>();
 	}
 
+	@SuppressWarnings("unused")
 	public void setParentDelegate(MvpDelegate delegate, String childId) {
 		if (mBundle != null) {
 			throw new IllegalStateException("You should call setParentDelegate() before first onCreate()");
@@ -85,10 +91,10 @@ public class MvpDelegate<Delegated> {
 		mParentDelegate.removeChildDelegate(this);
 	}
 
-	public void removeAllChildDelegates()
-	{
+	@SuppressWarnings("unused")
+	public void removeAllChildDelegates() {
 		// For avoiding ConcurrentModificationException when removing by removeChildDelegate()
-		List<MvpDelegate> childDelegatesClone = new ArrayList<MvpDelegate>(mChildDelegates.size());
+		List<MvpDelegate> childDelegatesClone = new ArrayList<>(mChildDelegates.size());
 		childDelegatesClone.addAll(mChildDelegates);
 
 		for (MvpDelegate childDelegate : childDelegatesClone) {
@@ -133,7 +139,7 @@ public class MvpDelegate<Delegated> {
 		}
 
 		//bind presenters to view
-		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag);
+		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag, mCustomPresenterFields);
 
 		for (MvpDelegate childDelegate : mChildDelegates) {
 			childDelegate.onCreate(bundle);
@@ -190,7 +196,7 @@ public class MvpDelegate<Delegated> {
 		}
 
 		// For avoiding ConcurrentModificationException when removing from mChildDelegates
-		List<MvpDelegate> childDelegatesClone = new ArrayList<MvpDelegate>(mChildDelegates.size());
+		List<MvpDelegate> childDelegatesClone = new ArrayList<>(mChildDelegates.size());
 		childDelegatesClone.addAll(mChildDelegates);
 
 		for (MvpDelegate childDelegate : childDelegatesClone) {
@@ -253,8 +259,13 @@ public class MvpDelegate<Delegated> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public Bundle getChildrenSaveState() {
 		return mBundle;
+	}
+
+	public void addCustomPresenterFields(PresenterField<Delegated> customPresenterField) {
+		mCustomPresenterFields.add(customPresenterField);
 	}
 
 	/**

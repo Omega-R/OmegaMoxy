@@ -15,17 +15,22 @@ import com.omegar.mvp.viewstate.MvpViewState;
  * @author Alexander Blinov
  * @author Konstantin Tckhovrebov
  */
+@SuppressWarnings("rawtypes")
+@InjectViewState
 public abstract class MvpPresenter<View extends MvpView> {
+	private final Set<View> mViews;
 	private boolean mFirstLaunch = true;
 	private String mTag;
 	private PresenterType mPresenterType;
-	private Set<View> mViews;
 	private View mViewStateAsView;
 	private MvpViewState<View> mViewState;
 	private Class<? extends MvpPresenter> mPresenterClass;
 
+	@SuppressWarnings("unchecked")
 	public MvpPresenter() {
-		Binder.bind(this);
+        MvpView viewState = (MvpView) MoxyReflector.getViewState(getClass());
+		mViewStateAsView = (View) viewState;
+        mViewState = (MvpViewState<View>) viewState;
 
 		mViews = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
 	}
@@ -37,7 +42,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 *
 	 * @param view to attachment
 	 */
-	public void attachView(View view) {
+	void attachView(View view) {
 		if (mViewState != null) {
 			mViewState.attachView(view);
 		} else {
@@ -67,7 +72,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 * @param view view to detach
 	 */
 	@SuppressWarnings("WeakerAccess")
-	public void detachView(View view) {
+	void detachView(View view) {
 		if (mViewState != null) {
 			mViewState.detachView(view);
 		} else {
@@ -75,7 +80,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 		}
 	}
 
-	public void destroyView(View view) {
+	void destroyView(View view) {
 		if (mViewState != null) {
 			mViewState.destroyView(view);
 		}
@@ -85,7 +90,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 * @return views attached to view state, or attached to presenter(if view state not exists)
 	 */
 	@SuppressWarnings("WeakerAccess")
-	public Set<View> getAttachedViews() {
+	protected Set<View> getAttachedViews() {
 		if (mViewState != null) {
 			return mViewState.getViews();
 		}
@@ -97,7 +102,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 * @return view state, casted to view interface for simplify
 	 */
 	@SuppressWarnings("WeakerAccess")
-	public View getViewState() {
+	protected View getViewState() {
 		return mViewStateAsView;
 	}
 
@@ -108,7 +113,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 * @return true if view state restore state to incoming view. false otherwise.
 	 */
 	@SuppressWarnings("unused")
-	public boolean isInRestoreState(View view) {
+	protected boolean isInRestoreState(View view) {
 		//noinspection SimplifiableIfStatement
 		if (mViewState != null) {
 			return mViewState.isInRestoreState(view);
@@ -122,7 +127,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 * @param viewState that implements type, setted as View generic param
 	 */
 	@SuppressWarnings({"unchecked", "unused"})
-	public void setViewState(MvpViewState<View> viewState) {
+	protected void setViewState(MvpViewState<View> viewState) {
 		mViewStateAsView = (View) viewState;
 		mViewState = (MvpViewState) viewState;
 	}
@@ -147,6 +152,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 		mPresenterClass = presenterClass;
 	}
 
+	@SuppressWarnings("unused")
 	Class<? extends MvpPresenter> getPresenterClass() {
 		return mPresenterClass;
 	}
@@ -155,15 +161,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 * <p>Called before reference on this presenter will be cleared and instance of presenter
 	 * will be never used.</p>
 	 */
-	public void onDestroy() {
+	protected void onDestroy() {
 	}
 
-	private static class Binder {
-		static void bind(MvpPresenter presenter) {
-			MvpView viewState = (MvpView) MoxyReflector.getViewState(presenter.getClass());
-
-			presenter.mViewStateAsView = viewState;
-			presenter.mViewState = (MvpViewState) viewState;
-		}
-	}
 }

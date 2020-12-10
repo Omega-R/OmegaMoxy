@@ -10,7 +10,7 @@ import com.omegar.mvp.viewstate.strategy.StateStrategyType;
  * @author Savin Mikhail
  */
 public interface ViewStateParentStrategyTagView {
-	@StateStrategyType(AddToEndSingleStrategy.class)
+	@StateStrategyType(ADD_TO_END_SINGLE)
 	void method1();
 
 	@StateStrategyType(value = AddToEndSingleStrategy.class, tag = "Test2")

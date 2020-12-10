@@ -12,9 +12,9 @@ import android.util.Log;
  * @author Yuri Shmakov
  * @author Alexander Blinov
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings("rawtypes")
 public class PresenterStore {
-	private Map<String, MvpPresenter> mPresenters = new HashMap<>();
+	private final Map<String, MvpPresenter> mPresenters = new HashMap<>();
 
 	/**
 	 * Add presenter to storage
@@ -47,6 +47,7 @@ public class PresenterStore {
 		return mPresenters.remove(tag);
 	}
 
+	@SuppressWarnings("unused")
 	public void logPresenters() {
 		for (Map.Entry<String, MvpPresenter> currentEntry : mPresenters.entrySet()) {
 			Log.d("PresenterStore", currentEntry.getKey() + " -> " +

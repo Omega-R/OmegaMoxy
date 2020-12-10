@@ -1,6 +1,10 @@
 package com.omegar.mvp.compiler.presenterbinder;
 
-import com.omegar.mvp.compiler.ElementProcessor;
+import com.omegar.mvp.compiler.entity.PresenterProviderMethod;
+import com.omegar.mvp.compiler.entity.TagProviderMethod;
+import com.omegar.mvp.compiler.entity.TargetClassInfo;
+import com.omegar.mvp.compiler.entity.TargetPresenterField;
+import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.Util;
 import com.omegar.mvp.presenter.InjectPresenter;
 import com.omegar.mvp.presenter.ProvidePresenter;
@@ -14,47 +18,26 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-public class InjectPresenterProcessor extends ElementProcessor<VariableElement, TargetClassInfo> {
+public class ElementToTargetClassInfoProcessor extends ElementProcessor<TypeElement, com.omegar.mvp.compiler.entity.TargetClassInfo> {
 	private static final String PRESENTER_FIELD_ANNOTATION = InjectPresenter.class.getName();
 	private static final String PROVIDE_PRESENTER_ANNOTATION = ProvidePresenter.class.getName();
 	private static final String PROVIDE_PRESENTER_TAG_ANNOTATION = ProvidePresenterTag.class.getName();
 
-	private final List<TypeElement> presentersContainers = new ArrayList<>();
-
-	public List<TypeElement> getPresentersContainers() {
-		return new ArrayList<>(presentersContainers);
-	}
-
 	@Override
-	public TargetClassInfo process(VariableElement variableElement) {
-		final Element enclosingElement = variableElement.getEnclosingElement();
-
-		if (!(enclosingElement instanceof TypeElement)) {
-			throw new RuntimeException("Only class fields could be annotated as @InjectPresenter: " +
-					variableElement + " at " + enclosingElement);
-		}
-
-		if (presentersContainers.contains(enclosingElement)) {
-			return null;
-		}
-
-		final TypeElement presentersContainer = (TypeElement) enclosingElement;
-		presentersContainers.add(presentersContainer);
-
+	protected com.omegar.mvp.compiler.entity.TargetClassInfo process(TypeElement presentersContainer) {
 		// gather presenter fields info
-		List<TargetPresenterField> fields = collectFields(presentersContainer);
+		List<com.omegar.mvp.compiler.entity.TargetPresenterField> fields = collectFields(presentersContainer);
 		bindProvidersToFields(fields, collectPresenterProviders(presentersContainer));
 		bindTagProvidersToFields(fields, collectTagProviders(presentersContainer));
 
 		return new TargetClassInfo(presentersContainer, fields);
 	}
 
-	private static List<TargetPresenterField> collectFields(TypeElement presentersContainer) {
-		List<TargetPresenterField> fields = new ArrayList<>();
+	private static List<com.omegar.mvp.compiler.entity.TargetPresenterField> collectFields(TypeElement presentersContainer) {
+		List<com.omegar.mvp.compiler.entity.TargetPresenterField> fields = new ArrayList<>();
 
 		for (Element element : presentersContainer.getEnclosedElements()) {
 			if (element.getKind() != ElementKind.FIELD) {
@@ -76,14 +59,14 @@ public class InjectPresenterProcessor extends ElementProcessor<VariableElement, 
 			String tag = Util.getAnnotationValueAsString(annotation, "tag");
 			String presenterId = Util.getAnnotationValueAsString(annotation, "presenterId");
 
-			TargetPresenterField field = new TargetPresenterField(clazz, name, type, tag, presenterId);
+			com.omegar.mvp.compiler.entity.TargetPresenterField field = new com.omegar.mvp.compiler.entity.TargetPresenterField(clazz, name, type, tag, presenterId);
 			fields.add(field);
 		}
 		return fields;
 	}
 
-	private static List<PresenterProviderMethod> collectPresenterProviders(TypeElement presentersContainer) {
-		List<PresenterProviderMethod> providers = new ArrayList<>();
+	private static List<com.omegar.mvp.compiler.entity.PresenterProviderMethod> collectPresenterProviders(TypeElement presentersContainer) {
+		List<com.omegar.mvp.compiler.entity.PresenterProviderMethod> providers = new ArrayList<>();
 
 		for (Element element : presentersContainer.getEnclosedElements()) {
 			if (element.getKind() != ElementKind.METHOD) {
@@ -105,13 +88,13 @@ public class InjectPresenterProcessor extends ElementProcessor<VariableElement, 
 			String tag = Util.getAnnotationValueAsString(annotation, "tag");
 			String presenterId = Util.getAnnotationValueAsString(annotation, "presenterId");
 
-			providers.add(new PresenterProviderMethod(kind, name, type, tag, presenterId));
+			providers.add(new com.omegar.mvp.compiler.entity.PresenterProviderMethod(kind, name, type, tag, presenterId));
 		}
 		return providers;
 	}
 
-	private static List<TagProviderMethod> collectTagProviders(TypeElement presentersContainer) {
-		List<TagProviderMethod> providers = new ArrayList<>();
+	private static List<com.omegar.mvp.compiler.entity.TagProviderMethod> collectTagProviders(TypeElement presentersContainer) {
+		List<com.omegar.mvp.compiler.entity.TagProviderMethod> providers = new ArrayList<>();
 
 		for (Element element : presentersContainer.getEnclosedElements()) {
 			if (element.getKind() != ElementKind.METHOD) {
@@ -132,13 +115,13 @@ public class InjectPresenterProcessor extends ElementProcessor<VariableElement, 
 			String type = Util.getAnnotationValueAsString(annotation, "type");
 			String presenterId = Util.getAnnotationValueAsString(annotation, "presenterId");
 
-			providers.add(new TagProviderMethod(presenterClass, name, type, presenterId));
+			providers.add(new com.omegar.mvp.compiler.entity.TagProviderMethod(presenterClass, name, type, presenterId));
 		}
 		return providers;
 	}
 
-	private static void bindProvidersToFields(List<TargetPresenterField> fields,
-	                                          List<PresenterProviderMethod> presenterProviders) {
+	private static void bindProvidersToFields(List<com.omegar.mvp.compiler.entity.TargetPresenterField> fields,
+	                                          List<com.omegar.mvp.compiler.entity.PresenterProviderMethod> presenterProviders) {
 		if (fields.isEmpty() || presenterProviders.isEmpty()) {
 			return;
 		}
@@ -146,7 +129,7 @@ public class InjectPresenterProcessor extends ElementProcessor<VariableElement, 
 		for (PresenterProviderMethod presenterProvider : presenterProviders) {
 			TypeMirror providerTypeMirror = presenterProvider.getClazz().asElement().asType();
 
-			for (TargetPresenterField field : fields) {
+			for (com.omegar.mvp.compiler.entity.TargetPresenterField field : fields) {
 				if ((field.getClazz()).equals(providerTypeMirror)) {
 					if (field.getPresenterType() != presenterProvider.getPresenterType()) {
 						continue;
@@ -173,8 +156,8 @@ public class InjectPresenterProcessor extends ElementProcessor<VariableElement, 
 		}
 	}
 
-	private static void bindTagProvidersToFields(List<TargetPresenterField> fields,
-	                                             List<TagProviderMethod> tagProviders) {
+	private static void bindTagProvidersToFields(List<com.omegar.mvp.compiler.entity.TargetPresenterField> fields,
+	                                             List<com.omegar.mvp.compiler.entity.TagProviderMethod> tagProviders) {
 		if (fields.isEmpty() || tagProviders.isEmpty()) {
 			return;
 		}
@@ -198,4 +181,5 @@ public class InjectPresenterProcessor extends ElementProcessor<VariableElement, 
 			}
 		}
 	}
+
 }
