@@ -1,4 +1,4 @@
-# Moxy
+# OmegaMoxy
 [![](https://jitpack.io/v/Omega-R/OmegaMoxy.svg)](https://jitpack.io/#Omega-R/OmegaMoxy)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
 
