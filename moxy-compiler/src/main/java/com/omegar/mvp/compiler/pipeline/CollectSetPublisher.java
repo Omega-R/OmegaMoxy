@@ -1,28 +1,23 @@
 package com.omegar.mvp.compiler.pipeline;
 
-import com.omegar.mvp.compiler.MvpCompiler;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Nullable;
-import javax.tools.Diagnostic;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Created by Anton Knyazev on 05.12.2020.
  */
 
-public class CollectListPublisher<I> extends Publisher<List<I>>{
+public class CollectSetPublisher<I> extends Publisher<Set<I>>{
 
-    private final List<I> mResult = new ArrayList<>();
+    private final Set<I> mResult = new LinkedHashSet<>();
     private final Publisher<I> mPublisher;
 
-    public CollectListPublisher(Publisher<I> publisher) {
+    public CollectSetPublisher(Publisher<I> publisher) {
         mPublisher = publisher;
     }
 
     @Override
-    public void publish(PipelineContext<List<I>> context) {
+    public void publish(PipelineContext<Set<I>> context) {
         super.publish(context);
         mPublisher.publish(new LocalContext());
     }
@@ -36,9 +31,9 @@ public class CollectListPublisher<I> extends Publisher<List<I>>{
 
         @Override
         public void finish() {
-            CollectListPublisher.this.next(new ArrayList<>(mResult));
+            CollectSetPublisher.this.next(new LinkedHashSet<>(mResult));
             mResult.clear();
-            CollectListPublisher.this.finish();
+            CollectSetPublisher.this.finish();
         }
     }
 

@@ -65,6 +65,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 	@Override
 	public void process(TypeElement element, PipelineContext<ViewInterfaceInfo> context) {
 		Collection<ViewInterfaceInfo> list = generateInfos(element);
+
 		for (ViewInterfaceInfo info: list) {
 			context.next(info);
 		}
@@ -83,7 +84,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 		for (TypeMirror typeMirror : element.getInterfaces()) {
 			final TypeElement interfaceElement = asElement(typeMirror);
 
-			if (interfaceElement == null || mTypes.isAssignable(interfaceElement.asType(), mMvpViewTypeMirror)) {
+			if (interfaceElement != null && mTypes.isAssignable(interfaceElement.asType(), mMvpViewTypeMirror)) {
 				Set<ViewInterfaceInfo> parentInfos = generateInfos(interfaceElement);
 				if (superInterfaceInfo == null) {
 					superInterfaceInfo = Util.lastOrNull(parentInfos);

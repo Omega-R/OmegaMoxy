@@ -53,7 +53,7 @@ import static javax.lang.model.SourceVersion.latestSupported;
  *
  * @author Yuri Shmakov
  */
-
+@SuppressWarnings("NewApi")
 @AutoService(Processor.class)
 @IncrementalAnnotationProcessor(IncrementalAnnotationProcessorType.DYNAMIC)
 public class MvpCompiler extends AbstractProcessor {
@@ -134,9 +134,7 @@ public class MvpCompiler extends AbstractProcessor {
 	}
 
 	private boolean throwableProcess(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-
 		String currentMoxyReflectorPackage = mOptions.getOrDefault(OPTION_MOXY_REFLECTOR_PACKAGE, DEFAULT_MOXY_REFLECTOR_PACKAGE);
-
 
 		Publisher<TypeElement> presenterContainerElementPublisher = new Publisher<>();
 		Publisher<TypeElement> presenterElementPublisher = new Publisher<>();
@@ -145,6 +143,35 @@ public class MvpCompiler extends AbstractProcessor {
 		Publisher<String> reflectorPackagesPublisher = new Publisher<>(getAdditionalMoxyReflectorPackages(roundEnv));
 
 		JavaFileWriter fileWriter = new JavaFileWriter(processingEnv.getFiler());
+
+		// moxyReflectorPipeline
+		new Pipeline.Builder<>(
+				QuadPublisher.collectQuad(
+						presenterElementPublisher,
+						presenterContainerElementPublisher,
+						strategiesElementPublisher,
+						reflectorPackagesPublisher))
+				.addProcessor(new MoxyReflectorProcessor(currentMoxyReflectorPackage))
+				.buildPipeline(fileWriter)
+				.start();
+
+
+		// viewStatePipeline
+		new Pipeline.Builder<>(viewElementPublisher)
+				.addProcessor(new ElementToViewInterfaceInfoProcessor(mElements, mTypes, mMessager, strategiesElementPublisher))
+				.uniqueFilter()
+				.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(mElements, mTypes, currentMoxyReflectorPackage, reflectorPackagesPublisher))
+				.buildPipeline(fileWriter)
+				.start();
+
+		// viewStateProviderPipeline
+		new Pipeline.Builder<>(new ElementsAnnotatedGenerator<>(roundEnv, mMessager, mInjectViewStateAnnotation))
+				.addProcessor(new ElementToPresenterInfoProcessor(mElements, viewElementPublisher))
+				.addValidator(new NormalPresenterValidator())
+				.copyTypeElementTo(presenterElementPublisher)
+				.addProcessor(new PresenterInfoToViewStateProviderJavaFileProcessor().withCache())
+				.buildPipeline(fileWriter)
+				.start();
 
 		if (mInjectPresenterAnnotation.contains(annotations)) {
 			checkInjectors(roundEnv, new PresenterInjectorRules(mElements, mMessager, mInjectPresenterAnnotation, Modifier.PUBLIC, Modifier.PROTECTED, Modifier.DEFAULT));
@@ -162,35 +189,7 @@ public class MvpCompiler extends AbstractProcessor {
 			presenterContainerElementPublisher.finish();
 		}
 
-		// viewStateProviderPipeline
-		new Pipeline.Builder<>(new ElementsAnnotatedGenerator<>(roundEnv, mMessager, mInjectViewStateAnnotation))
-				.addProcessor(new ElementToPresenterInfoProcessor(mElements, viewElementPublisher))
-				.addValidator(new NormalPresenterValidator())
-				.copyTypeElementTo(presenterElementPublisher)
-				.addProcessor(new PresenterInfoToViewStateProviderJavaFileProcessor().withCache())
-				.buildPipeline(fileWriter)
-				.start();
-
-		// viewStatePipeline
-		new Pipeline.Builder<>(viewElementPublisher)
-				.addProcessor(new ElementToViewInterfaceInfoProcessor(mElements, mTypes, mMessager, strategiesElementPublisher))
-				.uniqueFilter()
-				.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(mElements, mTypes, currentMoxyReflectorPackage, reflectorPackagesPublisher))
-				.buildPipeline(fileWriter)
-				.start();
-
-
-		// moxyReflectorPipeline
-		new Pipeline.Builder<>(
-				QuadPublisher.collectQuad(
-						presenterElementPublisher,
-						presenterContainerElementPublisher,
-						strategiesElementPublisher,
-						reflectorPackagesPublisher))
-				.addProcessor(new MoxyReflectorProcessor(currentMoxyReflectorPackage))
-				.buildPipeline(fileWriter)
-				.start();
-
+		fileWriter.shutdown();
 
 		return true;
 	}

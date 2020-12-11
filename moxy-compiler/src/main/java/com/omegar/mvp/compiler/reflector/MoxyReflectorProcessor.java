@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -38,8 +39,8 @@ import static com.omegar.mvp.compiler.MvpCompiler.DEFAULT_MOXY_REFLECTOR_PACKAGE
  *
  * @author Yuri Shmakov
  */
-
-public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>>, JavaFile> {
+@SuppressWarnings("NewApi")
+public class MoxyReflectorProcessor extends Processor<Quad<Set<TypeElement>, Set<TypeElement>, Set<TypeElement>, Set<String>>, JavaFile> {
 	private static final Comparator<TypeElement> TYPE_ELEMENT_COMPARATOR = Comparator.comparing(Object::toString);
 
 	private static final TypeName CLASS_WILDCARD_TYPE_NAME // Class<*>
@@ -58,16 +59,16 @@ public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, Li
 	}
 
 	@Override
-	protected JavaFile process(Quad<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>> input) {
+	protected JavaFile process(Quad<Set<TypeElement>, Set<TypeElement>, Set<TypeElement>, Set<String>> input) {
 
 		return generate(mDestinationPackage, input.getFirst(), input.getSecond(), input.getThird(), input.getFourth());
 	}
 
 	public static JavaFile generate(String destinationPackage,
-									List<TypeElement> presenterClassNames,
-									List<TypeElement> presentersContainers,
-									List<TypeElement> strategyClasses,
-									List<String> additionalMoxyReflectorsPackages) {
+									Set<TypeElement> presenterClassNames,
+									Set<TypeElement> presentersContainers,
+									Set<TypeElement> strategyClasses,
+									Set<String> additionalMoxyReflectorsPackages) {
 		TypeSpec.Builder classBuilder = TypeSpec.classBuilder("MoxyReflector")
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
 				.addField(MAP_CLASS_TO_OBJECT_TYPE_NAME, "sViewStateProviders", Modifier.PRIVATE, Modifier.STATIC)
@@ -84,9 +85,12 @@ public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, Li
 
 		additionalMoxyReflectorsPackages.remove(destinationPackage);
 
-		additionalMoxyReflectorsPackages = Util.newDistinctList(additionalMoxyReflectorsPackages);
-
-		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage, presenterClassNames, presentersContainers, strategyClasses, additionalMoxyReflectorsPackages));
+		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage,
+				new ArrayList<>(presenterClassNames),
+				new ArrayList<>(presentersContainers),
+				new ArrayList<>(strategyClasses),
+				new ArrayList<>(additionalMoxyReflectorsPackages))
+		);
 
 		if (destinationPackage.equals(DEFAULT_MOXY_REFLECTOR_PACKAGE)) {
 			classBuilder.addMethod(MethodSpec.methodBuilder("getViewState")
