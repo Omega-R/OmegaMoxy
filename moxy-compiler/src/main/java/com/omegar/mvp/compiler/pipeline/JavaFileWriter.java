@@ -16,7 +16,7 @@ import javax.annotation.processing.Filer;
 @SuppressWarnings("NewApi")
 public class JavaFileWriter extends Receiver<JavaFile> {
 
-    private final ExecutorService mExecutors = Executors.newCachedThreadPool();
+    private final ExecutorService mAsyncExecutors = Executors.newCachedThreadPool();
     private final Filer mFiler;
 
     public JavaFileWriter(Filer Filer) {
@@ -25,11 +25,15 @@ public class JavaFileWriter extends Receiver<JavaFile> {
 
     @Override
     public void receive(JavaFile file) {
-        if (!mExecutors.isShutdown() && file.typeSpec.methodSpecs.size() >= 1) {
-            mExecutors.submit(() -> run(file));
+        if (isAsyncRun(file)) {
+            mAsyncExecutors.submit(() -> run(file));
         } else {
             run(file);
         }
+    }
+
+    private boolean isAsyncRun(JavaFile file) {
+        return !mAsyncExecutors.isShutdown() && file.typeSpec.methodSpecs.size() >= 1;
     }
 
     private void run(JavaFile file) {
@@ -41,13 +45,13 @@ public class JavaFileWriter extends Receiver<JavaFile> {
     }
 
     public void shutdown() {
-        List<Runnable> runnables = mExecutors.shutdownNow();
+        List<Runnable> runnables = mAsyncExecutors.shutdownNow();
         for (Runnable runnable : runnables) {
             runnable.run();
         }
 
         try {
-            mExecutors.awaitTermination(2, TimeUnit.MINUTES);
+            mAsyncExecutors.awaitTermination(2, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
