@@ -81,17 +81,19 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 		getMethods(element, new ArrayList<>(), methods, element);
 
         // Add methods from super interfaces
-		ViewInterfaceInfo superInterfaceInfo = null;
+		TypeElement superInterfaceType = null;
+
 		for (TypeMirror typeMirror : element.getInterfaces()) {
 			final TypeElement interfaceElement = asElement(typeMirror);
 
 			if (interfaceElement != null && mTypes.isAssignable(interfaceElement.asType(), mMvpViewTypeMirror)) {
-				Set<ViewInterfaceInfo> parentInfos = generateInfos(interfaceElement);
-				if (superInterfaceInfo == null) {
-					superInterfaceInfo = Util.lastOrNull(parentInfos);
+				if (superInterfaceType == null) {
+					superInterfaceType = interfaceElement;
+					break;
 				}
-            }
+			}
 		}
+
 
 		// Allow methods be with same names
 		Map<String, Integer> methodsCounter = new HashMap<>();
@@ -108,7 +110,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 			methodsCounter.put(method.getName(), counter);
 		}
 
-		ViewInterfaceInfo info = new ViewInterfaceInfo(superInterfaceInfo, element, methods);
+		ViewInterfaceInfo info = new ViewInterfaceInfo(superInterfaceType, element, methods);
 		if (!info.getName().equals(MVP_VIEW_CLASS_NAME)) interfaceInfos.add(info);
 
 		return interfaceInfos;
