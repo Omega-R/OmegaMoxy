@@ -44,6 +44,7 @@ import static com.omegar.mvp.compiler.Util.isMvpElement;
  *
  * @author Evgeny Kursakov
  */
+@SuppressWarnings("NewApi")
 public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeElement, ViewInterfaceInfo> {
 	private static final String STATE_STRATEGY_TYPE_ANNOTATION = StateStrategyType.class.getName();
 
@@ -214,7 +215,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 					.map(ParameterSpec::toString)
 					.collect(Collectors.joining(", "));
 
-			String parts = differentParts.stream().collect(Collectors.joining(" and "));
+			String parts = String.join(" and ", differentParts);
 
 			throw new IllegalStateException("Both " + existingMethod.getEnclosedClassName() +
 					" and " + method.getEnclosedClassName() +

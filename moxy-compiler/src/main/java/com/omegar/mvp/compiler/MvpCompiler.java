@@ -15,6 +15,7 @@ import com.omegar.mvp.compiler.presenterbinder.VariableToContainerElementProcess
 import com.omegar.mvp.compiler.reflector.MoxyReflectorProcessor;
 import com.omegar.mvp.compiler.viewstate.ElementToViewInterfaceInfoProcessor;
 import com.omegar.mvp.compiler.viewstate.ViewInterfaceInfoToViewStateJavaFileProcessor;
+import com.omegar.mvp.compiler.viewstate.ViewInterfaceInfoValidator;
 import com.omegar.mvp.compiler.viewstateprovider.ElementToPresenterInfoProcessor;
 import com.omegar.mvp.compiler.viewstateprovider.NormalPresenterValidator;
 import com.omegar.mvp.compiler.viewstateprovider.PresenterInfoToViewStateProviderJavaFileProcessor;
@@ -160,6 +161,7 @@ public class MvpCompiler extends AbstractProcessor {
 		new Pipeline.Builder<>(viewElementPublisher)
 				.addProcessor(new ElementToViewInterfaceInfoProcessor(mElements, mTypes, mMessager, strategiesElementPublisher))
 				.uniqueFilter()
+				.addValidator(new ViewInterfaceInfoValidator(mElements, currentMoxyReflectorPackage))
 				.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(mElements, mTypes, currentMoxyReflectorPackage, reflectorPackagesPublisher))
 				.buildPipeline(fileWriter)
 				.start();

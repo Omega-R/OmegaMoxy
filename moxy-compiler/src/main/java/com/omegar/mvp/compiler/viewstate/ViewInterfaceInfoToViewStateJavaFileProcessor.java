@@ -77,7 +77,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         DeclaredType viewInterfaceType = (DeclaredType) viewInterfaceInfo.getTypeElement().asType();
         TypeVariableName variableName = TypeVariableName.get(VIEW, nameWithTypeVariables);
 
-        TypeSpec.Builder classBuilder = TypeSpec.classBuilder(Util.getSimpleClassName(mElements, viewInterfaceInfo.getTypeElement()) + MvpProcessor.VIEW_STATE_SUFFIX)
+        TypeSpec.Builder classBuilder = TypeSpec.classBuilder(viewInterfaceInfo.getViewStateSimpleName(mElements))
                 .addOriginatingElement(viewInterfaceInfo.getTypeElement())
                 .addAnnotation(
                         AnnotationSpec.builder(Moxy.class)
@@ -95,7 +95,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         if (superInfo == null || superInfo.getTypeElement().getSimpleName().equals(MVP_VIEW_STATE_TYPE_NAME)) {
             classBuilder.superclass(MVP_VIEW_STATE_TYPE_NAME);
         } else {
-            String superViewState = Util.getFullClassName(mElements, superInfo.getTypeElement()) + MvpProcessor.VIEW_STATE_SUFFIX;
+            String superViewState = superInfo.getViewStateFullName(mElements);
             ClassName superClassName = ClassName.bestGuess(superViewState);
             checkReflectorPackages(superViewState);
             classBuilder.superclass(

@@ -1,16 +1,18 @@
 package com.omegar.mvp.compiler.entity;
 
+import com.omegar.mvp.MvpProcessor;
+import com.omegar.mvp.compiler.Util;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
 
 /**
  * Date: 27-Jul-2017
@@ -18,6 +20,7 @@ import javax.lang.model.element.TypeElement;
  *
  * @author Evgeny Kursakov
  */
+@SuppressWarnings("NewApi")
 public class ViewInterfaceInfo implements TypeElementHolder {
     @Nullable
     private final ViewInterfaceInfo superInterfaceInfo;
@@ -74,8 +77,12 @@ public class ViewInterfaceInfo implements TypeElementHolder {
         return methods;
     }
 
-    public TypeElement getSuperClassElement() {
-        return superInterfaceInfo == null ? null : superInterfaceInfo.getTypeElement();
+    public String getViewStateFullName(Elements elements) {
+        return getViewStateFullName(elements, element);
+    }
+
+    public String getViewStateSimpleName(Elements elements) {
+        return getViewStateSimpleName(elements, element);
     }
 
     @Override
@@ -100,4 +107,14 @@ public class ViewInterfaceInfo implements TypeElementHolder {
                 ", element=" + element +
                 '}';
     }
+
+    public static String getViewStateFullName(Elements elements, TypeElement viewTypeElement) {
+        return Util.getFullClassName(elements, viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX;
+    }
+
+    public static String getViewStateSimpleName(Elements elements, TypeElement viewTypeElement) {
+        return Util.getSimpleClassName(elements, viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX;
+    }
+
+
 }
