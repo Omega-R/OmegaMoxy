@@ -22,6 +22,7 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -29,6 +30,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -102,7 +104,9 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         }
 
         for (ViewMethod method : viewInterfaceInfo.getMethods()) {
-            TypeSpec commandClass = generateCommandClass(method, variableName);
+            TypeSpec commandClass = generateCommandClass(method, new ArrayList<TypeVariableName>(viewInterfaceInfo.getTypeVariables()) {{
+               add(0, variableName);
+            }} );
             classBuilder.addType(commandClass);
             classBuilder.addMethod(generateMethod(viewInterfaceType, method, nameWithTypeVariables, commandClass));
         }
@@ -142,7 +146,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         return parentClassTypeVariables.toArray(new TypeVariableName[parentClassTypeVariables.size()]);
     }
 
-    private TypeSpec generateCommandClass(ViewMethod method, TypeVariableName variableName) {
+    private TypeSpec generateCommandClass(ViewMethod method, List<TypeVariableName> variableNames) {
         MethodSpec applyMethod = MethodSpec.methodBuilder("apply")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -155,7 +159,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
                 .addOriginatingElement(method.getElement())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                 .addTypeVariables(new ArrayList<TypeVariableName>(method.getTypeVariables()) {{
-                    add(0, variableName);
+                    addAll(0, variableNames);
                 }})
                 .superclass(VIEW_COMMAND_TYPE_NAME)
                 .addMethod(generateCommandConstructor(method))
@@ -180,7 +184,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         }
 
         return MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
-                .addStatement("$1N $2L = new $1N<$4L>($3L)", commandClass, commandFieldName, method.getArgumentsString(), VIEW)
+                .addStatement("$1N $2L = new $1N($3L)", commandClass, commandFieldName, method.getArgumentsString())
                 .addStatement("mViewCommands.beforeApply($L)", commandFieldName)
                 .addCode("\n")
                 .beginControlFlow("if (mViews == null || mViews.isEmpty())")

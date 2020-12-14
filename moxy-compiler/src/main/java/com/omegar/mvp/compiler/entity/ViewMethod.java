@@ -1,6 +1,7 @@
 package com.omegar.mvp.compiler.entity;
 
 import com.omegar.mvp.compiler.MvpCompiler;
+import com.omegar.mvp.compiler.Util;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
@@ -23,6 +24,7 @@ import javax.lang.model.util.Types;
  *
  * @author Evgeny Kursakov
  */
+@SuppressWarnings("NewApi")
 public class ViewMethod {
 	private final ExecutableElement methodElement;
 	private final String name;
@@ -48,9 +50,9 @@ public class ViewMethod {
     }
 
 	public ViewMethod(Types types, DeclaredType targetInterfaceElement,
-	           ExecutableElement methodElement,
-	           TypeElement strategy,
-	           String tag) {
+					  ExecutableElement methodElement,
+					  TypeElement strategy,
+					  String tag) {
 		this.methodElement = methodElement;
 		this.name = methodElement.getSimpleName().toString();
 		this.strategy = strategy;
@@ -138,7 +140,7 @@ public class ViewMethod {
 	}
 
 	public String getCommandClassName() {
-		return name.substring(0, 1).toUpperCase() + name.substring(1) + uniqueSuffix + "Command";
+		return Util.capitalizeString(name) + uniqueSuffix + "Command";
 	}
 
 	public String getEnclosedClassName() {
