@@ -3,6 +3,7 @@ package com.omegar.mvp.compiler.pipeline;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Anton Knyazev on 05.12.2020.
@@ -61,10 +62,10 @@ public class QuadPublisher<FI, SE, TH, FO> extends Publisher<Quad<FI, SE, TH, FO
         }
     }
 
-    public static <FI, SE, TH, FO> QuadPublisher<List<FI>, List<SE>, List<TH>, List<FO>> collectQuad(Publisher<FI> publisher1,
-                                                                                                     Publisher<SE> publisher2,
-                                                                                                     Publisher<TH> publisher3,
-                                                                                                     Publisher<FO> publisher4) {
+    public static <FI, SE, TH, FO> QuadPublisher<Set<FI>, Set<SE>, Set<TH>, Set<FO>> collectQuad(Publisher<FI> publisher1,
+                                                                                                 Publisher<SE> publisher2,
+                                                                                                 Publisher<TH> publisher3,
+                                                                                                 Publisher<FO> publisher4) {
         return new QuadPublisher<>(
                 publisher1.collect(),
                 publisher2.collect(),

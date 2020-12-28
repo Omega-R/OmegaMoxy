@@ -6,10 +6,10 @@ import example.com.moxy_androidx_sample.BaseView
 
 interface Contract {
 
-    interface MainView : BaseView {
+    interface MainView<D: Number> : BaseView {
 
         @StateStrategyType(ADD_TO_END_SINGLE)
-        fun printLog(msg: Double?, log: String?)
+        fun printLog(msg: D?, log: String?)
 
     }
 

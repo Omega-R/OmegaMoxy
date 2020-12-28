@@ -16,10 +16,12 @@ import com.squareup.javapoet.WildcardTypeName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -38,8 +40,9 @@ import static com.omegar.mvp.compiler.MvpCompiler.DEFAULT_MOXY_REFLECTOR_PACKAGE
  *
  * @author Yuri Shmakov
  */
-
-public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>>, JavaFile> {
+@SuppressWarnings("NewApi")
+public class MoxyReflectorProcessor extends Processor<Quad<Set<TypeElement>, Set<TypeElement>, Set<TypeElement>, Set<String>>, JavaFile> {
+	private static final String ZERO_INIT_MAP = "0";
 	private static final Comparator<TypeElement> TYPE_ELEMENT_COMPARATOR = Comparator.comparing(Object::toString);
 
 	private static final TypeName CLASS_WILDCARD_TYPE_NAME // Class<*>
@@ -58,16 +61,16 @@ public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, Li
 	}
 
 	@Override
-	protected JavaFile process(Quad<List<TypeElement>, List<TypeElement>, List<TypeElement>, List<String>> input) {
+	protected JavaFile process(Quad<Set<TypeElement>, Set<TypeElement>, Set<TypeElement>, Set<String>> input) {
 
 		return generate(mDestinationPackage, input.getFirst(), input.getSecond(), input.getThird(), input.getFourth());
 	}
 
 	public static JavaFile generate(String destinationPackage,
-									List<TypeElement> presenterClassNames,
-									List<TypeElement> presentersContainers,
-									List<TypeElement> strategyClasses,
-									List<String> additionalMoxyReflectorsPackages) {
+									Set<TypeElement> presenterClassNames,
+									Set<TypeElement> presentersContainers,
+									Set<TypeElement> strategyClasses,
+									Set<String> additionalMoxyReflectorsPackages) {
 		TypeSpec.Builder classBuilder = TypeSpec.classBuilder("MoxyReflector")
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
 				.addField(MAP_CLASS_TO_OBJECT_TYPE_NAME, "sViewStateProviders", Modifier.PRIVATE, Modifier.STATIC)
@@ -84,9 +87,12 @@ public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, Li
 
 		additionalMoxyReflectorsPackages.remove(destinationPackage);
 
-		additionalMoxyReflectorsPackages = Util.newDistinctList(additionalMoxyReflectorsPackages);
-
-		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage, presenterClassNames, presentersContainers, strategyClasses, additionalMoxyReflectorsPackages));
+		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage,
+				new ArrayList<>(presenterClassNames),
+				new ArrayList<>(presentersContainers),
+				new ArrayList<>(strategyClasses),
+				new ArrayList<>(additionalMoxyReflectorsPackages))
+		);
 
 		if (destinationPackage.equals(DEFAULT_MOXY_REFLECTOR_PACKAGE)) {
 			classBuilder.addMethod(MethodSpec.methodBuilder("getViewState")
@@ -174,45 +180,59 @@ public class MoxyReflectorProcessor extends Processor<Quad<List<TypeElement>, Li
 		CodeBlock.Builder builder = CodeBlock.builder();
 
 		String viewStateInitMap = getInitMap(presenterClassNames.size(), !additionalMoxyReflectorsPackages.isEmpty());
-		builder.addStatement("sViewStateProviders = new $T<>(" + viewStateInitMap + ")", HashMap.class);
-		for (TypeElement presenter : presenterClassNames) {
-			ClassName presenterClassName = ClassName.get(presenter);
-			ClassName viewStateProvider = ClassName.get(presenterClassName.packageName(),
-					String.join("$", presenterClassName.simpleNames()) + MvpProcessor.VIEW_STATE_PROVIDER_SUFFIX);
-			builder.addStatement("sViewStateProviders.put($T.class, new $T())", presenterClassName, viewStateProvider);
+		if (ZERO_INIT_MAP.equals(viewStateInitMap)) {
+			builder.addStatement("sViewStateProviders = $T.emptyMap()", Collections.class);
+		} else {
+			builder.addStatement("sViewStateProviders = new $T<>(" + viewStateInitMap + ")", HashMap.class);
+			for (TypeElement presenter : presenterClassNames) {
+				ClassName presenterClassName = ClassName.get(presenter);
+				ClassName viewStateProvider = ClassName.get(presenterClassName.packageName(),
+						String.join("$", presenterClassName.simpleNames()) + MvpProcessor.VIEW_STATE_PROVIDER_SUFFIX);
+
+				builder.addStatement("sViewStateProviders.put($T.class, new $T())", presenterClassName, viewStateProvider);
+			}
 		}
+
 
 		builder.add("\n");
 
 		String presenterBindersMapInit = getInitMap(presenterBinders.size(), !additionalMoxyReflectorsPackages.isEmpty());
-		builder.addStatement("sPresenterBinders = new $T<>(" + presenterBindersMapInit + ")", HashMap.class);
-		for (Map.Entry<TypeElement, List<TypeElement>> keyValue : presenterBinders.entrySet()) {
-			builder.add("sPresenterBinders.put($T.class, $T.<Object>asList(", keyValue.getKey(), Arrays.class);
+		if (ZERO_INIT_MAP.equals(presenterBindersMapInit)) {
+			builder.addStatement("sPresenterBinders = $T.emptyMap()", Collections.class);
+		} else {
+			builder.addStatement("sPresenterBinders = new $T<>(" + presenterBindersMapInit + ")", HashMap.class);
+			for (Map.Entry<TypeElement, List<TypeElement>> keyValue : presenterBinders.entrySet()) {
+				builder.add("sPresenterBinders.put($T.class, $T.<Object>asList(", keyValue.getKey(), Arrays.class);
 
-			boolean isFirst = true;
-			for (TypeElement typeElement : keyValue.getValue()) {
-				ClassName className = ClassName.get(typeElement);
-				String presenterBinderName = String.join("$", className.simpleNames()) + MvpProcessor.PRESENTER_BINDER_SUFFIX;
+				boolean isFirst = true;
+				for (TypeElement typeElement : keyValue.getValue()) {
+					ClassName className = ClassName.get(typeElement);
+					String presenterBinderName = String.join("$", className.simpleNames()) + MvpProcessor.PRESENTER_BINDER_SUFFIX;
 
-				if (isFirst) {
-					isFirst = false;
-				} else {
-					builder.add(", ");
+					if (isFirst) {
+						isFirst = false;
+					} else {
+						builder.add(", ");
+					}
+					builder.add("new $T()", ClassName.get(className.packageName(), presenterBinderName));
 				}
-				builder.add("new $T()", ClassName.get(className.packageName(), presenterBinderName));
-			}
 
-			builder.add("));\n");
+				builder.add("));\n");
+			}
 		}
+
 
 		builder.add("\n");
 
 		String strategiesMapInit = getInitMap(strategyClasses.size(), !additionalMoxyReflectorsPackages.isEmpty());
-		builder.addStatement("sStrategies = new $T<>(" + strategiesMapInit + ")", HashMap.class);
-		for (TypeElement strategyClass : strategyClasses) {
-			builder.addStatement("sStrategies.put($1T.class, new $1T())", strategyClass);
+		if (ZERO_INIT_MAP.equals(strategiesMapInit)) {
+			builder.addStatement("sStrategies = $T.emptyMap()", Collections.class);
+		} else {
+			builder.addStatement("sStrategies = new $T<>(" + strategiesMapInit + ")", HashMap.class);
+			for (TypeElement strategyClass : strategyClasses) {
+				builder.addStatement("sStrategies.put($1T.class, new $1T())", strategyClass);
+			}
 		}
-
 		for (String pkg : additionalMoxyReflectorsPackages) {
 			ClassName moxyReflector = ClassName.get(pkg, "MoxyReflector");
 

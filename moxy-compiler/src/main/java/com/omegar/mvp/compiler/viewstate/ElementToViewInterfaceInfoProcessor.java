@@ -44,6 +44,7 @@ import static com.omegar.mvp.compiler.Util.isMvpElement;
  *
  * @author Evgeny Kursakov
  */
+@SuppressWarnings("NewApi")
 public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeElement, ViewInterfaceInfo> {
 	private static final String STATE_STRATEGY_TYPE_ANNOTATION = StateStrategyType.class.getName();
 
@@ -65,6 +66,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 	@Override
 	public void process(TypeElement element, PipelineContext<ViewInterfaceInfo> context) {
 		Collection<ViewInterfaceInfo> list = generateInfos(element);
+
 		for (ViewInterfaceInfo info: list) {
 			context.next(info);
 		}
@@ -79,17 +81,19 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 		getMethods(element, new ArrayList<>(), methods, element);
 
         // Add methods from super interfaces
-		ViewInterfaceInfo superInterfaceInfo = null;
+		TypeElement superInterfaceType = null;
+
 		for (TypeMirror typeMirror : element.getInterfaces()) {
 			final TypeElement interfaceElement = asElement(typeMirror);
 
-			if (interfaceElement == null || mTypes.isAssignable(interfaceElement.asType(), mMvpViewTypeMirror)) {
-				Set<ViewInterfaceInfo> parentInfos = generateInfos(interfaceElement);
-				if (superInterfaceInfo == null) {
-					superInterfaceInfo = Util.lastOrNull(parentInfos);
+			if (interfaceElement != null && mTypes.isAssignable(interfaceElement.asType(), mMvpViewTypeMirror)) {
+				if (superInterfaceType == null) {
+					superInterfaceType = interfaceElement;
+					break;
 				}
-            }
+			}
 		}
+
 
 		// Allow methods be with same names
 		Map<String, Integer> methodsCounter = new HashMap<>();
@@ -106,7 +110,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 			methodsCounter.put(method.getName(), counter);
 		}
 
-		ViewInterfaceInfo info = new ViewInterfaceInfo(superInterfaceInfo, element, methods);
+		ViewInterfaceInfo info = new ViewInterfaceInfo(superInterfaceType, element, methods);
 		if (!info.getName().equals(MVP_VIEW_CLASS_NAME)) interfaceInfos.add(info);
 
 		return interfaceInfos;
@@ -213,7 +217,7 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
 					.map(ParameterSpec::toString)
 					.collect(Collectors.joining(", "));
 
-			String parts = differentParts.stream().collect(Collectors.joining(" and "));
+			String parts = String.join(" and ", differentParts);
 
 			throw new IllegalStateException("Both " + existingMethod.getEnclosedClassName() +
 					" and " + method.getEnclosedClassName() +

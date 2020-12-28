@@ -3,6 +3,7 @@ package com.omegar.mvp.compiler.viewstateprovider;
 import com.omegar.mvp.MvpPresenter;
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.compiler.entity.PresenterInfo;
+import com.omegar.mvp.compiler.entity.ViewInterfaceInfo;
 import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
@@ -26,7 +27,7 @@ import javax.tools.Diagnostic;
 
 import static com.omegar.mvp.compiler.Util.fillGenerics;
 
-public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElement, com.omegar.mvp.compiler.entity.PresenterInfo>  {
+public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElement, PresenterInfo>  {
 	private static final String MVP_PRESENTER_CLASS = MvpPresenter.class.getCanonicalName();
 
 	private final Elements mElements;
@@ -51,12 +52,12 @@ public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElemen
 		TypeElement viewTypeElement = mElements.getTypeElement(viewWithoutGeneric);
 
 		if (viewTypeElement == null) {
-			throw new IllegalArgumentException("View \"" + view + "\" for " + typeElement + " cannot be found. \n " + viewWithoutGeneric);
+			throw new IllegalArgumentException("View \"" + view + "\" for " + typeElement + " cannot be found. \n " + view);
 		}
 
 		mUsedViewsPublisher.next(viewTypeElement);
 
-		return Util.getFullClassName(mElements, viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX;
+		return ViewInterfaceInfo.getViewStateFullName(mElements, viewTypeElement);
 	}
 
 

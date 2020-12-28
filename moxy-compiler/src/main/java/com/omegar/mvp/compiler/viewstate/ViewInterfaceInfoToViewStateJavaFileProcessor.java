@@ -2,6 +2,7 @@ package com.omegar.mvp.compiler.viewstate;
 
 import com.omegar.mvp.Moxy;
 import com.omegar.mvp.MvpProcessor;
+import com.omegar.mvp.MvpView;
 import com.omegar.mvp.compiler.entity.ViewInterfaceInfo;
 import com.omegar.mvp.compiler.entity.ViewMethod;
 import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
@@ -22,6 +23,7 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -29,6 +31,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -42,7 +45,9 @@ import static com.omegar.mvp.compiler.Util.decapitalizeString;
  */
 public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFileProcessor<ViewInterfaceInfo> {
 
+
     private static final String VIEW = "Omega$$View";
+    private static final String CLASS_NAME_MVP_VIEW = MvpView.class.getCanonicalName();
     private static final TypeVariableName GENERIC_TYPE_VARIABLE_NAME = TypeVariableName.get(VIEW);
     private static final ClassName MVP_VIEW_STATE_CLASS_NAME = ClassName.get(MvpViewState.class);
     private static final ClassName VIEW_COMMAND_CLASS_NAME = ClassName.get(ViewCommand.class);
@@ -75,7 +80,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         DeclaredType viewInterfaceType = (DeclaredType) viewInterfaceInfo.getTypeElement().asType();
         TypeVariableName variableName = TypeVariableName.get(VIEW, nameWithTypeVariables);
 
-        TypeSpec.Builder classBuilder = TypeSpec.classBuilder(Util.getSimpleClassName(mElements, viewInterfaceInfo.getTypeElement()) + MvpProcessor.VIEW_STATE_SUFFIX)
+        TypeSpec.Builder classBuilder = TypeSpec.classBuilder(viewInterfaceInfo.getViewStateSimpleName(mElements))
                 .addOriginatingElement(viewInterfaceInfo.getTypeElement())
                 .addAnnotation(
                         AnnotationSpec.builder(Moxy.class)
@@ -88,12 +93,12 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
                     add(0, variableName);
                 }});
 
-        ViewInterfaceInfo superInfo = viewInterfaceInfo.getSuperInterfaceInfo();
+        TypeElement superInfoElement = viewInterfaceInfo.getSuperInterfaceType();
 
-        if (superInfo == null || superInfo.getTypeElement().getSimpleName().equals(MVP_VIEW_STATE_TYPE_NAME)) {
+        if (superInfoElement == null || superInfoElement.getQualifiedName().toString().equals(CLASS_NAME_MVP_VIEW)) {
             classBuilder.superclass(MVP_VIEW_STATE_TYPE_NAME);
         } else {
-            String superViewState = Util.getFullClassName(mElements, superInfo.getTypeElement()) + MvpProcessor.VIEW_STATE_SUFFIX;
+            String superViewState = ViewInterfaceInfo.getViewStateFullName(mElements, superInfoElement);
             ClassName superClassName = ClassName.bestGuess(superViewState);
             checkReflectorPackages(superViewState);
             classBuilder.superclass(
@@ -102,7 +107,9 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         }
 
         for (ViewMethod method : viewInterfaceInfo.getMethods()) {
-            TypeSpec commandClass = generateCommandClass(method, variableName);
+            TypeSpec commandClass = generateCommandClass(method, new ArrayList<TypeVariableName>(viewInterfaceInfo.getTypeVariables()) {{
+               add(0, variableName);
+            }} );
             classBuilder.addType(commandClass);
             classBuilder.addMethod(generateMethod(viewInterfaceType, method, nameWithTypeVariables, commandClass));
         }
@@ -142,7 +149,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         return parentClassTypeVariables.toArray(new TypeVariableName[parentClassTypeVariables.size()]);
     }
 
-    private TypeSpec generateCommandClass(ViewMethod method, TypeVariableName variableName) {
+    private TypeSpec generateCommandClass(ViewMethod method, List<TypeVariableName> variableNames) {
         MethodSpec applyMethod = MethodSpec.methodBuilder("apply")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -155,7 +162,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
                 .addOriginatingElement(method.getElement())
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                 .addTypeVariables(new ArrayList<TypeVariableName>(method.getTypeVariables()) {{
-                    add(0, variableName);
+                    addAll(0, variableNames);
                 }})
                 .superclass(VIEW_COMMAND_TYPE_NAME)
                 .addMethod(generateCommandConstructor(method))
@@ -180,7 +187,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         }
 
         return MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
-                .addStatement("$1N $2L = new $1N<$4L>($3L)", commandClass, commandFieldName, method.getArgumentsString(), VIEW)
+                .addStatement("$1N $2L = new $1N($3L)", commandClass, commandFieldName, method.getArgumentsString())
                 .addStatement("mViewCommands.beforeApply($L)", commandFieldName)
                 .addCode("\n")
                 .beginControlFlow("if (mViews == null || mViews.isEmpty())")

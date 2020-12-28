@@ -2,7 +2,7 @@ package com.omegar.mvp.compiler.pipeline;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Anton Knyazev on 03.12.2020.
@@ -54,8 +54,8 @@ public class Publisher<O> extends Processor<Void, O> {
         mFinished = true;
     }
 
-    public Publisher<List<O>> collect() {
-        return new CollectListPublisher<>(this);
+    public Publisher<Set<O>> collect() {
+        return new CollectSetPublisher<>(this);
     }
 
     public <SE, TH, FO>QuadPublisher<O, SE, TH, FO> quad(Publisher<SE> publisher2, Publisher<TH> publisher3, Publisher<FO> publisher4) {

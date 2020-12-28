@@ -49,6 +49,7 @@ import javax.lang.model.type.DeclaredType;
  * @author Yuri Shmakov
  * @author Alexander Blinov
  */
+@SuppressWarnings("NewApi")
 public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends JavaFileProcessor<TargetClassInfo> {
 
 	@Override
