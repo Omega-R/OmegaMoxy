@@ -45,10 +45,7 @@ public class JavaFileWriter extends Receiver<JavaFile> {
     }
 
     public void shutdown() {
-        List<Runnable> runnables = mAsyncExecutors.shutdownNow();
-        for (Runnable runnable : runnables) {
-            runnable.run();
-        }
+        mAsyncExecutors.shutdown();
 
         try {
             mAsyncExecutors.awaitTermination(2, TimeUnit.MINUTES);
