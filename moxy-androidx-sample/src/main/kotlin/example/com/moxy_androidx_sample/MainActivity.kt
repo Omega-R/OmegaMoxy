@@ -1,11 +1,9 @@
 package example.com.moxy_androidx_sample
 
-import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import com.omegar.mvp.presenter.InjectPresenter
 import example.com.moxy_androidx_sample.contract.Contract
-import example.com.moxy_androidx_sample.packagee.Item
 
 class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Double>, SecondInterface {
 //	override fun fourth(item: String?) {
@@ -41,7 +39,7 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
 	}
 	
 	override fun printLog(msg: Double?, log: String?) {
-		Log.e(TAG, "printLog : msg : $msg activity hash code : ${hashCode()}")
+		Log.e(TAG, "printLog : msg : $msg activity hash code : ${hashCode()}, log: $log")
 	}
 
 	override fun second() {

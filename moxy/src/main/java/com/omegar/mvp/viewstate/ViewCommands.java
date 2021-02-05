@@ -54,4 +54,11 @@ public class ViewCommands<View extends MvpView> {
 	public List<ViewCommand<View>> getCurrentState() {
 		return mState;
 	}
+
+	@Override
+	public String toString() {
+		return "ViewCommands{" +
+				"state=" + mState +
+				'}';
+	}
 }
