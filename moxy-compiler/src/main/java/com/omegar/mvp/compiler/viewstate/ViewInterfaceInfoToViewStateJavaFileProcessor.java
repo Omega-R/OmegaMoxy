@@ -166,7 +166,8 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
                 }})
                 .superclass(VIEW_COMMAND_TYPE_NAME)
                 .addMethod(generateCommandConstructor(method))
-                .addMethod(applyMethod);
+                .addMethod(applyMethod)
+                .addMethod(generateToStringMethodSpec(method));
 
         for (ParameterSpec parameter : method.getParameterSpecs()) {
             classBuilder.addField(parameter.type, parameter.name, Modifier.PRIVATE, Modifier.FINAL);
@@ -219,6 +220,37 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         }
 
         return builder.build();
+    }
+
+    private MethodSpec generateToStringMethodSpec(ViewMethod method) {
+        StringBuilder statement = new StringBuilder("return \"" + method.getName());
+
+        boolean firstParams = true;
+        for (ParameterSpec parameter : method.getParameterSpecs()) {
+            if (firstParams) {
+                firstParams = false;
+                statement.append("{\" + \n\"");
+            } else {
+                statement.append(" + \n\", ");
+            }
+
+            statement.append(parameter.name)
+                    .append("=\" + ")
+                    .append(parameter.name)
+                    .append(" ");
+        }
+        if (!firstParams) {
+            statement.append("+\n'}'");
+        } else {
+            statement.append("\"");
+        }
+
+        return MethodSpec.methodBuilder("toString")
+                .addAnnotation(Override.class)
+                .addModifiers(Modifier.PUBLIC)
+                .returns(String.class)
+                .addStatement(statement.toString())
+                .build();
     }
 
     @Override
