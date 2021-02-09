@@ -42,7 +42,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 *
 	 * @param view to attachment
 	 */
-	void attachView(View view) {
+	protected void attachView(View view) {
 		if (mViewState != null) {
 			mViewState.attachView(view);
 		} else {
@@ -72,7 +72,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 * @param view view to detach
 	 */
 	@SuppressWarnings("WeakerAccess")
-	void detachView(View view) {
+	protected void detachView(View view) {
 		if (mViewState != null) {
 			mViewState.detachView(view);
 		} else {
@@ -80,7 +80,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 		}
 	}
 
-	void destroyView(View view) {
+	protected void destroyView(View view) {
 		if (mViewState != null) {
 			mViewState.destroyView(view);
 		}
