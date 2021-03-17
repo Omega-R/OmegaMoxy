@@ -105,4 +105,11 @@ public abstract class MvpViewState<View extends MvpView> {
 	public boolean isInRestoreState(View view) {
 		return mInRestoreState.contains(view);
 	}
+
+	@Override
+	public String toString() {
+		return "MvpViewState{" +
+				"viewCommands=" + mViewCommands +
+				'}';
+	}
 }

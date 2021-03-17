@@ -1,3 +1,4 @@
+include ':moxy-ktx'
 include ':moxy', ':stub-reflector', ':moxy-android', ':moxy-compiler', ':stub-android', ':moxy-app-compat', ':moxy-androidx', ':stub-appcompat', ':stub-androidx'
 include ':sample-github'
 include ':sample-kotlin'

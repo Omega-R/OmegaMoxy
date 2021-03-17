@@ -16,7 +16,6 @@
  */
 package com.omegar.mvp.compiler;
 
-import com.google.common.collect.Iterables;
 import com.omegar.mvp.MvpView;
 import com.omegar.mvp.viewstate.strategy.StrategyType;
 import com.squareup.javapoet.ClassName;
@@ -45,7 +44,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Utilities for handling types in annotation processors
