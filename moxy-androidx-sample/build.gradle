@@ -45,6 +45,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation project(':moxy')
     implementation project(':moxy-androidx')
+    implementation project(':moxy-ktx')
     kapt project(':moxy-compiler')
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }

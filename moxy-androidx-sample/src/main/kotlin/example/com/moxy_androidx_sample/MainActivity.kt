@@ -2,6 +2,7 @@ package example.com.moxy_androidx_sample
 
 import android.os.Bundle
 import android.util.Log
+import com.omegar.mvp.ktx.providePresenter
 import com.omegar.mvp.presenter.InjectPresenter
 import example.com.moxy_androidx_sample.contract.Contract
 
@@ -30,8 +31,10 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
 //		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 //	}
 
-	@InjectPresenter
-	internal lateinit var presenter: MainPresenter
+
+	private val presenter: MainPresenter by providePresenter {
+		MainPresenter()
+	}
 	
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
