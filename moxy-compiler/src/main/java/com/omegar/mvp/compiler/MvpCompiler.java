@@ -128,7 +128,7 @@ public class MvpCompiler extends AbstractProcessor {
 		try {
 			return throwableProcess(annotations, roundEnv);
 		} catch (RuntimeException e) {
-			mMessager.printMessage(Diagnostic.Kind.OTHER, "Moxy compilation failed. Could you copy stack trace above and write us (or make issue on Github)?");
+			mMessager.printMessage(Diagnostic.Kind.ERROR, "Moxy compilation failed. Could you copy stack trace above and write us (or make issue on Github)?");
 			e.printStackTrace();
 			return true;
 		}

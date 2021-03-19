@@ -1,12 +1,12 @@
 package com.omegar.mvp.compiler.viewstate;
 
 import com.omegar.mvp.Moxy;
-import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.MvpView;
+import com.omegar.mvp.compiler.entity.ReturnViewMethod;
 import com.omegar.mvp.compiler.entity.ViewInterfaceInfo;
+import com.omegar.mvp.compiler.entity.CommandViewMethod;
 import com.omegar.mvp.compiler.entity.ViewMethod;
 import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
-import com.omegar.mvp.compiler.MvpCompiler;
 import com.omegar.mvp.compiler.Util;
 import com.omegar.mvp.compiler.pipeline.PipelineContext;
 import com.omegar.mvp.compiler.pipeline.Publisher;
@@ -23,15 +23,14 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
@@ -107,11 +106,29 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         }
 
         for (ViewMethod method : viewInterfaceInfo.getMethods()) {
-            TypeSpec commandClass = generateCommandClass(method, new ArrayList<TypeVariableName>(viewInterfaceInfo.getTypeVariables()) {{
-               add(0, variableName);
-            }} );
-            classBuilder.addType(commandClass);
-            classBuilder.addMethod(generateMethod(viewInterfaceType, method, nameWithTypeVariables, commandClass));
+            if (method instanceof CommandViewMethod) {
+                CommandViewMethod commandViewMethod = (CommandViewMethod) method;
+                TypeSpec commandClass = generateCommandClass(commandViewMethod, new ArrayList<TypeVariableName>(viewInterfaceInfo.getTypeVariables()) {{
+                    add(0, variableName);
+                }});
+
+                classBuilder.addType(commandClass);
+                classBuilder.addMethod(generateVoidMethod(viewInterfaceType, commandViewMethod, commandClass));
+            } else if (method instanceof ReturnViewMethod) {
+                ReturnViewMethod returnViewMethod = (ReturnViewMethod) method;
+                ExecutableElement setterElement = returnViewMethod.getSetterElement();
+                CommandViewMethod setterMethod = null;
+                for (ViewMethod viewMethod : viewInterfaceInfo.getMethods()) {
+                    if (viewMethod instanceof CommandViewMethod) {
+                        if (setterElement == viewMethod.getElement()) {
+                            setterMethod = (CommandViewMethod) viewMethod;
+                            break;
+                        }
+                    }
+                }
+
+                classBuilder.addMethod(generateReturnMethod(viewInterfaceType, returnViewMethod, setterMethod));
+            }
         }
 
         return JavaFile.builder(viewName.packageName(), classBuilder.build())
@@ -149,7 +166,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         return parentClassTypeVariables.toArray(new TypeVariableName[parentClassTypeVariables.size()]);
     }
 
-    private TypeSpec generateCommandClass(ViewMethod method, List<TypeVariableName> variableNames) {
+    private TypeSpec generateCommandClass(CommandViewMethod method, List<TypeVariableName> variableNames) {
         MethodSpec applyMethod = MethodSpec.methodBuilder("apply")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -176,8 +193,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         return classBuilder.build();
     }
 
-    private MethodSpec generateMethod(DeclaredType enclosingType, ViewMethod method,
-                                      TypeName viewTypeName, TypeSpec commandClass) {
+    private MethodSpec generateVoidMethod(DeclaredType enclosingType, CommandViewMethod method, TypeSpec commandClass) {
         // TODO: String commandFieldName = "$cmd";
         String commandFieldName = decapitalizeString(method.getCommandClassName());
 
@@ -203,7 +219,19 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
                 .build();
     }
 
-    private MethodSpec generateCommandConstructor(ViewMethod method) {
+    private MethodSpec generateReturnMethod(DeclaredType enclosingType, ReturnViewMethod method, CommandViewMethod commandViewMethod) {
+        String commandClassName = commandViewMethod.getCommandClassName();
+        return MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
+                .beginControlFlow("for ($L viewCommand : mViewCommands.getCurrentState())", VIEW_COMMAND_CLASS_NAME)
+                .beginControlFlow("if (viewCommand instanceof $L)", commandClassName)
+                .addStatement("return (($L) viewCommand).$L", commandClassName, commandViewMethod.getArgumentsString())
+                .endControlFlow()
+                .endControlFlow()
+                .addStatement("return null")
+                .build();
+    }
+
+    private MethodSpec generateCommandConstructor(CommandViewMethod method) {
         List<ParameterSpec> parameters = method.getParameterSpecs();
 
         MethodSpec.Builder builder = MethodSpec.constructorBuilder()
@@ -222,7 +250,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         return builder.build();
     }
 
-    private MethodSpec generateToStringMethodSpec(ViewMethod method) {
+    private MethodSpec generateToStringMethodSpec(CommandViewMethod method) {
         StringBuilder statement = new StringBuilder("return \"" + method.getName());
 
         boolean firstParams = true;
