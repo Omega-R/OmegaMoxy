@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -288,6 +289,10 @@ public final class Util {
 		HashSet<E> set = new HashSet<>(elements.length);
 		Collections.addAll(set, elements);
 		return set;
+	}
+
+	public static boolean startWith(@Nonnull String string, @Nonnull String prefix) {
+		return string.indexOf(prefix) == 0;
 	}
 
 }

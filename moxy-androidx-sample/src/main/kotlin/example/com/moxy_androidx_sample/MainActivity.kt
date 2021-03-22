@@ -2,6 +2,7 @@ package example.com.moxy_androidx_sample
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import com.omegar.mvp.ktx.providePresenter
 import com.omegar.mvp.presenter.InjectPresenter
 import example.com.moxy_androidx_sample.contract.Contract
@@ -31,6 +32,7 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
 //		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 //	}
 
+	override var value: String = ""
 
 	private val presenter: MainPresenter by providePresenter {
 		MainPresenter()
@@ -48,8 +50,11 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
 	override fun second() {
 		TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 	}
-	
+
+
+
 	companion object {
 		const val TAG = "MoxyDebug"
 	}
+
 }

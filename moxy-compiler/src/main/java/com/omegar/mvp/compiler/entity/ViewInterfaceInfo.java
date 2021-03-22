@@ -29,10 +29,6 @@ public class ViewInterfaceInfo implements TypeElementHolder {
     private final List<TypeVariableName> mTypeVariables;
     private final List<ViewMethod> mMethods;
 
-    public ViewInterfaceInfo(TypeElement element, List<ViewMethod> methods) {
-        this(null, element, methods);
-    }
-
     public ViewInterfaceInfo(@Nullable TypeElement superInterfaceType, TypeElement element, List<ViewMethod> methods) {
         mSuperInterfaceType = superInterfaceType;
         mElement = element;

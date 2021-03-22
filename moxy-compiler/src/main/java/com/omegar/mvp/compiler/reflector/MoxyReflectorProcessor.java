@@ -2,7 +2,6 @@ package com.omegar.mvp.compiler.reflector;
 
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.ViewStateProvider;
-import com.omegar.mvp.compiler.Util;
 import com.omegar.mvp.compiler.pipeline.Processor;
 import com.omegar.mvp.compiler.pipeline.Quad;
 import com.squareup.javapoet.ClassName;
@@ -87,7 +86,7 @@ public class MoxyReflectorProcessor extends Processor<Quad<Set<TypeElement>, Set
 
 		additionalMoxyReflectorsPackages.remove(destinationPackage);
 
-		classBuilder.addStaticBlock(generateStaticInitializer(destinationPackage,
+		classBuilder.addStaticBlock(generateStaticInitializer(
 				new ArrayList<>(presenterClassNames),
 				new ArrayList<>(presentersContainers),
 				new ArrayList<>(strategyClasses),
@@ -166,11 +165,10 @@ public class MoxyReflectorProcessor extends Processor<Quad<Set<TypeElement>, Set
 				.build();
 	}
 
-	private static CodeBlock generateStaticInitializer(String destinationPackage,
-													   List<TypeElement> presenterClassNames,
-	                                                   List<TypeElement> presentersContainers,
-	                                                   List<TypeElement> strategyClasses,
-	                                                   List<String> additionalMoxyReflectorsPackages) {
+	private static CodeBlock generateStaticInitializer(List<TypeElement> presenterClassNames,
+													   List<TypeElement> presentersContainers,
+													   List<TypeElement> strategyClasses,
+													   List<String> additionalMoxyReflectorsPackages) {
 		// sort to preserve order of statements between compilations
 		Map<TypeElement, List<TypeElement>> presenterBinders = getPresenterBinders(presentersContainers);
 		presenterClassNames.sort(TYPE_ELEMENT_COMPARATOR);

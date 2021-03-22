@@ -8,6 +8,8 @@ interface Contract {
 
     interface MainView<D: Number> : BaseView {
 
+        var value: String
+
         @StateStrategyType(ADD_TO_END_SINGLE)
         fun printLog(msg: D?, log: String?)
 
