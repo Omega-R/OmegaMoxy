@@ -32,7 +32,7 @@ class CustomPresenterFactory<P : MvpPresenter<*>>(tag: String, clz: Class<out Mv
 
 inline fun <reified P : MvpPresenter<*>> MvpDelegateHolder.providePresenter(
     name: String = "presenter",
-    noinline factoryBlock: () -> P = { P::class.java.newInstance() }
+    noinline factoryBlock: () -> P = { P::class.java.getDeclaredConstructor().newInstance() }
 ): CustomPresenterFactory<P> {
     return CustomPresenterFactory(P::class.java.name + "." + name, P::class.java, factoryBlock).also {
         mvpDelegate.addCustomPresenterFields(it)
