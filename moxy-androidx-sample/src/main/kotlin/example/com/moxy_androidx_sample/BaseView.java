@@ -7,6 +7,8 @@ import com.omegar.mvp.viewstate.strategy.StateStrategyType;
 import static com.omegar.mvp.viewstate.strategy.StrategyType.*;
 public interface BaseView extends MvpView {
 
+
+
     @StateStrategyType(ADD_TO_END_SINGLE)
     void testFunction();
 

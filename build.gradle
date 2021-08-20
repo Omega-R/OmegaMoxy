@@ -2,19 +2,17 @@
 
 buildscript {
     repositories {
-        jcenter()
         mavenCentral()
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.1'
+        classpath 'com.android.tools.build:gradle:7.0.1'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }
 
 allprojects {
     repositories {
-        jcenter()
         mavenCentral()
         google()
         maven { url 'https://jitpack.io' }
@@ -24,7 +22,7 @@ allprojects {
 ext {
     targetVersionCode = 46
     targetVersionName = "1.5.6"
-    kotlin_version = '1.3.72'
+    kotlin_version = '1.5.10'
     def autoServiceVersion = '1.0-rc5'
     def gradleIncapHelperVersion = '0.3'
 

@@ -1,6 +1,5 @@
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
-apply plugin: 'maven'
 
 ext {
     publishDir = 'artifacts'
@@ -268,5 +267,5 @@ dependencies {
     testImplementation deps.asm
 
     // workaround to use generateInfos resources (https://stackoverflow.com/q/24870464)
-    testRuntime files(sourceSets.test.output.resourcesDir)
+    testRuntimeOnly files(sourceSets.test.output.resourcesDir)
 }
