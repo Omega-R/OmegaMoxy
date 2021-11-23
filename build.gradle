@@ -22,9 +22,9 @@ allprojects {
 ext {
     targetVersionCode = 46
     targetVersionName = "1.5.6"
-    kotlin_version = '1.5.21'
+    kotlin_version = '1.5.20'
     def autoServiceVersion = '1.0-rc5'
-    def gradleIncapHelperVersion = '0.3'
+    def gradleIncapHelperVersion = '0.2'
 
     deps = [
             android                     : 'com.google.android:android:1.6_r2',
