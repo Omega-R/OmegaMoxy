@@ -7,7 +7,7 @@ import example.com.moxy_androidx_sample.BaseView
 
 interface Contract {
 
-    interface MainView : BaseView, MainPartView {
+    interface MainView : BaseView {
 
         var value: String
 
