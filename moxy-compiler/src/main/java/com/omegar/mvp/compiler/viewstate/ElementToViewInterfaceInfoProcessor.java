@@ -178,7 +178,12 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
             if (setterElement.getSimpleName().contentEquals(setterMethod)) {
                 List<? extends VariableElement> parameters = setterElement.getParameters();
                 if (parameters.size() == 1) {
-                    if (parameters.get(0).asType().equals(getterElement.getReturnType())) {
+                    TypeMirror paramTypeMirror = parameters.get(0).asType();
+                    if (paramTypeMirror instanceof DeclaredType) {
+                        if (((DeclaredType) paramTypeMirror).asElement().equals(Util.asElement(getterElement.getReturnType()))) {
+                            return setterElement;
+                        }
+                    } else if (parameters.get(0).asType().equals(getterElement.getReturnType())) {
                         return setterElement;
                     }
                 }
