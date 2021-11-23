@@ -221,14 +221,32 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
 
     private MethodSpec generateReturnMethod(DeclaredType enclosingType, ReturnViewMethod method, CommandViewMethod commandViewMethod) {
         String commandClassName = commandViewMethod.getCommandClassName();
-        return MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
+        MethodSpec.Builder builder = MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
                 .beginControlFlow("for ($L viewCommand : mViewCommands.getCurrentState())", VIEW_COMMAND_CLASS_NAME)
                 .beginControlFlow("if (viewCommand instanceof $L)", commandClassName)
                 .addStatement("return (($L) viewCommand).$L", commandClassName, commandViewMethod.getArgumentsString())
                 .endControlFlow()
-                .endControlFlow()
-                .addStatement("return null")
-                .build();
+                .endControlFlow();
+
+        switch (method.getReturnType().getKind()) {
+            case BOOLEAN:
+                builder.addStatement("return false");
+                break;
+            case BYTE:
+            case SHORT:
+            case INT:
+            case LONG:
+            case FLOAT:
+            case CHAR:
+            case DOUBLE:
+                builder.addStatement("return 0");
+                break;
+            default:
+                builder.addStatement("return null");
+                break;
+        }
+
+        return builder.build();
     }
 
     private MethodSpec generateCommandConstructor(CommandViewMethod method) {
