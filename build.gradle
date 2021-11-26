@@ -6,7 +6,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.1'
+        classpath 'com.android.tools.build:gradle:7.0.3'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }
@@ -22,7 +22,7 @@ allprojects {
 ext {
     targetVersionCode = 46
     targetVersionName = "1.5.6"
-    kotlin_version = '1.5.20'
+    kotlin_version = '1.5.31'
     def autoServiceVersion = '1.0-rc5'
     def gradleIncapHelperVersion = '0.2'
 

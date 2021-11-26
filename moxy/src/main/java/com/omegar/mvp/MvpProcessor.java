@@ -34,6 +34,7 @@ public class MvpProcessor {
 	private <Delegated> MvpPresenter<? super Delegated> getMvpPresenter(Delegated target,
 																		PresenterField<Delegated> presenterField,
 																		String delegateTag) {
+		//noinspection rawtypes
 		Class<? extends MvpPresenter> presenterClass = presenterField.getPresenterClass();
 		PresenterStore presenterStore = MvpFacade.getInstance().getPresenterStore();
 
@@ -142,6 +143,7 @@ public class MvpProcessor {
 		}
 
 		try {
+			//noinspection InstantiationOfUtilityClass
 			new MoxyReflector();
 
 			hasMoxyReflector = true;

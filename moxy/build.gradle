@@ -226,6 +226,5 @@ dependencies {
     testImplementation deps.android
     testImplementation deps.robolectric
     testImplementation deps.compiletesting
-    testImplementation project(':moxy-compiler')
     testImplementation deps.javapoet
 }
