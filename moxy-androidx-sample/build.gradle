@@ -41,6 +41,11 @@ android {
         enabled = true
     }
 
+    lintOptions {
+
+        checkReleaseBuilds false
+
+    }
 }
 
 dependencies {
