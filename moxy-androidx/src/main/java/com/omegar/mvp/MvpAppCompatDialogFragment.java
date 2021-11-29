@@ -3,6 +3,7 @@ package com.omegar.mvp;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.LayoutRes;
 import androidx.appcompat.app.AppCompatDialogFragment;
 import androidx.fragment.app.Fragment;
 
@@ -10,6 +11,10 @@ public class MvpAppCompatDialogFragment extends AppCompatDialogFragment implemen
 
     private boolean mIsStateSaved;
     private MvpDelegate<? extends MvpAppCompatDialogFragment> mMvpDelegate;
+
+    public MvpAppCompatDialogFragment() { super(); }
+
+    public MvpAppCompatDialogFragment(@LayoutRes int contentLayoutId) { super(contentLayoutId); }
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
