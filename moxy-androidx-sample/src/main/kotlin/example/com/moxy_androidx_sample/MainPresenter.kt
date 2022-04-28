@@ -9,6 +9,7 @@ class MainPresenter : BasePresenter<Contract.MainView<Double>>() {
 
 
 	init {
+		viewState.testFunction()
 		viewState.printLog(10.0, "Kek")
 		viewState.value = "test";
 	}

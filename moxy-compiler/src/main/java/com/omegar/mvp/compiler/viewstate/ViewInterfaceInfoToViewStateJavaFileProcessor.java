@@ -194,28 +194,8 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
     }
 
     private MethodSpec generateVoidMethod(DeclaredType enclosingType, CommandViewMethod method, TypeSpec commandClass) {
-        // TODO: String commandFieldName = "$cmd";
-        String commandFieldName = decapitalizeString(method.getCommandClassName());
-
-        // Add salt if contains argument with same name
-        Random random = new Random();
-        while (method.getArgumentsString().contains(commandFieldName)) {
-            commandFieldName += random.nextInt(10);
-        }
-
         return MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
-                .addStatement("$1N $2L = new $1N($3L)", commandClass, commandFieldName, method.getArgumentsString())
-                .addStatement("mViewCommands.beforeApply($L)", commandFieldName)
-                .addCode("\n")
-                .beginControlFlow("if (mViews == null || mViews.isEmpty())")
-                .addStatement("return")
-                .endControlFlow()
-                .addCode("\n")
-                .beginControlFlow("for ($L view$$ : mViews)", VIEW)
-                .addStatement("view$$.$L($L)", method.getName(), method.getArgumentsString())
-                .endControlFlow()
-                .addCode("\n")
-                .addStatement("mViewCommands.afterApply($L)", commandFieldName)
+                .addStatement("apply(new $1N($2L))", commandClass, method.getArgumentsString())
                 .build();
     }
 

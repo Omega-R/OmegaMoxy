@@ -27,6 +27,20 @@ public abstract class MvpViewState<View extends MvpView> {
 		mViewStates = new WeakHashMap<>();
 	}
 
+	protected void apply(ViewCommand<View> command) {
+		mViewCommands.beforeApply(command);
+
+		if (mViews == null || mViews.isEmpty()) {
+			return;
+		}
+
+		for (View view$ : mViews) {
+			command.apply(view$);
+		}
+
+		mViewCommands.afterApply(command);
+	}
+
 	/**
 	 * Apply saved state to attached view
 	 *
