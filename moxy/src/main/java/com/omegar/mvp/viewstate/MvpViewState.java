@@ -16,21 +16,15 @@ import com.omegar.mvp.viewstate.strategy.StateStrategy;
  * @author Yuri Shmakov
  */
 public abstract class MvpViewState<View extends MvpView> {
-	protected ViewCommands<View> mViewCommands = new ViewCommands<>();
-	protected Set<View> mViews;
-	protected Set<View> mInRestoreState;
-	protected Map<View, Set<ViewCommand<View>>> mViewStates;
-
-	public MvpViewState() {
-		mViews = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
-		mInRestoreState = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
-		mViewStates = new WeakHashMap<>();
-	}
+	protected final ViewCommands<View> mViewCommands = new ViewCommands<>();
+	protected final Set<View> mViews = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
+	protected final Set<View> mInRestoreState = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
+	protected final Map<View, Set<ViewCommand<View>>> mViewStates = new WeakHashMap<>();
 
 	protected void apply(ViewCommand<View> command) {
 		mViewCommands.beforeApply(command);
 
-		if (mViews == null || mViews.isEmpty()) {
+		if (mViews.isEmpty()) {
 			return;
 		}
 
