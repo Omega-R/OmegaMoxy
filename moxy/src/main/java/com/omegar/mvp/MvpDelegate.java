@@ -8,7 +8,6 @@ import android.os.Bundle;
 
 import com.omegar.mvp.presenter.PresenterField;
 import com.omegar.mvp.presenter.PresenterType;
-import com.sun.istack.internal.Nullable;
 
 /**
  * Date: 18-Dec-15
@@ -119,7 +118,7 @@ public class MvpDelegate<Delegated> {
 	 *
 	 * @param bundle with saved state
 	 */
-	public void onCreate(@Nullable Bundle bundle) {
+	public void onCreate(Bundle bundle) {
 		if (mParentDelegate == null && bundle != null) {
 			bundle = bundle.getBundle(MOXY_DELEGATE_TAGS_KEY);
 		}
