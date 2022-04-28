@@ -3,12 +3,12 @@ package com.omegar.mvp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import android.os.Bundle;
 
 import com.omegar.mvp.presenter.PresenterField;
 import com.omegar.mvp.presenter.PresenterType;
+import com.sun.istack.internal.Nullable;
 
 /**
  * Date: 18-Dec-15
@@ -109,11 +109,7 @@ public class MvpDelegate<Delegated> {
 	 * state from parent presenter before get presenters</p>
 	 */
 	public void onCreate() {
-		Bundle bundle = new Bundle();
-		if (mParentDelegate != null) {
-			bundle = mParentDelegate.mBundle;
-		}
-
+		Bundle bundle = mParentDelegate != null ? mParentDelegate.mBundle : null;
 		onCreate(bundle);
 	}
 
@@ -123,7 +119,7 @@ public class MvpDelegate<Delegated> {
 	 *
 	 * @param bundle with saved state
 	 */
-	public void onCreate(Bundle bundle) {
+	public void onCreate(@Nullable Bundle bundle) {
 		if (mParentDelegate == null && bundle != null) {
 			bundle = bundle.getBundle(MOXY_DELEGATE_TAGS_KEY);
 		}
@@ -132,11 +128,7 @@ public class MvpDelegate<Delegated> {
 		mBundle = bundle != null ? bundle : new Bundle();
 
 		//get base tag for presenters
-		if (bundle == null || !mBundle.containsKey(mKeyTag)) {
-			mDelegateTag = generateTag();
-		} else {
-			mDelegateTag = bundle.getString(mKeyTag);
-		}
+		mDelegateTag = mBundle.containsKey(mKeyTag) ? bundle.getString(mKeyTag) : generateTag();
 
 		//bind presenters to view
 		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag, mCustomPresenterFields);
@@ -271,11 +263,11 @@ public class MvpDelegate<Delegated> {
 	/**
 	 * @return generated tag in format: &lt;parent_delegate_tag&gt; &lt;delegated_class_full_name&gt;$MvpDelegate@&lt;hashCode&gt;
 	 * <p>
-	 * example: com.omegar.mvp.sample.SampleFragment$MvpDelegate@32649b0
+	 * example: SampleFragment$MvpDelegate@32649b0
 	 */
 	private String generateTag() {
 		String tag = mParentDelegate != null ? mParentDelegate.mDelegateTag  + " " : "";
-		tag += mDelegated.getClass().getSimpleName() + "$" + getClass().getSimpleName() + toString().replace(getClass().getName(), "");
+		tag += mDelegated.getClass().getSimpleName() + "$" + getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 		return tag;
 	}
 }
