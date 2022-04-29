@@ -200,17 +200,10 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
     }
 
     private MethodSpec generateReturnMethod(DeclaredType enclosingType, ReturnViewMethod method, CommandViewMethod commandViewMethod) {
-        String commandClassName = commandViewMethod.getCommandClassName();
-        MethodSpec.Builder builder = MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
-                .beginControlFlow("for ($L viewCommand : mViewCommands.getCurrentState())", VIEW_COMMAND_CLASS_NAME)
-                .beginControlFlow("if (viewCommand instanceof $L)", commandClassName)
-                .addStatement("return (($L) viewCommand).$L", commandClassName, commandViewMethod.getArgumentsString())
-                .endControlFlow()
-                .endControlFlow();
-
+        String defaultValue;
         switch (method.getReturnType().getKind()) {
             case BOOLEAN:
-                builder.addStatement("return false");
+                defaultValue = "false";
                 break;
             case BYTE:
             case SHORT:
@@ -219,14 +212,17 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
             case FLOAT:
             case CHAR:
             case DOUBLE:
-                builder.addStatement("return 0");
+                defaultValue = "0";
                 break;
             default:
-                builder.addStatement("return null");
+                defaultValue = "null";
                 break;
         }
-
-        return builder.build();
+        String commandClassName = commandViewMethod.getCommandClassName();
+        return MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
+                .addStatement("$1L command = findCommand($1L.class)", commandClassName)
+                .addStatement("return command != null ? command.$L : $L", commandViewMethod.getArgumentsString(), defaultValue)
+                .build();
     }
 
     private MethodSpec generateCommandConstructor(CommandViewMethod method) {
@@ -237,10 +233,6 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
                 .addModifiers(Modifier.PRIVATE)
                 .addStatement("super($S, $T.class)", method.getTag(), method.getStrategy());
 
-        if (parameters.size() > 0) {
-            builder.addCode("\n");
-        }
-
         for (ParameterSpec parameter : parameters) {
             builder.addStatement("this.$1N = $1N", parameter);
         }
@@ -249,26 +241,30 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
     }
 
     private MethodSpec generateToStringMethodSpec(CommandViewMethod method) {
-        StringBuilder statement = new StringBuilder("return \"" + method.getName());
+        StringBuilder statement = new StringBuilder("return ");
 
-        boolean firstParams = true;
-        for (ParameterSpec parameter : method.getParameterSpecs()) {
-            if (firstParams) {
-                firstParams = false;
-                statement.append("{\" + \n\"");
-            } else {
-                statement.append(" + \n\", ");
-            }
-
-            statement.append(parameter.name)
-                    .append("=\" + ")
-                    .append(parameter.name)
-                    .append(" ");
-        }
-        if (!firstParams) {
-            statement.append("+\n'}'");
+        if (method.getParameterSpecs().isEmpty()) {
+            statement.append("\"")
+                    .append(method.getName())
+                    .append("\"");
         } else {
-            statement.append("\"");
+            boolean firstParams = true;
+            statement.append("buildString(")
+                    .append("\"")
+                    .append(method.getName())
+                    .append("\",");
+            for (ParameterSpec parameter : method.getParameterSpecs()) {
+                if (firstParams) {
+                    firstParams = false;
+                } else {
+                    statement.append(",");
+                }
+                statement.append("\"")
+                        .append(parameter.name)
+                        .append("\",")
+                        .append(parameter.name);
+            }
+            statement.append(")");
         }
 
         return MethodSpec.methodBuilder("toString")

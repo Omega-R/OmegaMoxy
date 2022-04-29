@@ -35,6 +35,16 @@ public abstract class MvpViewState<View extends MvpView> {
 		mViewCommands.afterApply(command);
 	}
 
+	@SuppressWarnings({"unchecked", "SameParameterValue"})
+	protected <C extends ViewCommand<View>> C findCommand(Class<C> clz) {
+		for (ViewCommand<?> viewCommand : mViewCommands.getCurrentState()) {
+			if (clz.isInstance(viewCommand)) {
+				return (C) viewCommand;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Apply saved state to attached view
 	 *
@@ -112,6 +122,36 @@ public abstract class MvpViewState<View extends MvpView> {
 	 */
 	public boolean isInRestoreState(View view) {
 		return mInRestoreState.contains(view);
+	}
+
+	protected static String buildString(String name, Object... args) {
+		StringBuilder builder = new StringBuilder(name);
+		if (args.length > 0) {
+			builder.append("{");
+			boolean key = true;
+			boolean isFirst = true;
+			for(Object arg : args) {
+				if (!isFirst) {
+					if (key) {
+						builder.append(", ");
+					}
+				} else {
+					isFirst = false;
+				}
+				if (!key && arg instanceof String) {
+					builder.append("'");
+				}
+				builder.append(arg);
+				if (key) {
+					builder.append("=");
+				} else if (arg instanceof String) {
+					builder.append("'");
+				}
+				key = !key;
+			}
+			builder.append("}");
+		}
+		return builder.toString();
 	}
 
 	@Override
