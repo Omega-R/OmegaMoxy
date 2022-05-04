@@ -22,4 +22,6 @@ public @interface StateStrategyType {
 
 	String tag() default "";
 
+	boolean singleInstance() default false;
+
 }

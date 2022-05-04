@@ -52,7 +52,6 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
     private static final TypeVariableName GENERIC_TYPE_VARIABLE_NAME = TypeVariableName.get(VIEW);
     private static final ClassName MVP_VIEW_STATE_CLASS_NAME = ClassName.get(MvpViewState.class);
     private static final ClassName VIEW_COMMAND_CLASS_NAME = ClassName.get(ViewCommand.class);
-    private static final String STRATEGY_ADD_TO_END_SINGLE = AddToEndSingleStrategy.class.getSimpleName();
     private static final ParameterizedTypeName VIEW_COMMAND_TYPE_NAME
             = ParameterizedTypeName.get(VIEW_COMMAND_CLASS_NAME, GENERIC_TYPE_VARIABLE_NAME);
     private static final ParameterizedTypeName MVP_VIEW_STATE_TYPE_NAME
@@ -171,8 +170,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
 
     private TypeSpec generateCommandClass(CommandViewMethod method, List<TypeVariableName> variableNames) {
         MethodSpec applyMethod = MethodSpec.methodBuilder("apply")
-                .addAnnotation(Override.class)
-                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                .addModifiers(Modifier.PUBLIC)
                 .addParameter(GENERIC_TYPE_VARIABLE_NAME, "mvpView")
                 .addExceptions(method.getExceptions())
                 .addStatement("mvpView.$L($L)", method.getName(), method.getArgumentsString())
@@ -180,10 +178,10 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
 
         MethodSpec.Builder updateMethodBuilder = null;
 
-        if (STRATEGY_ADD_TO_END_SINGLE.equals(method.getStrategy().getSimpleName().toString())) {
+        if (method.isSingleInstance()) {
 
             updateMethodBuilder = MethodSpec.methodBuilder("update")
-                    .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                    .addModifiers(Modifier.PRIVATE)
                     .addParameters(method.getParameterSpecs());
 
             for (ParameterSpec typeVariable : method.getParameterSpecs()) {
@@ -218,7 +216,7 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         String commandClassName = method.getCommandClassName();
 
         MethodSpec.Builder builder = MethodSpec.overriding(method.getElement(), enclosingType, mTypes);
-        if (STRATEGY_ADD_TO_END_SINGLE.equals(method.getStrategy().getSimpleName().toString())) {
+        if (method.isSingleInstance()) {
             builder.addStatement("$1L command = findCommand($1L.class)", commandClassName)
                     .beginControlFlow("if (command == null)")
                     .addStatement("apply(new $1N($2L))", commandClass, method.getArgumentsString())
@@ -301,7 +299,6 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
         }
 
         return MethodSpec.methodBuilder("toString")
-                .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(String.class)
                 .addStatement(statement.toString())

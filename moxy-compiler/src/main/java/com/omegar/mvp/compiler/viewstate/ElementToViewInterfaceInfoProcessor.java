@@ -132,12 +132,16 @@ public class ElementToViewInterfaceInfoProcessor extends ElementProcessor<TypeEl
                     // Allow methods be with same names
                     String uniqueSuffix = getUniqueSuffix(methodsCounter, methodElement);
 
+                    boolean singleInstance = Util.getAnnotationValueAsBoolean(annotation, "singleInstance");
+
                     return new CommandViewMethod(mTypes,
                             (DeclaredType) typeElement.asType(),
                             methodElement,
                             strategyClass,
                             methodTag,
-                            uniqueSuffix);
+                            uniqueSuffix,
+                            singleInstance
+                    );
 
                 });
 
