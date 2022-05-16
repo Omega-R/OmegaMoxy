@@ -2,10 +2,12 @@ package com.omegar.mvp.compiler.entity;
 
 import com.omegar.mvp.MvpProcessor;
 import com.omegar.mvp.compiler.Util;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeVariableName;
+import com.squareup.kotlinpoet.ClassName;
+import com.squareup.kotlinpoet.ClassNames;
+import com.squareup.kotlinpoet.ParameterizedTypeName;
+import com.squareup.kotlinpoet.TypeName;
+import com.squareup.kotlinpoet.TypeVariableName;
+import com.squareup.kotlinpoet.TypeVariableNames;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,18 +29,22 @@ public class ViewInterfaceInfo implements TypeElementHolder {
     private final TypeElement mElement;
     private final ClassName mName;
     private final List<TypeVariableName> mTypeVariables;
-    private final List<ViewMethod> mMethods;
+    private final List<TypeVariableName> mParentTypeVariables;
 
-    public ViewInterfaceInfo(@Nullable TypeElement superInterfaceType, TypeElement element, List<ViewMethod> methods) {
+    private final List<ViewCommandInfo> mCommands;
+
+    public ViewInterfaceInfo(@Nullable TypeElement superInterfaceType,
+                             TypeElement element,
+                             List<ViewCommandInfo> commands,
+                             List<TypeVariableName> typeVariables,
+                             List<TypeVariableName> parentTypeVariables
+    ) {
         mSuperInterfaceType = superInterfaceType;
         mElement = element;
-        mName = ClassName.get(element);
-        mMethods = methods;
-
-        mTypeVariables = element.getTypeParameters().stream()
-                .map(TypeVariableName::get)
-                .collect(Collectors.toList());
-
+        mName = ClassNames.get(element);
+        mCommands = commands;
+        mTypeVariables = typeVariables;
+        mParentTypeVariables = parentTypeVariables;
     }
 
     @Nullable
@@ -69,8 +75,12 @@ public class ViewInterfaceInfo implements TypeElementHolder {
         return mTypeVariables;
     }
 
-    public List<ViewMethod> getMethods() {
-        return mMethods;
+    public List<TypeVariableName> getParentTypeVariables() {
+        return mParentTypeVariables;
+    }
+
+    public List<ViewCommandInfo> getCommands() {
+        return mCommands;
     }
 
     public String getViewStateFullName(Elements elements) {

@@ -18,7 +18,8 @@ package com.omegar.mvp.compiler;
 
 import com.omegar.mvp.MvpView;
 import com.omegar.mvp.viewstate.strategy.StrategyType;
-import com.squareup.javapoet.ClassName;
+import com.squareup.kotlinpoet.ClassName;
+import com.squareup.kotlinpoet.ClassNames;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,7 +55,7 @@ import javax.lang.model.util.Elements;
 @SuppressWarnings("WeakerAccess")
 public final class Util {
 
-	public static final ClassName MVP_VIEW_CLASS_NAME = ClassName.get(MvpView.class);
+	public static final ClassName MVP_VIEW_CLASS_NAME = ClassNames.get(MvpView.class);
 
 
 	public static String fillGenerics(Map<String, String> types, TypeMirror param) {
@@ -249,7 +250,7 @@ public final class Util {
 	public static boolean isMvpElement(TypeElement element) {
 		if (element == null) return false;
 
-		ClassName className = ClassName.get(element);
+		ClassName className = ClassNames.get(element);
 		if (className.equals(MVP_VIEW_CLASS_NAME)) return true;
 
 		for (TypeMirror typeMirror : element.getInterfaces()) {

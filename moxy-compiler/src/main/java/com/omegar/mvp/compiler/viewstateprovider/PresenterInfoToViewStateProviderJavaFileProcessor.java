@@ -5,6 +5,7 @@ import com.omegar.mvp.MvpView;
 import com.omegar.mvp.ViewStateProvider;
 import com.omegar.mvp.compiler.entity.PresenterInfo;
 import com.omegar.mvp.compiler.pipeline.JavaFileProcessor;
+import com.omegar.mvp.compiler.pipeline.Processor;
 import com.omegar.mvp.viewstate.MvpViewState;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -21,7 +22,7 @@ import javax.lang.model.element.Modifier;
  *
  * @author Alexander Blinov
  */
-public final class PresenterInfoToViewStateProviderJavaFileProcessor extends JavaFileProcessor<com.omegar.mvp.compiler.entity.PresenterInfo> {
+public final class PresenterInfoToViewStateProviderJavaFileProcessor extends JavaFileProcessor<PresenterInfo> {
 
 	@Override
 	public JavaFile process(PresenterInfo presenterInfo) {

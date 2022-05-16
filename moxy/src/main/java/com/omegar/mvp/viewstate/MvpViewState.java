@@ -36,7 +36,7 @@ public abstract class MvpViewState<View extends MvpView> {
 	}
 
 	@SuppressWarnings({"unchecked", "SameParameterValue"})
-	protected <C extends ViewCommand<View>> C findCommand(Class<C> clz) {
+	protected <C extends ViewCommand<View>> C findCommand(Class<?> clz) {
 		for (ViewCommand<?> viewCommand : mViewCommands.getCurrentState()) {
 			if (viewCommand.getClass() == clz) {
 				return (C) viewCommand;

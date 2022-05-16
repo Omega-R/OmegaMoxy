@@ -2,8 +2,6 @@ package com.omegar.mvp.compiler.pipeline;
 
 import com.squareup.javapoet.JavaFile;
 
-import java.util.List;
-
 /**
  * Date: 27-Jul-17
  * Time: 10:26

@@ -1,6 +1,17 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 apply plugin: 'maven'
+apply plugin: 'kotlin'
 
 ext {
     publishDir = 'artifacts'
@@ -249,7 +260,13 @@ assemble.dependsOn copyVersion
 
 dependencies {
     implementation project(':moxy')
+    implementation deps.kotlin
+    implementation deps.kotlinReflect
+
     implementation deps.javapoet
+    implementation deps.kotlinpoet
+    implementation deps.kotlinpoetMetadata
+
     implementation deps.gradleIncapHelperAnnotations
 
     compileOnly deps.autocommon
@@ -260,6 +277,8 @@ dependencies {
 
     javadocDeps project(':moxy')
     javadocDeps deps.javapoet
+    javadocDeps deps.kotlinpoet
+    javadocDeps deps.kotlinpoetMetadata
     javadocDeps deps.autoservice
 
     testImplementation deps.junit
