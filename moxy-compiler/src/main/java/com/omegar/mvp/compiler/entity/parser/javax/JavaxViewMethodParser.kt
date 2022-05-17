@@ -20,7 +20,7 @@ class JavaxViewMethodParser(private val types: Types) : ViewMethod.Parser() {
     }
 
     override fun extractTypeVariableNames(targetInterfaceElement: TypeElement): List<TypeVariableName> {
-        return targetInterfaceElement.typeParameters.map { it.asTypeVariableName() }
+        return targetInterfaceElement.typeParameters.map { it.asTypeVariableName().javaToKotlinType() }
     }
 
     override fun parse(targetInterfaceElement: TypeElement): List<ViewMethod> {
@@ -49,8 +49,8 @@ class JavaxViewMethodParser(private val types: Types) : ViewMethod.Parser() {
         val methodName = methodElement.simpleName.toString()
         val parameters = methodElement.parameters
         val parameterSpecs = parameters.mapParametersSpecs(viewInterfaceType, methodElement)
-        val exceptions = methodElement.thrownTypes.map { it.asTypeName() }
-        val typeVariables = methodElement.typeParameters.map { it.asTypeVariableName() }
+        val exceptions = methodElement.thrownTypes.map { it.asTypeName().javaToKotlinType() }
+        val typeVariables = methodElement.typeParameters.map { it.asTypeVariableName().javaToKotlinType() }
 
         val setter = FunSpec.overriding(methodElement, viewInterfaceType, types)
                 .javaToKotlinType()
