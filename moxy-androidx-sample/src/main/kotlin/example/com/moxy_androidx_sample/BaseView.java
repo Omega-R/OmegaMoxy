@@ -8,9 +8,9 @@ import static com.omegar.mvp.viewstate.strategy.StrategyType.*;
 public interface BaseView extends MvpView {
 
     @StateStrategyType(ADD_TO_END_SINGLE)
-    void setTest(String test);
+    void setTest(float test);
 
-    String getTest();
+    float getTest();
 
     @StateStrategyType(ADD_TO_END)
     void testFunction();

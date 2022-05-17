@@ -158,7 +158,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                 .addModifiers(KModifier.PRIVATE, KModifier.FINAL, KModifier.INNER)
                 .primaryConstructor(
                         FunSpec.constructorBuilder()
-                                .addParameters(command.method.parameterSpecs.map { it.toBuilder(type = it.type.copy(nullable = true)).build() })
+                                .addParameters(command.method.parameterSpecs)
                                 .build()
                 )
                 .superclass(VIEW_COMMAND_TYPE_NAME)
@@ -170,7 +170,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         classBuilder.addFunction(generateToStringMethodSpec(command))
         for (parameter in command.method.parameterSpecs) {
             classBuilder.addProperty(
-                    PropertySpec.builder(parameter.name, parameter.type.copy(true, parameter.type.annotations))
+                    PropertySpec.builder(parameter.name, parameter.type)
                             .addModifiers(KModifier.INTERNAL)
                             .mutable(command.singleInstance)
                             .initializer("%1N", parameter)
@@ -202,19 +202,21 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
     }
 
     private fun generateGetterBuilder(command: ViewCommandInfo, funSpec: FunSpec.Builder): FunSpec.Builder {
-        val defaultValue = when (funSpec.build().returnType) {
+        val returnType = funSpec.build().returnType
+        val defaultValue = when (returnType) {
             BOOLEAN -> "false"
             FLOAT -> "0f"
             CHAR -> "\\u0000"
             DOUBLE -> "0.0"
             BYTE, SHORT, INT, LONG -> "0"
+            STRING -> "\"\""
             else -> "null"
         }
         val commandClassName = command.name
         val builder = funSpec.clearBody()
         builder.modifiers.remove(KModifier.ABSTRACT)
         builder.annotations.clear()
-        if ("null" == defaultValue) {
+        if ("null" == defaultValue || returnType?.isNullable == true) {
             builder.addStatement("return findCommand<%1L>(%1L::class.java)?.%2L", commandClassName, command.method.argumentsString)
         } else {
             builder.addStatement("return findCommand<%1L>(%1L::class.java)?.%2L ?: %3L", commandClassName, command.method.argumentsString, defaultValue)

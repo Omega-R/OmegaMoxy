@@ -42,6 +42,14 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
             Log.e(TAG, "duration : $value")
         }
 
+    override fun setTest(test: Float) {
+
+    }
+
+    override fun getTest(): Float {
+        return 0f
+    }
+
     private val presenter: MainPresenter by providePresenter {
         MainPresenter()
     }
