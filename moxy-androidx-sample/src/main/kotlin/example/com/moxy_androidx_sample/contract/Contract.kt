@@ -13,6 +13,22 @@ interface Contract {
 
         var duration: Duration?
 
+        var boolean: Boolean
+
+        var list: List<Int>
+
+        var array: Array<Int>
+
+        var set: Set<Int>
+
+        var map: Map<Int, Int>
+
+        var mutablelist: MutableList<Int>
+
+        var mutableSet: MutableSet<Int>
+
+        var mutableMap: MutableMap<Int, Int>
+
         @StateStrategyType(ADD_TO_END_SINGLE, singleInstance = true)
         fun printLog(msg: D?, log: String?)
 

@@ -13,6 +13,7 @@ import com.omegar.mvp.viewstate.ViewCommand
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
+import java.lang.IllegalArgumentException
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 
@@ -202,20 +203,30 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
     }
 
     private fun generateGetterBuilder(command: ViewCommandInfo, funSpec: FunSpec.Builder): FunSpec.Builder {
-        val returnType = funSpec.build().returnType
-        val defaultValue = when (returnType) {
+        val returnType = command.method.parameterSpecs.firstOrNull()?.type
+        val defaultValue = when ((returnType as? ParameterizedTypeName)?.rawType ?: returnType) {
             BOOLEAN -> "false"
             FLOAT -> "0f"
             CHAR -> "\\u0000"
             DOUBLE -> "0.0"
             BYTE, SHORT, INT, LONG -> "0"
             STRING -> "\"\""
+            LIST -> "emptyList()"
+            MAP -> "emptyMap()"
+            SET -> "emptySet()"
+            ARRAY -> "emptyArray()"
+            MUTABLE_MAP -> "mutableMapOf()"
+            MUTABLE_LIST -> "mutableListOf()"
+            MUTABLE_SET -> "mutableSetOf()"
             else -> "null"
         }
         val commandClassName = command.name
         val builder = funSpec.clearBody()
         builder.modifiers.remove(KModifier.ABSTRACT)
         builder.annotations.clear()
+//        if (command.method.name == "list") {
+//            throw IllegalArgumentException(returnType.toString())
+//        }
         if ("null" == defaultValue || returnType?.isNullable == true) {
             builder.addStatement("return findCommand<%1L>(%1L::class.java)?.%2L", commandClassName, command.method.argumentsString)
         } else {

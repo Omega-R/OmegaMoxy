@@ -275,12 +275,6 @@ dependencies {
     compileOnly deps.guava
     annotationProcessor deps.gradleIncapHelperProcessor
 
-    javadocDeps project(':moxy')
-    javadocDeps deps.javapoet
-    javadocDeps deps.kotlinpoet
-    javadocDeps deps.kotlinpoetMetadata
-    javadocDeps deps.autoservice
-
     testImplementation deps.junit
     testImplementation deps.truth
     testImplementation deps.compiletesting

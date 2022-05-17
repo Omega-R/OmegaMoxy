@@ -48,7 +48,7 @@ public final class PresenterInfoToViewStateProviderJavaFileProcessor extends Jav
 		if (viewState == null) {
 			methodBuilder.addStatement("throw new RuntimeException($S)", presenter.reflectionName() + " should has view");
 		} else {
-			methodBuilder.addStatement("return new $T()", viewState);
+			methodBuilder.addStatement("return (MvpViewState<? extends MvpView>) new $T()", viewState);
 		}
 
 		return methodBuilder.build();

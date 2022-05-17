@@ -72,4 +72,29 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
         const val TAG = "MoxyDebug"
     }
 
+    override var boolean: Boolean
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var list: List<Int>
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var array: Array<Int>
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var set: Set<Int>
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var map: Map<Int, Int>
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var mutablelist: MutableList<Int>
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var mutableSet: MutableSet<Int>
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    override var mutableMap: MutableMap<Int, Int>
+        get() = TODO("Not yet implemented")
+        set(value) {}
+
 }
