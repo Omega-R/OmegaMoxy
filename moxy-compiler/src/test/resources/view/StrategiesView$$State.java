@@ -11,49 +11,49 @@ public class StrategiesView$$State extends MvpViewState<StrategiesView> implemen
 	@Override
 	public void singleState() {
 		SingleStateCommand singleStateCommand = new SingleStateCommand();
-		mViewCommands.beforeApply(singleStateCommand);
+		viewCommands.beforeApply(singleStateCommand);
 
-		if (mViews == null || mViews.isEmpty()) {
+		if (mutableViews == null || mutableViews.isEmpty()) {
 			return;
 		}
 
-		for (StrategiesView view : mViews) {
+		for (StrategiesView view : mutableViews) {
 			view.singleState();
 		}
 
-		mViewCommands.afterApply(singleStateCommand);
+		viewCommands.afterApply(singleStateCommand);
 	}
 
 	@Override
 	public void oneExecution() {
 		OneExecutionCommand oneExecutionCommand = new OneExecutionCommand();
-		mViewCommands.beforeApply(oneExecutionCommand);
+		viewCommands.beforeApply(oneExecutionCommand);
 
-		if (mViews == null || mViews.isEmpty()) {
+		if (mutableViews == null || mutableViews.isEmpty()) {
 			return;
 		}
 
-		for (StrategiesView view : mViews) {
+		for (StrategiesView view : mutableViews) {
 			view.oneExecution();
 		}
 
-		mViewCommands.afterApply(oneExecutionCommand);
+		viewCommands.afterApply(oneExecutionCommand);
 	}
 
 	@Override
 	public void withoutStrategy() {
 		WithoutStrategyCommand withoutStrategyCommand = new WithoutStrategyCommand();
-		mViewCommands.beforeApply(withoutStrategyCommand);
+		viewCommands.beforeApply(withoutStrategyCommand);
 
-		if (mViews == null || mViews.isEmpty()) {
+		if (mutableViews == null || mutableViews.isEmpty()) {
 			return;
 		}
 
-		for (StrategiesView view : mViews) {
+		for (StrategiesView view : mutableViews) {
 			view.withoutStrategy();
 		}
 
-		mViewCommands.afterApply(withoutStrategyCommand);
+		viewCommands.afterApply(withoutStrategyCommand);
 	}
 
 

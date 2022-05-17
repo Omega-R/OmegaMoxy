@@ -1,4 +1,4 @@
-package com.omegar.mvp;
+package com.omegar.mvp
 
 /**
  * Date: 21.01.2016
@@ -6,5 +6,4 @@ package com.omegar.mvp;
  *
  * @author Yuri Shmakov
  */
-public interface MvpView {
-}
+interface MvpView 

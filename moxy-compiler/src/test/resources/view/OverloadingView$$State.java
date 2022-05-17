@@ -9,49 +9,49 @@ public class OverloadingView$$State extends MvpViewState<OverloadingView> implem
 	@Override
 	public void method(String string) {
 		MethodCommand methodCommand = new MethodCommand(string);
-		mViewCommands.beforeApply(methodCommand);
+		viewCommands.beforeApply(methodCommand);
 
-		if (mViews == null || mViews.isEmpty()) {
+		if (mutableViews == null || mutableViews.isEmpty()) {
 			return;
 		}
 
-		for (OverloadingView view : mViews) {
+		for (OverloadingView view : mutableViews) {
 			view.method(string);
 		}
 
-		mViewCommands.afterApply(methodCommand);
+		viewCommands.afterApply(methodCommand);
 	}
 
 	@Override
 	public void method(int number) {
 		Method1Command method1Command = new Method1Command(number);
-		mViewCommands.beforeApply(method1Command);
+		viewCommands.beforeApply(method1Command);
 
-		if (mViews == null || mViews.isEmpty()) {
+		if (mutableViews == null || mutableViews.isEmpty()) {
 			return;
 		}
 
-		for (OverloadingView view : mViews) {
+		for (OverloadingView view : mutableViews) {
 			view.method(number);
 		}
 
-		mViewCommands.afterApply(method1Command);
+		viewCommands.afterApply(method1Command);
 	}
 
 	@Override
 	public void method(Object object) {
 		Method2Command method2Command = new Method2Command(object);
-		mViewCommands.beforeApply(method2Command);
+		viewCommands.beforeApply(method2Command);
 
-		if (mViews == null || mViews.isEmpty()) {
+		if (mutableViews == null || mutableViews.isEmpty()) {
 			return;
 		}
 
-		for (OverloadingView view : mViews) {
+		for (OverloadingView view : mutableViews) {
 			view.method(object);
 		}
 
-		mViewCommands.afterApply(method2Command);
+		viewCommands.afterApply(method2Command);
 	}
 
 

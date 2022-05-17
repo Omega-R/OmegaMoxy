@@ -5,26 +5,26 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import com.squareup.kotlinpoet.metadata.classinspectors.ElementsClassInspector
 import com.squareup.kotlinpoet.metadata.specs.toTypeSpec
-import java.util.*
 import javax.lang.model.element.AnnotationMirror
 import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
+import kotlin.collections.HashMap
 
 class KmViewMethodParser(elements: Elements, types: Types) : ViewMethod.Parser() {
     @KotlinPoetMetadataPreview
     private val classInspector = ElementsClassInspector.create(elements, types)
-    private val map: MutableMap<TypeElement, TypeSpec> = WeakHashMap()
+
+    private val map: MutableMap<TypeElement, TypeSpec> = HashMap()
 
     @KotlinPoetMetadataPreview
     override fun extractTypeVariableNames(targetInterfaceElement: TypeElement): List<TypeVariableName> {
-        val typeSpec = map.getOrPut(targetInterfaceElement) { targetInterfaceElement.toTypeSpec(classInspector) }
-        return typeSpec.typeVariables
+        return targetInterfaceElement.typeSpec.typeVariables
     }
 
     @KotlinPoetMetadataPreview
     override fun parse(targetInterfaceElement: TypeElement): List<ViewMethod> {
-        val typeSpec = map.getOrPut(targetInterfaceElement) { targetInterfaceElement.toTypeSpec(classInspector) }
+        val typeSpec = targetInterfaceElement.typeSpec
 
         val properties = typeSpec.propertySpecs
                 .asSequence()
@@ -59,5 +59,8 @@ class KmViewMethodParser(elements: Elements, types: Types) : ViewMethod.Parser()
                 }
         return (properties + functions).toList()
     }
+
+    @KotlinPoetMetadataPreview
+    private val TypeElement.typeSpec: TypeSpec get() = map.getOrPut(this) { toTypeSpec(classInspector) }
 
 }

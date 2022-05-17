@@ -1,6 +1,17 @@
-apply plugin: 'java'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+
 apply plugin: 'maven-publish'
 apply plugin: 'maven'
+apply plugin: 'kotlin'
 
 ext {
     publishDir = 'artifacts'
@@ -224,6 +235,7 @@ assemble.dependsOn copyVersion
 dependencies {
     compileOnly deps.android
     compileOnly project(':stub-reflector')
+    implementation deps.kotlin
 
     javadocDeps deps.android
     javadocDeps project(':stub-reflector')

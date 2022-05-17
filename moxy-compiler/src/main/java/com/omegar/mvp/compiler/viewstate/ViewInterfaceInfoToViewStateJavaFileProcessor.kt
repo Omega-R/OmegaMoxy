@@ -35,8 +35,8 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         private val GENERIC_TYPE_VARIABLE_NAME: TypeVariableName = TypeVariableName(VIEW)
         private val MVP_VIEW_STATE_CLASS_NAME = MvpViewState::class.java.asClassName()
         private val VIEW_COMMAND_CLASS_NAME = ViewCommand::class.java.asClassName()
-        private val VIEW_COMMAND_TYPE_NAME: ParameterizedTypeName = VIEW_COMMAND_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
-        private val MVP_VIEW_STATE_TYPE_NAME: ParameterizedTypeName = MVP_VIEW_STATE_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
+        private val VIEW_COMMAND_TYPE_NAME = VIEW_COMMAND_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
+        private val MVP_VIEW_STATE_TYPE_NAME = MVP_VIEW_STATE_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
     }
 
 
@@ -130,7 +130,6 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
     }
 
     private fun generateCommandClass(command: ViewCommandInfo, variableNames: List<TypeVariableName>): TypeSpec {
-
         var updateMethodBuilder: FunSpec.Builder? = null
         if (command.singleInstance) {
             updateMethodBuilder = FunSpec.builder("update")
@@ -142,7 +141,6 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         }
 
         val applyMethodBuilder = FunSpec.builder("apply")
-                .returns(Unit::class)
                 .addModifiers(KModifier.OVERRIDE)
                 .addParameter("mvpView", GENERIC_TYPE_VARIABLE_NAME)
         when (command.method.type) {
@@ -163,7 +161,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                                 .build()
                 )
                 .superclass(VIEW_COMMAND_TYPE_NAME)
-                .addSuperclassConstructorParameter(CodeBlock.of("%S, %T::class.java", command.tag, command.strategy))
+                .addSuperclassConstructorParameter(CodeBlock.of("%S, %T::class.java", command.tag, command.strategy.asClassName()))
                 .addFunction(applyMethodBuilder.build())
         if (updateMethodBuilder != null) {
             classBuilder.addFunction(updateMethodBuilder.build())
@@ -172,7 +170,6 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         for (parameter in command.method.parameterSpecs) {
             classBuilder.addProperty(
                     PropertySpec.builder(parameter.name, parameter.type)
-                            .addModifiers(KModifier.INTERNAL)
                             .mutable(command.singleInstance)
                             .initializer("%1N", parameter)
                             .build()
@@ -189,7 +186,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         builder.annotations.clear()
         if (command.singleInstance) {
 
-            builder.addStatement("val command = findCommand<%1L>(%1L::class.java)", commandClassName)
+            builder.addStatement("val command = findCommand<%1L>()", commandClassName)
                     .beginControlFlow("if (command == null)")
                     .addStatement("apply(%1N(%2L))", commandClass, command.method.argumentsString)
                     .nextControlFlow("else")
@@ -224,13 +221,10 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         val builder = funSpec.clearBody()
         builder.modifiers.remove(KModifier.ABSTRACT)
         builder.annotations.clear()
-//        if (command.method.name == "list") {
-//            throw IllegalArgumentException(returnType.toString())
-//        }
         if ("null" == defaultValue || returnType?.isNullable == true) {
-            builder.addStatement("return findCommand<%1L>(%1L::class.java)?.%2L", commandClassName, command.method.argumentsString)
+            builder.addStatement("return findCommand<%1L>()?.%2L", commandClassName, command.method.argumentsString)
         } else {
-            builder.addStatement("return findCommand<%1L>(%1L::class.java)?.%2L ?: %3L", commandClassName, command.method.argumentsString, defaultValue)
+            builder.addStatement("return findCommand<%1L>()?.%2L ?: %3L", commandClassName, command.method.argumentsString, defaultValue)
         }
         return builder
     }
