@@ -1,5 +1,6 @@
 package com.omegar.mvp.viewstate;
 
+import com.omegar.mvp.MoxyReflector;
 import com.omegar.mvp.MvpView;
 import com.omegar.mvp.viewstate.strategy.StateStrategy;
 
@@ -11,11 +12,15 @@ import com.omegar.mvp.viewstate.strategy.StateStrategy;
  */
 public abstract class ViewCommand<View extends MvpView> {
 	private final String mTag;
-	private final Class<? extends StateStrategy> mStateStrategyClass;
+	private final StateStrategy mStateStrategy;
+
+	protected ViewCommand(String tag, StateStrategy stateStrategy) {
+		mTag = tag;
+		mStateStrategy = stateStrategy;
+	}
 
 	protected ViewCommand(String tag, Class<? extends StateStrategy> stateStrategyClass) {
-		mTag = tag;
-		mStateStrategyClass = stateStrategyClass;
+		this(tag, (StateStrategy) MoxyReflector.getStrategy(stateStrategyClass));
 	}
 
 	public abstract void apply(View view);
@@ -24,7 +29,7 @@ public abstract class ViewCommand<View extends MvpView> {
 		return mTag;
 	}
 
-	public Class<? extends StateStrategy> getStrategyClass() {
-		return mStateStrategyClass;
+	public StateStrategy getStateStrategy() {
+		return mStateStrategy;
 	}
 }

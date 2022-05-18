@@ -13,7 +13,6 @@ import com.omegar.mvp.viewstate.ViewCommand
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
-import java.lang.IllegalArgumentException
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 
@@ -72,7 +71,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         }
 
         viewInterfaceInfo.commands.forEach { command ->
-            val commandClass = generateCommandClass(command, variableNames)
+            val commandClass = generateCommandClass(command)
             classBuilder.addType(commandClass)
 
             when (command.method.type) {
@@ -129,7 +128,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         return (listOf(variableName) + viewInterfaceInfo.parentTypeVariables).toTypedArray()
     }
 
-    private fun generateCommandClass(command: ViewCommandInfo, variableNames: List<TypeVariableName>): TypeSpec {
+    private fun generateCommandClass(command: ViewCommandInfo): TypeSpec {
         var updateMethodBuilder: FunSpec.Builder? = null
         if (command.singleInstance) {
             updateMethodBuilder = FunSpec.builder("update")
@@ -185,14 +184,12 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         builder.modifiers.remove(KModifier.ABSTRACT)
         builder.annotations.clear()
         if (command.singleInstance) {
+            builder.addCode(
+                    "apply(findCommand<%1L>()?.also { it.update(%2L) } ?: %1L(%2L))",
+                    commandClassName,
+                    command.method.argumentsString
+            )
 
-            builder.addStatement("val command = findCommand<%1L>()", commandClassName)
-                    .beginControlFlow("if (command == null)")
-                    .addStatement("apply(%1N(%2L))", commandClass, command.method.argumentsString)
-                    .nextControlFlow("else")
-                    .addStatement("command.update(%L)", command.method.argumentsString)
-                    .addStatement("apply(command)")
-                    .endControlFlow()
         } else {
             builder.addStatement("apply(%1N(%2L))", commandClass, command.method.argumentsString)
         }

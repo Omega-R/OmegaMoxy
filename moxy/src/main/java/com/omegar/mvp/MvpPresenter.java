@@ -18,21 +18,15 @@ import com.omegar.mvp.viewstate.MvpViewState;
 @SuppressWarnings("rawtypes")
 @InjectViewState
 public abstract class MvpPresenter<View extends MvpView> {
-	private final Set<View> mViews;
 	private boolean mFirstLaunch = true;
 	private String mTag;
 	private PresenterType mPresenterType;
-	private View mViewStateAsView;
 	private MvpViewState<View> mViewState;
 	private Class<? extends MvpPresenter> mPresenterClass;
 
 	@SuppressWarnings("unchecked")
 	public MvpPresenter() {
-        MvpView viewState = (MvpView) MoxyReflector.getViewState(getClass());
-		mViewStateAsView = (View) viewState;
-        mViewState = (MvpViewState<View>) viewState;
-
-		mViews = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
+        mViewState = (MvpViewState<View>) MoxyReflector.getViewState(getClass());
 	}
 
 	/**
@@ -43,11 +37,8 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 * @param view to attachment
 	 */
 	protected void attachView(View view) {
-		if (mViewState != null) {
-			mViewState.attachView(view);
-		} else {
-			mViews.add(view);
-		}
+		mViewState.attachView(view);
+
 		attachView(view, mFirstLaunch);
 
 		if (mFirstLaunch) {
@@ -65,6 +56,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 * @param view to attachment
      * @param isFirstAttach is first presenter init and view binding
 	 */
+	@SuppressWarnings("unused")
 	protected void attachView(View view, boolean isFirstAttach) {
 	}
 
@@ -86,17 +78,11 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 */
 	@SuppressWarnings("WeakerAccess")
 	protected void detachView(View view) {
-		if (mViewState != null) {
-			mViewState.detachView(view);
-		} else {
-			mViews.remove(view);
-		}
+		mViewState.detachView(view);
 	}
 
 	protected void destroyView(View view) {
-		if (mViewState != null) {
-			mViewState.destroyView(view);
-		}
+		mViewState.destroyView(view);
 	}
 
 	/**
@@ -104,19 +90,25 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 */
 	@SuppressWarnings("WeakerAccess")
 	protected Set<View> getAttachedViews() {
-		if (mViewState != null) {
-			return mViewState.getViews();
-		}
-
-		return mViews;
+		return mViewState.getViews();
 	}
 
 	/**
 	 * @return view state, casted to view interface for simplify
 	 */
-	@SuppressWarnings("WeakerAccess")
+	@SuppressWarnings("unchecked")
 	protected View getViewState() {
-		return mViewStateAsView;
+		return (View) mViewState;
+	}
+
+	/**
+	 * Set view state to presenter
+	 *
+	 * @param viewState that implements type, setted as View generic param
+	 */
+	@SuppressWarnings("unused")
+	protected void setViewState(MvpViewState<View> viewState) {
+		mViewState = viewState;
 	}
 
 	/**
@@ -127,22 +119,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 */
 	@SuppressWarnings("unused")
 	protected boolean isInRestoreState(View view) {
-		//noinspection SimplifiableIfStatement
-		if (mViewState != null) {
-			return mViewState.isInRestoreState(view);
-		}
-		return false;
-	}
-
-	/**
-	 * Set view state to presenter
-	 *
-	 * @param viewState that implements type, setted as View generic param
-	 */
-	@SuppressWarnings({"unchecked", "unused"})
-	protected void setViewState(MvpViewState<View> viewState) {
-		mViewStateAsView = (View) viewState;
-		mViewState = (MvpViewState) viewState;
+		return mViewState.isInRestoreState(view);
 	}
 
 	PresenterType getPresenterType() {

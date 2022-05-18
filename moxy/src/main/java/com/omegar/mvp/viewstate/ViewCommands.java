@@ -18,19 +18,15 @@ public class ViewCommands<View extends MvpView> {
 	private final List<ViewCommand<View>> mState = new ArrayList<>();
 
 	public void beforeApply(ViewCommand<View> viewCommand) {
-		StateStrategy stateStrategy = getStateStrategy(viewCommand);
+		StateStrategy stateStrategy = viewCommand.getStateStrategy();
 
 		stateStrategy.beforeApply(mState, viewCommand);
 	}
 
 	public void afterApply(ViewCommand<View> viewCommand) {
-		StateStrategy stateStrategy = getStateStrategy(viewCommand);
+		StateStrategy stateStrategy = viewCommand.getStateStrategy();
 
 		stateStrategy.afterApply(mState, viewCommand);
-	}
-
-	private StateStrategy getStateStrategy(ViewCommand<View> viewCommand) {
-		return (StateStrategy) MoxyReflector.getStrategy(viewCommand.getStrategyClass());
 	}
 
 	public boolean isEmpty() {

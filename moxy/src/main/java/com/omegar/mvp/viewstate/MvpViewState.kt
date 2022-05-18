@@ -21,17 +21,14 @@ abstract class MvpViewState<View : MvpView> {
     protected val viewCommands = ViewCommands<View>()
     protected val mutableViews = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
     protected val inRestoreState = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
-    protected val viewStates: MutableMap<View, Set<ViewCommand<View>>> = WeakHashMap()
+    protected val viewStates = WeakHashMap<View, Set<ViewCommand<View>>>()
 
     protected fun apply(command: ViewCommand<View>) {
         viewCommands.beforeApply(command)
-        if (mutableViews.isEmpty()) {
-            return
+        if (views.isNotEmpty()) {
+            views.forEach(command::apply)
+            viewCommands.afterApply(command)
         }
-        mutableViews.forEach { view ->
-            command.apply(view)
-        }
-        viewCommands.afterApply(command)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -48,10 +45,9 @@ abstract class MvpViewState<View : MvpView> {
      * @param currentState commands that was applied already
      */
     protected fun restoreState(view: View, currentState: Set<ViewCommand<View>>?) {
-        if (viewCommands.isEmpty) {
-            return
+        if (!viewCommands.isEmpty) {
+            viewCommands.reapply(view, currentState)
         }
-        viewCommands.reapply(view, currentState)
     }
 
     /**
@@ -99,9 +95,7 @@ abstract class MvpViewState<View : MvpView> {
      * @param view view for check
      * @return true if view state restore state to incoming view. false otherwise.
      */
-    fun isInRestoreState(view: View): Boolean {
-        return inRestoreState.contains(view)
-    }
+    fun isInRestoreState(view: View): Boolean = inRestoreState.contains(view)
 
     override fun toString(): String {
         return "MvpViewState{" +
@@ -109,33 +103,14 @@ abstract class MvpViewState<View : MvpView> {
                 '}'
     }
 
-    protected fun buildString(name: String?, vararg args: Any?): String {
-        val builder = StringBuilder(name)
-        if (args.size > 0) {
-            builder.append("{")
-            var key = true
-            var isFirst = true
-            for (arg in args) {
-                if (!isFirst) {
-                    if (key) {
-                        builder.append(", ")
-                    }
-                } else {
-                    isFirst = false
+    protected fun buildString(name: String, vararg args: Any?): String {
+        return (0 until args.size / 2)
+                .joinToString(prefix = "$name{", separator = ", ", postfix = "}") { i ->
+                    val key = args[i * 2]
+                    val value = args[i * 2 + 1]
+                    val mark = "'".takeIf { value is String } ?: ""
+                    "$key=$mark$value$mark"
                 }
-                if (!key && arg is String) {
-                    builder.append("'")
-                }
-                builder.append(arg)
-                if (key) {
-                    builder.append("=")
-                } else if (arg is String) {
-                    builder.append("'")
-                }
-                key = !key
-            }
-            builder.append("}")
-        }
-        return builder.toString()
     }
+
 }
