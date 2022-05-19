@@ -4,6 +4,7 @@ import com.omegar.mvp.MvpView;
 import com.omegar.mvp.viewstate.MvpViewState;
 import com.omegar.mvp.viewstate.ViewCommand;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ import java.util.List;
  *
  * @author Yuri Shmakov
  */
-public interface StateStrategy {
+public interface StateStrategy extends Serializable {
 	/**
 	 * Called immediately after
 	 * {@link MvpViewState} receive some

@@ -124,12 +124,11 @@ public final class TargetClassInfoToPresenterBinderJavaFileProcessor extends Jav
 	private static MethodSpec generatePresenterBinderConstructor(TargetPresenterField field, String tag) {
 		return MethodSpec.constructorBuilder()
 				.addModifiers(Modifier.PUBLIC)
-				.addStatement("super($S, $T.$L, $S, $T.class)",
+				.addStatement("super($S, $T.$L, $S)",
 						tag,
 						field.getPresenterType().getDeclaringClass(),
 						field.getPresenterType().name(),
-						field.getPresenterId(),
-						field.getTypeName())
+						field.getPresenterId())
 				.build();
 	}
 

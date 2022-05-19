@@ -11,7 +11,7 @@ interface Contract {
 
         var value: String?
 
-        var duration: Duration?
+//        var duration: Duration?
 
         var boolean: Boolean
 
@@ -28,6 +28,8 @@ interface Contract {
         var mutableSet: MutableSet<Int>
 
         var mutableMap: MutableMap<Int, Int>
+
+        var random: Int
 
         @StateStrategyType(ADD_TO_END_SINGLE, singleInstance = true)
         fun printLog(msg: D?, log: String?)

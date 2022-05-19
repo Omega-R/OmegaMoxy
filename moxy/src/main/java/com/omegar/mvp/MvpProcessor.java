@@ -34,7 +34,6 @@ public class MvpProcessor {
 	private <Delegated> MvpPresenter<? super Delegated> getMvpPresenter(Delegated target,
 																		PresenterField<Delegated> presenterField,
 																		String delegateTag) {
-		Class<? extends MvpPresenter> presenterClass = presenterField.getPresenterClass();
 		PresenterStore presenterStore = MvpFacade.getInstance().getPresenterStore();
 
 		PresenterType type = presenterField.getPresenterType();
@@ -60,7 +59,6 @@ public class MvpProcessor {
 
 		presenter.setPresenterType(type);
 		presenter.setTag(tag);
-		presenter.setPresenterClass(presenterClass);
 		presenterStore.add(tag, presenter);
 
 		return presenter;

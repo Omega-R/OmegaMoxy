@@ -10,8 +10,8 @@ import kotlin.reflect.KProperty
  * Created by Anton Knyazev on 25.11.2020.
  */
 
-class CustomPresenterFactory<P : MvpPresenter<*>>(tag: String, clz: Class<out MvpPresenter<*>>, private val factoryBlock: () -> P) :
-    PresenterField<Any?>(tag, PresenterType.LOCAL, null, clz) {
+class CustomPresenterFactory<P : MvpPresenter<*>>(tag: String, private val factoryBlock: () -> P) :
+    PresenterField<Any?>(tag, PresenterType.LOCAL, null) {
 
     private var presenter: P? = null
 
@@ -34,7 +34,7 @@ inline fun <reified P : MvpPresenter<*>> MvpDelegateHolder.providePresenter(
     name: String = "presenter",
     noinline factoryBlock: () -> P = { P::class.java.newInstance() }
 ): CustomPresenterFactory<P> {
-    return CustomPresenterFactory(P::class.java.name + "." + name, P::class.java, factoryBlock).also {
+    return CustomPresenterFactory(P::class.java.name + "." + name, factoryBlock).also {
         mvpDelegate.addCustomPresenterFields(it)
     }
 }

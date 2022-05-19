@@ -1,11 +1,11 @@
 package com.omegar.mvp;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
+import android.os.Bundle;
 
 import com.omegar.mvp.presenter.PresenterType;
 import com.omegar.mvp.viewstate.MvpViewState;
+
+import java.util.Set;
 
 /**
  * Date: 15.12.2015
@@ -15,18 +15,23 @@ import com.omegar.mvp.viewstate.MvpViewState;
  * @author Alexander Blinov
  * @author Konstantin Tckhovrebov
  */
-@SuppressWarnings("rawtypes")
 @InjectViewState
 public abstract class MvpPresenter<View extends MvpView> {
 	private boolean mFirstLaunch = true;
 	private String mTag;
 	private PresenterType mPresenterType;
 	private MvpViewState<View> mViewState;
-	private Class<? extends MvpPresenter> mPresenterClass;
 
 	@SuppressWarnings("unchecked")
 	public MvpPresenter() {
         mViewState = (MvpViewState<View>) MoxyReflector.getViewState(getClass());
+	}
+
+
+	public void onCreate(Bundle bundle) {
+		if (bundle != null && mFirstLaunch) {
+			mViewState.loadState(bundle);
+		}
 	}
 
 	/**
@@ -138,13 +143,9 @@ public abstract class MvpPresenter<View extends MvpView> {
 		mTag = tag;
 	}
 
-	void setPresenterClass(Class<? extends MvpPresenter> presenterClass) {
-		mPresenterClass = presenterClass;
-	}
 
-	@SuppressWarnings("unused")
-	Class<? extends MvpPresenter> getPresenterClass() {
-		return mPresenterClass;
+	public void onSaveInstanceState(Bundle outState) {
+		mViewState.saveState(outState);
 	}
 
 	/**

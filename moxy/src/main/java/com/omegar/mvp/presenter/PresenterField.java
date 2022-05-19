@@ -14,13 +14,11 @@ public abstract class PresenterField<PresentersContainer> {
 	protected final String tag;
 	protected final PresenterType presenterType;
 	protected final String presenterId;
-	protected final Class<? extends MvpPresenter> presenterClass;
 
-	protected PresenterField(String tag, PresenterType presenterType, String presenterId, Class<? extends MvpPresenter> presenterClass) {
+	protected PresenterField(String tag, PresenterType presenterType, String presenterId) {
 		this.tag = tag;
 		this.presenterType = presenterType;
 		this.presenterId = presenterId;
-		this.presenterClass = presenterClass;
 	}
 
 	public abstract void bind(PresentersContainer container, MvpPresenter presenter);
@@ -37,10 +35,6 @@ public abstract class PresenterField<PresentersContainer> {
 
 	public String getPresenterId() {
 		return presenterId;
-	}
-
-	public Class<? extends MvpPresenter> getPresenterClass() {
-		return presenterClass;
 	}
 
 	public abstract MvpPresenter<?> providePresenter(PresentersContainer delegated);

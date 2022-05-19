@@ -1,12 +1,10 @@
-package com.omegar.mvp.viewstate;
+package com.omegar.mvp.viewstate
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import com.omegar.mvp.MoxyReflector;
-import com.omegar.mvp.MvpView;
-import com.omegar.mvp.viewstate.strategy.StateStrategy;
+import android.os.Bundle
+import android.os.Parcelable
+import android.util.Log
+import com.omegar.mvp.MvpView
+import java.util.ArrayList
 
 /**
  * Date: 17.12.2015
@@ -14,47 +12,52 @@ import com.omegar.mvp.viewstate.strategy.StateStrategy;
  *
  * @author Yuri Shmakov
  */
-public class ViewCommands<View extends MvpView> {
-	private final List<ViewCommand<View>> mState = new ArrayList<>();
+class ViewCommands<View : MvpView> {
 
-	public void beforeApply(ViewCommand<View> viewCommand) {
-		StateStrategy stateStrategy = viewCommand.getStateStrategy();
+    private companion object {
+        private const val KEY_STATE = "state"
+    }
 
-		stateStrategy.beforeApply(mState, viewCommand);
-	}
+    val currentState: MutableList<ViewCommand<View>> = ArrayList()
 
-	public void afterApply(ViewCommand<View> viewCommand) {
-		StateStrategy stateStrategy = viewCommand.getStateStrategy();
+    @Suppress("UNCHECKED_CAST")
+    fun load(inBundle: Bundle) {
+        val loadedState = inBundle.getParcelableArrayList<Parcelable>(KEY_STATE)
+        currentState.addAll(loadedState as List<ViewCommand<View>>)
+        Log.e("MoxyDebug", "Loaded state = $loadedState")
+    }
 
-		stateStrategy.afterApply(mState, viewCommand);
-	}
+    fun save(outBundle: Bundle) {
+        val savedState = currentState.filterIsInstanceTo(ArrayList(currentState.size), Parcelable::class.java)
+        outBundle.putParcelableArrayList(KEY_STATE, savedState)
+    }
 
-	public boolean isEmpty() {
-		return mState.isEmpty();
-	}
+    fun beforeApply(viewCommand: ViewCommand<View>) {
+        val stateStrategy = viewCommand.stateStrategy
+        stateStrategy.beforeApply(currentState, viewCommand)
+    }
 
-	public void reapply(View view, Set<ViewCommand<View>> currentState) {
-		final ArrayList<ViewCommand<View>> commands = new ArrayList<>(mState);
+    fun afterApply(viewCommand: ViewCommand<View>) {
+        val stateStrategy = viewCommand.stateStrategy
+        stateStrategy.afterApply(currentState, viewCommand)
+    }
 
-		for (ViewCommand<View> command : commands) {
-			if (currentState.contains(command)) {
-				continue;
-			}
+    fun reapply(view: View, currentState: Set<ViewCommand<View>>) {
+        if (this.currentState.isNotEmpty()) {
+            val commands = ArrayList(this.currentState)
+            for (command in commands) {
+                if (currentState.contains(command)) {
+                    continue
+                }
+                command.apply(view)
+                afterApply(command)
+            }
+        }
+    }
 
-			command.apply(view);
-
-			afterApply(command);
-		}
-	}
-
-	public List<ViewCommand<View>> getCurrentState() {
-		return mState;
-	}
-
-	@Override
-	public String toString() {
-		return "ViewCommands{" +
-				"state=" + mState +
-				'}';
-	}
+    override fun toString(): String {
+        return "ViewCommands{" +
+                "state=" + currentState +
+                '}'
+    }
 }

@@ -1,13 +1,14 @@
 package example.com.moxy_androidx_sample
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import com.omegar.mvp.ktx.providePresenter
-import com.omegar.mvp.presenter.InjectPresenter
 import example.com.moxy_androidx_sample.contract.Contract
-import kotlin.time.Duration
 
 class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Double>, SecondInterface {
 //	override fun fourth(item: String?) {
@@ -36,11 +37,17 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
 
     override var value: String? = ""
 
-    override var duration: Duration? = null
+    override var random: Int = Color.BLACK
         set(value) {
             field = value
-            Log.e(TAG, "duration : $value")
+            Log.e(TAG, "random : $value")
         }
+
+//    override var duration: Duration? = null
+//        set(value) {
+//            field = value
+//            Log.e(TAG, "duration : $value")
+//        }
 
     override fun setTest(test: Float) {
 
@@ -56,7 +63,15 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.e(TAG, "onCreate = ${savedInstanceState != null}")
+
 //		setContentView(R.layout.activity_main)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.e(TAG, "onResume")
+
     }
 
     override fun printLog(msg: Double?, log: String?) {

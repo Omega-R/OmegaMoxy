@@ -35,7 +35,8 @@ import com.omegar.mvp.presenter.PresenterType;
 @SuppressWarnings("rawtypes")
 public class MvpDelegate<Delegated> {
 	private static final String KEY_TAG = "MvpDelegate.KEY_TAG";
-	public static final String MOXY_DELEGATE_TAGS_KEY = "MoxyDelegateBundle";
+	public static final String MOXY_DELEGATE_BUNDLE_KEY = "MoxyDelegateBundle";
+	public static final String MOXY_PRESENTER_BUNDLE_KEY = "MoxyPresenterBundle";
 
 	private final List<PresenterField<Delegated>> mCustomPresenterFields = new ArrayList<>();
 
@@ -120,7 +121,7 @@ public class MvpDelegate<Delegated> {
 	 */
 	public void onCreate(Bundle bundle) {
 		if (mParentDelegate == null && bundle != null) {
-			bundle = bundle.getBundle(MOXY_DELEGATE_TAGS_KEY);
+			bundle = bundle.getBundle(MOXY_DELEGATE_BUNDLE_KEY);
 		}
 
 		mIsAttached = false;
@@ -131,6 +132,10 @@ public class MvpDelegate<Delegated> {
 
 		//bind presenters to view
 		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag, mCustomPresenterFields);
+
+		for (MvpPresenter<?> presenter : mPresenters) {
+			presenter.onCreate(bundle != null ? bundle.getBundle(MOXY_PRESENTER_BUNDLE_KEY) : null);
+		}
 
 		for (MvpDelegate childDelegate : mChildDelegates) {
 			childDelegate.onCreate(bundle);
@@ -238,7 +243,7 @@ public class MvpDelegate<Delegated> {
 	public void onSaveInstanceState(Bundle outState) {
 		if (mParentDelegate == null) {
 			Bundle moxyDelegateBundle = new Bundle();
-			outState.putBundle(MOXY_DELEGATE_TAGS_KEY, moxyDelegateBundle);
+			outState.putBundle(MOXY_DELEGATE_BUNDLE_KEY, moxyDelegateBundle);
 			outState = moxyDelegateBundle;
 		}
 
@@ -248,6 +253,13 @@ public class MvpDelegate<Delegated> {
 		for (MvpDelegate childDelegate : mChildDelegates) {
 			childDelegate.onSaveInstanceState(outState);
 		}
+
+		Bundle moxyPresenterBundle = new Bundle();
+
+		for (MvpPresenter<?> presenter: mPresenters) {
+			presenter.onSaveInstanceState(moxyPresenterBundle);
+		}
+		outState.putBundle(MOXY_PRESENTER_BUNDLE_KEY, moxyPresenterBundle);
 	}
 
 	@SuppressWarnings("unused")

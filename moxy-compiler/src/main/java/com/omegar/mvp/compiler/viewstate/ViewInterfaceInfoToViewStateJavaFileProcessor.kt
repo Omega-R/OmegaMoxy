@@ -34,6 +34,10 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         private val GENERIC_TYPE_VARIABLE_NAME: TypeVariableName = TypeVariableName(VIEW)
         private val MVP_VIEW_STATE_CLASS_NAME = MvpViewState::class.java.asClassName()
         private val VIEW_COMMAND_CLASS_NAME = ViewCommand::class.java.asClassName()
+        private val ANNOTATION_PARCELIZE = ClassName("kotlinx.android.parcel", "Parcelize")
+        private val CLASS_NAME_PARCELABLE = ClassName("android.os", "Parcelable")
+        private val CLASS_NAME_SERIALIZABLE = ClassName("java.io", "Serializable")
+
         private val VIEW_COMMAND_TYPE_NAME = VIEW_COMMAND_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
         private val MVP_VIEW_STATE_TYPE_NAME = MVP_VIEW_STATE_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
     }
@@ -71,19 +75,19 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         }
 
         viewInterfaceInfo.commands.forEach { command ->
-            val commandClass = generateCommandClass(command)
+            val commandClass = generateCommandClass(command, variableNames)
             classBuilder.addType(commandClass)
 
             when (command.method.type) {
                 is Method -> {
                     classBuilder.addFunction(
-                            generateSetterBuilder(command, commandClass, command.method.type.setterSpec.toBuilder())
+                            generateSetterBuilder(command, commandClass, command.method.type.setterSpec.toBuilder(), variableNames)
                                     .addModifiers(KModifier.OVERRIDE)
                                     .build()
                     )
                     if (command.method.type.getterSpec != null) {
                         classBuilder.addFunction(
-                                generateGetterBuilder(command, command.method.type.getterSpec.toBuilder())
+                                generateGetterBuilder(command, command.method.type.getterSpec.toBuilder(), variableNames)
                                         .addModifiers(KModifier.OVERRIDE)
                                         .build()
                         )
@@ -95,8 +99,8 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                     val getter = FunSpec.getterBuilder()
                     val property = command.method.type.spec.toBuilder()
                             .addModifiers(KModifier.OVERRIDE)
-                            .setter(generateSetterBuilder(command, commandClass, setter).build())
-                            .getter(generateGetterBuilder(command, getter).build())
+                            .setter(generateSetterBuilder(command, commandClass, setter, variableNames).build())
+                            .getter(generateGetterBuilder(command, getter, variableNames).build())
                             .initializer(null)
                             .build()
                     classBuilder.addProperty(property)
@@ -128,7 +132,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         return (listOf(variableName) + viewInterfaceInfo.parentTypeVariables).toTypedArray()
     }
 
-    private fun generateCommandClass(command: ViewCommandInfo): TypeSpec {
+    private fun generateCommandClass(command: ViewCommandInfo, variableNames: List<TypeVariableName>): TypeSpec {
         var updateMethodBuilder: FunSpec.Builder? = null
         if (command.singleInstance) {
             updateMethodBuilder = FunSpec.builder("update")
@@ -153,19 +157,24 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
 
         val classBuilder = TypeSpec.classBuilder(command.name)
                 .addOriginatingElement(command.method.element)
-                .addModifiers(KModifier.PRIVATE, KModifier.FINAL, KModifier.INNER)
+                .addAnnotation(ANNOTATION_PARCELIZE)
+                .addModifiers(KModifier.PRIVATE)
+                .addTypeVariables(variableNames)
                 .primaryConstructor(
                         FunSpec.constructorBuilder()
                                 .addParameters(command.method.parameterSpecs)
                                 .build()
                 )
                 .superclass(VIEW_COMMAND_TYPE_NAME)
+                .addSuperinterface(CLASS_NAME_PARCELABLE)
                 .addSuperclassConstructorParameter(CodeBlock.of("%S, %T::class.java", command.tag, command.strategy.asClassName()))
                 .addFunction(applyMethodBuilder.build())
+        if (command.method.parameterSpecs.isNotEmpty()) {
+            classBuilder.addModifiers(KModifier.DATA)
+        }
         if (updateMethodBuilder != null) {
             classBuilder.addFunction(updateMethodBuilder.build())
         }
-        classBuilder.addFunction(generateToStringMethodSpec(command))
         for (parameter in command.method.parameterSpecs) {
             classBuilder.addProperty(
                     PropertySpec.builder(parameter.name, parameter.type)
@@ -178,16 +187,17 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
     }
 
 
-    private fun generateSetterBuilder(command: ViewCommandInfo, commandClass: TypeSpec, funSpec: FunSpec.Builder): FunSpec.Builder {
+    private fun generateSetterBuilder(command: ViewCommandInfo, commandClass: TypeSpec, funSpec: FunSpec.Builder, variableNames: List<TypeVariableName>): FunSpec.Builder {
         val commandClassName = command.name
         val builder = funSpec.clearBody()
         builder.modifiers.remove(KModifier.ABSTRACT)
         builder.annotations.clear()
         if (command.singleInstance) {
             builder.addCode(
-                    "apply(findCommand<%1L>()?.also { it.update(%2L) } ?: %1L(%2L))",
+                    "apply(findCommand<%1L<%3L>>()?.also { it.update(%2L) } ?: %1L(%2L))",
                     commandClassName,
-                    command.method.argumentsString
+                    command.method.argumentsString,
+                    variableNames.joinToString(separator = ",") { it.name }
             )
 
         } else {
@@ -196,7 +206,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         return builder
     }
 
-    private fun generateGetterBuilder(command: ViewCommandInfo, funSpec: FunSpec.Builder): FunSpec.Builder {
+    private fun generateGetterBuilder(command: ViewCommandInfo, funSpec: FunSpec.Builder, variableNames: List<TypeVariableName>): FunSpec.Builder {
         val returnType = command.method.parameterSpecs.firstOrNull()?.type
         val defaultValue = when ((returnType as? ParameterizedTypeName)?.rawType ?: returnType) {
             BOOLEAN -> "false"
@@ -218,10 +228,12 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         val builder = funSpec.clearBody()
         builder.modifiers.remove(KModifier.ABSTRACT)
         builder.annotations.clear()
+        val generics = variableNames.joinToString(separator = ",") { it.name }
         if ("null" == defaultValue || returnType?.isNullable == true) {
-            builder.addStatement("return findCommand<%1L>()?.%2L", commandClassName, command.method.argumentsString)
+            builder.addStatement("return findCommand<%1L<%3L>>()?.%2L", commandClassName, command.method.argumentsString, generics)
         } else {
-            builder.addStatement("return findCommand<%1L>()?.%2L ?: %3L", commandClassName, command.method.argumentsString, defaultValue)
+            builder.addStatement("return findCommand<%1L<%4L>>()?.%2L ?: %3L", commandClassName, command.method
+                    .argumentsString, defaultValue, generics)
         }
         return builder
     }

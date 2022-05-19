@@ -1,8 +1,7 @@
 package com.omegar.mvp.viewstate
 
-import com.omegar.mvp.MvpProcessor
+import android.os.Bundle
 import com.omegar.mvp.MvpView
-import java.lang.StringBuilder
 import java.util.*
 
 /**
@@ -19,9 +18,18 @@ abstract class MvpViewState<View : MvpView> {
         get() = mutableViews
 
     protected val viewCommands = ViewCommands<View>()
-    protected val mutableViews = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
-    protected val inRestoreState = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
-    protected val viewStates = WeakHashMap<View, Set<ViewCommand<View>>>()
+    protected val mutableViews: MutableSet<View> = Collections.newSetFromMap(WeakHashMap())
+    private val inRestoreState = Collections.newSetFromMap<View>(WeakHashMap())
+    private val viewStates = WeakHashMap<View, Set<ViewCommand<View>>>()
+
+
+    fun loadState(inBundle: Bundle) {
+        viewCommands.load(inBundle)
+    }
+
+    fun saveState(outBundle: Bundle) {
+        viewCommands.save(outBundle)
+    }
 
     protected fun apply(command: ViewCommand<View>) {
         viewCommands.beforeApply(command)
@@ -44,10 +52,8 @@ abstract class MvpViewState<View : MvpView> {
      * @param view mvp view to restore state
      * @param currentState commands that was applied already
      */
-    protected fun restoreState(view: View, currentState: Set<ViewCommand<View>>?) {
-        if (!viewCommands.isEmpty) {
-            viewCommands.reapply(view, currentState)
-        }
+    private fun restoreState(view: View, currentState: Set<ViewCommand<View>>) {
+        viewCommands.reapply(view, currentState)
     }
 
     /**
@@ -55,15 +61,13 @@ abstract class MvpViewState<View : MvpView> {
      *
      * @param view attachment
      */
-    fun attachView(view: View?) {
-        requireNotNull(view) { "Mvp view must be not null" }
+    fun attachView(view: View) {
         val isViewAdded = mutableViews.add(view)
         if (!isViewAdded) {
             return
         }
         inRestoreState.add(view)
-        var currentState = viewStates[view]
-        currentState = currentState ?: emptySet()
+        val currentState = viewStates[view].orEmpty()
         restoreState(view, currentState)
         viewStates.remove(view)
         inRestoreState.remove(view)
@@ -103,14 +107,5 @@ abstract class MvpViewState<View : MvpView> {
                 '}'
     }
 
-    protected fun buildString(name: String, vararg args: Any?): String {
-        return (0 until args.size / 2)
-                .joinToString(prefix = "$name{", separator = ", ", postfix = "}") { i ->
-                    val key = args[i * 2]
-                    val value = args[i * 2 + 1]
-                    val mark = "'".takeIf { value is String } ?: ""
-                    "$key=$mark$value$mark"
-                }
-    }
 
 }
