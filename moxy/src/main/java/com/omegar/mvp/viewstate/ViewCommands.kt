@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
 import com.omegar.mvp.MvpView
+import com.omegar.mvp.SavedState
 import java.util.ArrayList
 
 /**
@@ -22,24 +23,21 @@ class ViewCommands<View : MvpView> {
 
     @Suppress("UNCHECKED_CAST")
     fun load(inBundle: Bundle) {
-        val loadedState = inBundle.getParcelableArrayList<Parcelable>(KEY_STATE)
-        currentState.addAll(loadedState as List<ViewCommand<View>>)
-        Log.e("MoxyDebug", "Loaded state = $loadedState")
+        val savedState = inBundle.getParcelable<SavedState>(KEY_STATE)
+        currentState.addAll(savedState.list as List<ViewCommand<View>>)
     }
 
     fun save(outBundle: Bundle) {
-        val savedState = currentState.filterIsInstanceTo(ArrayList(currentState.size), Parcelable::class.java)
-        outBundle.putParcelableArrayList(KEY_STATE, savedState)
+        val savedState = SavedState(currentState)
+        outBundle.putParcelable(KEY_STATE, savedState)
     }
 
     fun beforeApply(viewCommand: ViewCommand<View>) {
-        val stateStrategy = viewCommand.stateStrategy
-        stateStrategy.beforeApply(currentState, viewCommand)
+        viewCommand.stateStrategy.beforeApply(currentState, viewCommand)
     }
 
     fun afterApply(viewCommand: ViewCommand<View>) {
-        val stateStrategy = viewCommand.stateStrategy
-        stateStrategy.afterApply(currentState, viewCommand)
+        viewCommand.stateStrategy.afterApply(currentState, viewCommand)
     }
 
     fun reapply(view: View, currentState: Set<ViewCommand<View>>) {

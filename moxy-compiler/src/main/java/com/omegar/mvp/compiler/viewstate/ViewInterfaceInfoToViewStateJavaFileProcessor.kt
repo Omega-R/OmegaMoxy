@@ -9,10 +9,12 @@ import com.omegar.mvp.compiler.entity.ViewMethod.Type.*
 import com.omegar.mvp.compiler.pipeline.PipelineContext
 import com.omegar.mvp.compiler.pipeline.Publisher
 import com.omegar.mvp.viewstate.MvpViewState
+import com.omegar.mvp.viewstate.SerializeType
 import com.omegar.mvp.viewstate.ViewCommand
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
+import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 
@@ -75,7 +77,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         }
 
         viewInterfaceInfo.commands.forEach { command ->
-            val commandClass = generateCommandClass(command, variableNames)
+            val commandClass = generateCommandClass(viewInterfaceInfo.typeElement, command, variableNames)
             classBuilder.addType(commandClass)
 
             when (command.method.type) {
@@ -102,6 +104,9 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                             .setter(generateSetterBuilder(command, commandClass, setter, variableNames).build())
                             .getter(generateGetterBuilder(command, getter, variableNames).build())
                             .initializer(null)
+                            .also {
+                               it.annotations.clear()
+                            }
                             .build()
                     classBuilder.addProperty(property)
                 }
@@ -132,7 +137,8 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         return (listOf(variableName) + viewInterfaceInfo.parentTypeVariables).toTypedArray()
     }
 
-    private fun generateCommandClass(command: ViewCommandInfo, variableNames: List<TypeVariableName>): TypeSpec {
+    private fun generateCommandClass(typeElement: TypeElement, command: ViewCommandInfo, variableNames: List<TypeVariableName>):
+            TypeSpec {
         var updateMethodBuilder: FunSpec.Builder? = null
         if (command.singleInstance) {
             updateMethodBuilder = FunSpec.builder("update")
@@ -156,8 +162,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         }
 
         val classBuilder = TypeSpec.classBuilder(command.name)
-                .addOriginatingElement(command.method.element)
-                .addAnnotation(ANNOTATION_PARCELIZE)
+                .addOriginatingElement(typeElement)
                 .addModifiers(KModifier.PRIVATE)
                 .addTypeVariables(variableNames)
                 .primaryConstructor(
@@ -166,7 +171,6 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                                 .build()
                 )
                 .superclass(VIEW_COMMAND_TYPE_NAME)
-                .addSuperinterface(CLASS_NAME_PARCELABLE)
                 .addSuperclassConstructorParameter(CodeBlock.of("%S, %T::class.java", command.tag, command.strategy.asClassName()))
                 .addFunction(applyMethodBuilder.build())
         if (command.method.parameterSpecs.isNotEmpty()) {
@@ -174,6 +178,16 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         }
         if (updateMethodBuilder != null) {
             classBuilder.addFunction(updateMethodBuilder.build())
+        }
+        when (command.serializeType) {
+            SerializeType.PARCELABLE -> {
+                classBuilder.addSuperinterface(CLASS_NAME_PARCELABLE)
+                        .addAnnotation(ANNOTATION_PARCELIZE)
+            }
+            SerializeType.SERIALIZABLE -> classBuilder.addSuperinterface(CLASS_NAME_SERIALIZABLE)
+            null, SerializeType.NONE -> {
+                // nothing
+            }
         }
         for (parameter in command.method.parameterSpecs) {
             classBuilder.addProperty(
@@ -185,7 +199,6 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         }
         return classBuilder.build()
     }
-
 
     private fun generateSetterBuilder(command: ViewCommandInfo, commandClass: TypeSpec, funSpec: FunSpec.Builder, variableNames: List<TypeVariableName>): FunSpec.Builder {
         val commandClassName = command.name
@@ -236,37 +249,6 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                     .argumentsString, defaultValue, generics)
         }
         return builder
-    }
-
-    private fun generateToStringMethodSpec(command: ViewCommandInfo): FunSpec {
-        val statement = StringBuilder("return ")
-        if (command.method.parameterSpecs.isEmpty()) {
-            statement.append("\"")
-                    .append(command.name)
-                    .append("\"")
-        } else {
-            var firstParams = true
-            statement.append("buildString(")
-                    .append("\"")
-                    .append(command.name)
-                    .append("\",")
-            for (parameter in command.method.parameterSpecs) {
-                if (firstParams) {
-                    firstParams = false
-                } else {
-                    statement.append(",")
-                }
-                statement.append("\"")
-                        .append(parameter.name)
-                        .append("\",")
-                        .append(parameter.name)
-            }
-            statement.append(")")
-        }
-        return FunSpec.builder("toString")
-                .addModifiers(KModifier.OVERRIDE)
-                .addStatement(statement.toString())
-                .build()
     }
 
     override fun finish(nextContext: PipelineContext<FileSpec>) {

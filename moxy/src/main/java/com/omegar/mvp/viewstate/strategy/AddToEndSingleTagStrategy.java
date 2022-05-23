@@ -10,7 +10,7 @@ import java.util.List;
  * Command will be added to the end of the commands queue. If the commands queue contains the same tag, then
  * an existing command will be removed.
  */
-class AddToEndSingleTagStrategy implements StateStrategy {
+public class AddToEndSingleTagStrategy implements StateStrategy {
 
     @Override
     public <View extends MvpView> void beforeApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {

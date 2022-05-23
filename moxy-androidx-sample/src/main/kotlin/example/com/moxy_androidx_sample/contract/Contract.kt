@@ -1,5 +1,6 @@
 package example.com.moxy_androidx_sample.contract
 
+import com.omegar.mvp.viewstate.SerializeType
 import com.omegar.mvp.viewstate.strategy.StateStrategyType
 import com.omegar.mvp.viewstate.strategy.StrategyType.*
 import example.com.moxy_androidx_sample.BaseView
@@ -11,7 +12,7 @@ interface Contract {
 
         var value: String?
 
-//        var duration: Duration?
+        var duration: Duration?
 
         var boolean: Boolean
 
@@ -31,7 +32,7 @@ interface Contract {
 
         var random: Int
 
-        @StateStrategyType(ADD_TO_END_SINGLE, singleInstance = true)
+        @StateStrategyType(ADD_TO_END_SINGLE_TAG, singleInstance = true, serializeType = SerializeType.PARCELABLE)
         fun printLog(msg: D?, log: String?)
 
     }

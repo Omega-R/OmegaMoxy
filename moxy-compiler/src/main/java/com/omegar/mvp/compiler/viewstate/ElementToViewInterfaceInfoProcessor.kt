@@ -9,9 +9,11 @@ import com.omegar.mvp.compiler.entity.parser.UniversalViewMethodParser
 import com.omegar.mvp.compiler.pipeline.ElementProcessor
 import com.omegar.mvp.compiler.pipeline.PipelineContext
 import com.omegar.mvp.compiler.pipeline.Publisher
+import com.omegar.mvp.viewstate.SerializeType
 import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy
 import com.omegar.mvp.viewstate.strategy.StateStrategyType
 import com.omegar.mvp.viewstate.strategy.StrategyType
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import javax.annotation.processing.Messager
@@ -79,8 +81,8 @@ class ElementToViewInterfaceInfoProcessor(
         return mViewMethodParser.parse(this)
                 .map { method ->
                     val annotation = method.getAnnotation(STATE_STRATEGY_TYPE_ANNOTATION)
-                    val strategyClass = method.getStrategyClass()
-                            ?: annotation?.getStrategyClass()
+                    val strategyClass = annotation?.getStrategyClass()
+                            ?: method.getStrategyClass()
                             ?: throw IllegalArgumentException("""
 You are trying generate ViewState for ${simpleName}. But "${method.name}" method don't provide Strategy type. 
 Please annotate your method with Strategy.
@@ -94,12 +96,12 @@ fun ${method.name}()
                     mUsedStrategiesPublisher.next(strategyClass)
                     val methodTag = annotation.getMethodTag(method.name)
                     val singleInstance = annotation?.getValueAsBoolean("singleInstance") ?: false
+                    val serializeType = annotation?.getValueAsEnum("serializeType") ?: SerializeType.NONE
                     // Allow methods be with same names
                     val uniqueSuffix = getUniqueSuffix(methodsCounter, method.name)
-                    ViewCommandInfo(method, uniqueSuffix, strategyClass, methodTag, singleInstance)
+                    ViewCommandInfo(method, uniqueSuffix, strategyClass, methodTag, singleInstance, serializeType)
                 }
     }
-
 
     private fun getUniqueSuffix(methodsCounter: MutableMap<String, Int>, methodName: String): String {
         var counter = methodsCounter[methodName]

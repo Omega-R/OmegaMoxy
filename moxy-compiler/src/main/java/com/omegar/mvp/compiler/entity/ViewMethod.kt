@@ -2,11 +2,11 @@ package com.omegar.mvp.compiler.entity
 
 import com.squareup.kotlinpoet.*
 import javax.lang.model.element.AnnotationMirror
+import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
 
-data class ViewMethod(val element: TypeElement,
-                      val name: String,
+data class ViewMethod(val name: String,
                       val parameterSpecs: List<ParameterSpec>,
                       val exceptions: List<TypeName>,
                       val typeVariables: List<TypeVariableName>,

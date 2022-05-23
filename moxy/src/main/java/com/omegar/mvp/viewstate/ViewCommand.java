@@ -2,6 +2,8 @@ package com.omegar.mvp.viewstate;
 
 import com.omegar.mvp.MoxyReflector;
 import com.omegar.mvp.MvpView;
+import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy;
+import com.omegar.mvp.viewstate.strategy.SkipStrategy;
 import com.omegar.mvp.viewstate.strategy.StateStrategy;
 
 import java.io.Serializable;
@@ -21,8 +23,13 @@ public abstract class ViewCommand<View extends MvpView> {
 		mStateStrategy = stateStrategy;
 	}
 
+	// default constructor for serializable
 	protected ViewCommand(String tag, Class<? extends StateStrategy> stateStrategyClass) {
 		this(tag, (StateStrategy) MoxyReflector.getStrategy(stateStrategyClass));
+	}
+
+	protected ViewCommand() {
+		this("", AddToEndSingleStrategy.class);
 	}
 
 	public abstract void apply(View view);

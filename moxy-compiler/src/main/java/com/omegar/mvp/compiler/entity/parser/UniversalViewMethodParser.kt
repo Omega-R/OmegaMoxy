@@ -9,34 +9,29 @@ import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 
-class UniversalViewMethodParser(elements: Elements, types: Types): ViewMethod.Parser() {
+class UniversalViewMethodParser(elements: Elements, types: Types) : ViewMethod.Parser() {
     private val kmViewMethodFactory = KmViewMethodParser(elements, types)
     private val javaxViewMethodFactory = JavaxViewMethodParser(types)
 
     @KotlinPoetMetadataPreview
     override fun extractTypeVariableNames(targetInterfaceElement: TypeElement): List<TypeVariableName> {
-        return callFunc {
+        return targetInterfaceElement.callFunc {
             extractTypeVariableNames(targetInterfaceElement)
         }
     }
 
     @KotlinPoetMetadataPreview
     override fun parse(targetInterfaceElement: TypeElement): List<ViewMethod> {
-        return callFunc {
+        return targetInterfaceElement.callFunc {
             parse(targetInterfaceElement)
         }
     }
 
-    private inline fun <T> callFunc(func: ViewMethod.Parser.() -> T): T {
-        return try {
+    private inline fun <T> TypeElement.callFunc(func: ViewMethod.Parser.() -> T): T {
+        return if (kmViewMethodFactory.isPossible(this)) {
             kmViewMethodFactory.func()
-        } catch (e1: Throwable) {
-            try {
-                javaxViewMethodFactory.func()
-            } catch (e2: Throwable) {
-                e1.printStackTrace()
-                throw e2
-            }
+        } else {
+            javaxViewMethodFactory.func()
         }
     }
 

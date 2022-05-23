@@ -37,11 +37,10 @@ class JavaxViewMethodParser(private val types: Types) : ViewMethod.Parser() {
         return targetInterfaceElement.enclosedElements
                 .filterIsInstance(ExecutableElement::class.java)
                 .filter { it.kind == ElementKind.METHOD && it.returnType.kind == TypeKind.VOID }
-                .map { create(targetInterfaceElement, it, nonVoidMethods, viewInterfaceType) }
+                .map { create(it, nonVoidMethods, viewInterfaceType) }
     }
 
     private fun create(
-            targetInterfaceElement: TypeElement,
             methodElement: ExecutableElement,
             nonVoidMethods: Map<String, ExecutableElement>,
             viewInterfaceType: DeclaredType
@@ -79,8 +78,7 @@ class JavaxViewMethodParser(private val types: Types) : ViewMethod.Parser() {
 
         val annotationDataList = methodElement.annotationMirrors.toAnnotationDataList()
 
-        return ViewMethod(targetInterfaceElement, methodName, parameterSpecs, exceptions, typeVariables, methodType,
-                annotationDataList)
+        return ViewMethod(methodName, parameterSpecs, exceptions, typeVariables, methodType, annotationDataList)
     }
 
     private fun <T : VariableElement> List<T>.mapParametersSpecs(

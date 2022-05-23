@@ -41,7 +41,7 @@ abstract class MvpViewState<View : MvpView> {
 
     @Suppress("UNCHECKED_CAST")
     protected fun <C : ViewCommand<View>> findCommand(clz: Class<*>): C? {
-        return viewCommands.currentState.firstOrNull { it.javaClass == clz } as? C?
+        return viewCommands.currentState.lastOrNull { it.javaClass == clz } as? C?
     }
 
     protected inline fun <reified C : ViewCommand<View>> findCommand(): C? = findCommand(C::class.java)
