@@ -24,12 +24,8 @@ public abstract class ViewCommand<View extends MvpView> {
 	}
 
 	// default constructor for serializable
-	protected ViewCommand(String tag, Class<? extends StateStrategy> stateStrategyClass) {
-		this(tag, (StateStrategy) MoxyReflector.getStrategy(stateStrategyClass));
-	}
-
 	protected ViewCommand() {
-		this("", AddToEndSingleStrategy.class);
+		this("", AddToEndSingleStrategy.INSTANCE);
 	}
 
 	public abstract void apply(View view);

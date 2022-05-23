@@ -1,9 +1,7 @@
-package com.omegar.mvp.viewstate.strategy;
+package com.omegar.mvp.viewstate.strategy
 
-import java.util.List;
-
-import com.omegar.mvp.MvpView;
-import com.omegar.mvp.viewstate.ViewCommand;
+import com.omegar.mvp.MvpView
+import com.omegar.mvp.viewstate.ViewCommand
 
 /**
  * Command will not be put in commands queue
@@ -13,14 +11,12 @@ import com.omegar.mvp.viewstate.ViewCommand;
  *
  * @author Alexander Blinov
  */
-public class SkipStrategy implements StateStrategy {
-	@Override
-	public <View extends MvpView> void beforeApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		//do nothing to skip
-	}
+object SkipStrategy : StateStrategy {
+    override fun <View : MvpView?> beforeApply(currentState: List<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        //do nothing to skip
+    }
 
-	@Override
-	public <View extends MvpView> void afterApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		// pass
-	}
+    override fun <View : MvpView?> afterApply(currentState: List<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        // pass
+    }
 }

@@ -9,7 +9,7 @@ import com.omegar.mvp.compiler.pipeline.JavaFileWriter;
 import com.omegar.mvp.compiler.pipeline.KotlinFileWriter;
 import com.omegar.mvp.compiler.pipeline.Pipeline;
 import com.omegar.mvp.compiler.pipeline.Publisher;
-import com.omegar.mvp.compiler.pipeline.QuadPublisher;
+import com.omegar.mvp.compiler.pipeline.TriplePublisher;
 import com.omegar.mvp.compiler.presenterbinder.ElementToTargetClassInfoProcessor;
 import com.omegar.mvp.compiler.presenterbinder.TargetClassInfoToPresenterBinderJavaFileProcessor;
 import com.omegar.mvp.compiler.presenterbinder.VariableToContainerElementProcessor;
@@ -149,10 +149,9 @@ public class MvpCompiler extends AbstractProcessor {
 
 		// moxyReflectorPipeline
 		new Pipeline.Builder<>(
-				QuadPublisher.collectQuad(
+				TriplePublisher.collectQuad(
 						presenterElementPublisher,
 						presenterContainerElementPublisher,
-						strategiesElementPublisher,
 						reflectorPackagesPublisher))
 				.addProcessor(new MoxyReflectorProcessor(currentMoxyReflectorPackage))
 				.buildPipeline(javaFileWriter)

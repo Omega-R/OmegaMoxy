@@ -1,9 +1,7 @@
-package com.omegar.mvp.viewstate.strategy;
+package com.omegar.mvp.viewstate.strategy
 
-import java.util.List;
-
-import com.omegar.mvp.MvpView;
-import com.omegar.mvp.viewstate.ViewCommand;
+import com.omegar.mvp.MvpView
+import com.omegar.mvp.viewstate.ViewCommand
 
 /**
  * Command will be saved in commands queue. And this command will be removed after first execution.
@@ -13,15 +11,12 @@ import com.omegar.mvp.viewstate.ViewCommand;
  *
  * @author Yuri Shmakov
  */
+object OneExecutionStateStrategy : StateStrategy {
+    override fun <View : MvpView?> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        currentState.add(incomingCommand)
+    }
 
-public class OneExecutionStateStrategy implements StateStrategy {
-	@Override
-	public <View extends MvpView> void beforeApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		currentState.add(incomingCommand);
-	}
-
-	@Override
-	public <View extends MvpView> void afterApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		currentState.remove(incomingCommand);
-	}
+    override fun <View : MvpView?> afterApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        currentState.remove(incomingCommand)
+    }
 }

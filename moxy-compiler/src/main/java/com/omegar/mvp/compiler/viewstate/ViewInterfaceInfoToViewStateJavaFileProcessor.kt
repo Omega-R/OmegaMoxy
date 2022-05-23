@@ -179,7 +179,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                                 .build()
                 )
                 .superclass(VIEW_COMMAND_TYPE_NAME)
-                .addSuperclassConstructorParameter(CodeBlock.of("%S, %T::class.java", command.tag, command.strategy.asClassName()))
+                .addSuperclassConstructorParameter(CodeBlock.of("%S, %T", command.tag, command.strategy.asClassName()))
                 .addFunction(applyMethodBuilder.build())
         if (command.method.parameterSpecs.isNotEmpty()) {
             classBuilder.addModifiers(KModifier.DATA)

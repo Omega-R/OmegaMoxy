@@ -1,10 +1,7 @@
-package com.omegar.mvp.viewstate.strategy;
+package com.omegar.mvp.viewstate.strategy
 
-import java.util.Iterator;
-import java.util.List;
-
-import com.omegar.mvp.MvpView;
-import com.omegar.mvp.viewstate.ViewCommand;
+import com.omegar.mvp.MvpView
+import com.omegar.mvp.viewstate.ViewCommand
 
 /**
  * Command will be added to end of commands queue. If commands queue contains same type command, then existing command will be removed.
@@ -14,25 +11,13 @@ import com.omegar.mvp.viewstate.ViewCommand;
  *
  * @author Yuri Shmakov
  */
-public class AddToEndSingleStrategy implements StateStrategy {
-	@Override
-	public <View extends MvpView> void beforeApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		Iterator<ViewCommand<View>> iterator = currentState.iterator();
+object AddToEndSingleStrategy : StateStrategy {
+    override fun <View : MvpView?> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        currentState.removeAll { it.javaClass == incomingCommand.javaClass }
+        currentState.add(incomingCommand)
+    }
 
-		while (iterator.hasNext()) {
-			ViewCommand<View> entry = iterator.next();
-
-			if (entry.getClass() == incomingCommand.getClass()) {
-				iterator.remove();
-				break;
-			}
-		}
-
-		currentState.add(incomingCommand);
-	}
-
-	@Override
-	public <View extends MvpView> void afterApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		// pass
-	}
+    override fun <View : MvpView?> afterApply(currentState: List<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        // pass
+    }
 }

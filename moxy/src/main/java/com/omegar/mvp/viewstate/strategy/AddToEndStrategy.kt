@@ -1,9 +1,7 @@
-package com.omegar.mvp.viewstate.strategy;
+package com.omegar.mvp.viewstate.strategy
 
-import java.util.List;
-
-import com.omegar.mvp.MvpView;
-import com.omegar.mvp.viewstate.ViewCommand;
+import com.omegar.mvp.MvpView
+import com.omegar.mvp.viewstate.ViewCommand
 
 /**
  * Command will be added to end of commands queue.
@@ -14,14 +12,12 @@ import com.omegar.mvp.viewstate.ViewCommand;
  *
  * @author Yuri Shmakov
  */
-public class AddToEndStrategy implements StateStrategy {
-	@Override
-	public <View extends MvpView> void beforeApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		currentState.add(incomingCommand);
-	}
+object AddToEndStrategy : StateStrategy {
+    override fun <View : MvpView?> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        currentState.add(incomingCommand)
+    }
 
-	@Override
-	public <View extends MvpView> void afterApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		// pass
-	}
+    override fun <View : MvpView?> afterApply(currentState: List<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        // pass
+    }
 }

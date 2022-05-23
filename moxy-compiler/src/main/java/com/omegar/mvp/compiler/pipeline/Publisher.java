@@ -58,8 +58,8 @@ public class Publisher<O> extends Processor<Void, O> {
         return new CollectSetPublisher<>(this);
     }
 
-    public <SE, TH, FO>QuadPublisher<O, SE, TH, FO> quad(Publisher<SE> publisher2, Publisher<TH> publisher3, Publisher<FO> publisher4) {
-        return new QuadPublisher<>(this, publisher2, publisher3, publisher4);
+    public <SE, TH> TriplePublisher<O, SE, TH> triple(Publisher<SE> publisher2, Publisher<TH> publisher3) {
+        return new TriplePublisher<>(this, publisher2, publisher3);
     }
 
 

@@ -13,7 +13,6 @@ import java.util.Map;
 public class MoxyReflector {
 	private static Map<Class<?>, Object> sViewStateProviders;
 	private static Map<Class<?>, List<Object>> sPresenterBinders;
-	private static Map<Class<?>, Object> sStrategies;
 
 	static {
 		sViewStateProviders = new HashMap<>();
@@ -28,7 +27,4 @@ public class MoxyReflector {
 		return sPresenterBinders.get(delegated);
 	}
 
-	public static Object getStrategy(Class strategyClass) {
-		return sStrategies.get(strategyClass);
-	}
 }

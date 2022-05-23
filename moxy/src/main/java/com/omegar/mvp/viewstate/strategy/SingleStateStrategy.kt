@@ -1,9 +1,7 @@
-package com.omegar.mvp.viewstate.strategy;
+package com.omegar.mvp.viewstate.strategy
 
-import java.util.List;
-
-import com.omegar.mvp.MvpView;
-import com.omegar.mvp.viewstate.ViewCommand;
+import com.omegar.mvp.MvpView
+import com.omegar.mvp.viewstate.ViewCommand
 
 /**
  * This strategy will clear current commands queue and then incoming command will be put in.
@@ -15,15 +13,13 @@ import com.omegar.mvp.viewstate.ViewCommand;
  *
  * @author Alexander Blinov
  */
-public class SingleStateStrategy implements StateStrategy {
-	@Override
-	public <View extends MvpView> void beforeApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		currentState.clear();
-		currentState.add(incomingCommand);
-	}
+object SingleStateStrategy : StateStrategy {
+    override fun <View : MvpView?> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        currentState.clear()
+        currentState.add(incomingCommand)
+    }
 
-	@Override
-	public <View extends MvpView> void afterApply(List<ViewCommand<View>> currentState, ViewCommand<View> incomingCommand) {
-		// pass
-	}
+    override fun <View : MvpView?> afterApply(currentState: List<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+        // pass
+    }
 }
