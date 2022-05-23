@@ -154,11 +154,19 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                 .addParameter("mvpView", GENERIC_TYPE_VARIABLE_NAME)
         when (command.method.type) {
             is Property -> {
-                applyMethodBuilder.addStatement("mvpView.%L = %L", command.method.name, command.method.argumentsString)
+                applyMethodBuilder.addStatement("mvpView.%L = %L", command.method.name, command.method.argumentsStringWithStar)
             }
             is Method -> {
-                applyMethodBuilder.addStatement("mvpView.%L(%L)", command.method.name, command.method.argumentsString)
+                applyMethodBuilder.addStatement("mvpView.%L(%L)", command.method.name, command.method.argumentsStringWithStar)
             }
+        }
+
+        val parameterSpecs = command.method.parameterSpecs.map {
+            if (KModifier.VARARG in it.modifiers) {
+                it.toBuilder(type = ARRAY.parameterizedBy(WildcardTypeName.producerOf(it.type)))
+                        .apply { modifiers.remove(KModifier.VARARG) }
+                        .build()
+            } else it
         }
 
         val classBuilder = TypeSpec.classBuilder(command.name)
@@ -167,7 +175,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                 .addTypeVariables(variableNames)
                 .primaryConstructor(
                         FunSpec.constructorBuilder()
-                                .addParameters(command.method.parameterSpecs)
+                                .addParameters(parameterSpecs)
                                 .build()
                 )
                 .superclass(VIEW_COMMAND_TYPE_NAME)
@@ -189,7 +197,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                 // nothing
             }
         }
-        for (parameter in command.method.parameterSpecs) {
+        for (parameter in parameterSpecs) {
             classBuilder.addProperty(
                     PropertySpec.builder(parameter.name, parameter.type)
                             .mutable(command.singleInstance)
@@ -207,8 +215,9 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         builder.annotations.clear()
         if (command.singleInstance) {
             builder.addCode(
-                    "apply(findCommand<%1L<%3L>>()?.also { it.update(%2L) } ?: %1L(%2L))",
+                    "apply(findCommand<%1L<%4L>>()?.also { it.update(%2L) } ?: %1L(%3L))",
                     commandClassName,
+                    command.method.argumentsStringWithStar,
                     command.method.argumentsString,
                     variableNames.joinToString(separator = ",") { it.name }
             )
@@ -243,10 +252,10 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         builder.annotations.clear()
         val generics = variableNames.joinToString(separator = ",") { it.name }
         if ("null" == defaultValue || returnType?.isNullable == true) {
-            builder.addStatement("return findCommand<%1L<%3L>>()?.%2L", commandClassName, command.method.argumentsString, generics)
+            builder.addStatement("return findCommand<%1L<%3L>>()?.%2L", commandClassName, command.method.argumentsStringWithStar, generics)
         } else {
             builder.addStatement("return findCommand<%1L<%4L>>()?.%2L ?: %3L", commandClassName, command.method
-                    .argumentsString, defaultValue, generics)
+                    .argumentsStringWithStar, defaultValue, generics)
         }
         return builder
     }

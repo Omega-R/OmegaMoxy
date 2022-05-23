@@ -1,11 +1,8 @@
 package example.com.moxy_androidx_sample
 
 import android.util.Log
-import example.com.moxy_androidx_sample.BasePresenter
-import example.com.moxy_androidx_sample.MainActivity
 import example.com.moxy_androidx_sample.contract.Contract
 import kotlin.concurrent.thread
-import kotlin.time.Duration.Companion.seconds
 
 class MainPresenter : BasePresenter<Contract.MainView<Double>>() {
 

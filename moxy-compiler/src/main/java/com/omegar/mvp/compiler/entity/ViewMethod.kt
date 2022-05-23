@@ -13,9 +13,11 @@ data class ViewMethod(val name: String,
                       val type: Type,
                       val annotationData: List<AnnotationData>
 ) {
-    val argumentsString = parameterSpecs
-            .map(ParameterSpec::name)
-            .joinToString(", ")
+    val argumentsString = parameterSpecs.joinToString(", ", transform = ParameterSpec::name)
+
+    val argumentsStringWithStar = parameterSpecs.joinToString(", ") {
+        if (KModifier.VARARG in it.modifiers) "*" + it.name else it.name
+    }
 
     private val annotationMap = annotationData.groupBy { it.name }
 
@@ -53,15 +55,15 @@ data class ViewMethod(val name: String,
     }
 
     sealed class Type {
-        data class Method(val setterSpec: FunSpec, val getterSpec: FunSpec? = null): Type()
-        data class Property(val spec: PropertySpec): Type()
+        data class Method(val setterSpec: FunSpec, val getterSpec: FunSpec? = null) : Type()
+        data class Property(val spec: PropertySpec) : Type()
     }
 
     data class AnnotationData(val name: String, val params: Map<String, String>) {
 
         fun getValue(key: String) = params[key]
 
-        inline fun <reified E: Enum<E>> getValueAsEnum(key: String): E?  {
+        inline fun <reified E : Enum<E>> getValueAsEnum(key: String): E? {
             return try {
                 getValue(key)?.let { enumValueOf<E>(it) }
             } catch (e: Exception) {
@@ -69,11 +71,11 @@ data class ViewMethod(val name: String,
             }
         }
 
-        fun getValueAsTypeElement(key: String, elements: Elements): TypeElement?  {
+        fun getValueAsTypeElement(key: String, elements: Elements): TypeElement? {
             return getValue(key)?.let { elements.getTypeElement(it) }
         }
 
-        fun getValueAsBoolean(key: String): Boolean?  {
+        fun getValueAsBoolean(key: String): Boolean? {
             return getValue(key)?.toBooleanStrictOrNull()
         }
 

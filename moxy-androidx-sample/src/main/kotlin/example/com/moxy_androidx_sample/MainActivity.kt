@@ -1,9 +1,5 @@
 package example.com.moxy_androidx_sample
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -75,7 +71,7 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
 
     }
 
-    override fun printLog(msg: Double?, log: String?) {
+    override fun printLog(msg: Double?, vararg log: String?) {
         Log.e(TAG, "printLog : msg : $msg activity hash code : ${hashCode()}, log: $log")
     }
 
