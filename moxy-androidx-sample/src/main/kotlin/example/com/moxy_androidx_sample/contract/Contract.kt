@@ -33,7 +33,7 @@ interface Contract {
         var random: Int
 
         @StateStrategyType(ADD_TO_END_SINGLE_TAG, singleInstance = false, serializeType = SerializeType.PARCELABLE)
-        fun printLog(msg: D?, vararg log: String?)
+        fun printLog(msg: D? = null, vararg log: String?)
 
     }
 

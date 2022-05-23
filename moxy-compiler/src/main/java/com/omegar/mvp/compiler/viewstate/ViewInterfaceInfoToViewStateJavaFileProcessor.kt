@@ -212,6 +212,13 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         val commandClassName = command.name
         val builder = funSpec.clearBody()
         builder.modifiers.remove(KModifier.ABSTRACT)
+        val parameters = builder.parameters.map {
+            it.toBuilder()
+                    .defaultValue(null)
+                    .build()
+        }
+        builder.parameters.clear()
+        builder.parameters.addAll(parameters)
         builder.annotations.clear()
         if (command.singleInstance) {
             builder.addCode(
