@@ -141,7 +141,6 @@ public class MvpCompiler extends AbstractProcessor {
 		Publisher<TypeElement> presenterContainerElementPublisher = new Publisher<>();
 		Publisher<TypeElement> presenterElementPublisher = new Publisher<>();
 		Publisher<TypeElement> viewElementPublisher = new Publisher<>();
-		Publisher<TypeElement> strategiesElementPublisher = new Publisher<>();
 		Publisher<String> reflectorPackagesPublisher = new Publisher<>(getAdditionalMoxyReflectorPackages(roundEnv));
 
 		JavaFileWriter javaFileWriter = new JavaFileWriter(processingEnv.getFiler());
@@ -160,7 +159,7 @@ public class MvpCompiler extends AbstractProcessor {
 
 		// viewStatePipeline
 		new Pipeline.Builder<>(viewElementPublisher)
-				.addProcessor(new ElementToViewInterfaceInfoProcessor(mElements, mTypes, strategiesElementPublisher))
+				.addProcessor(new ElementToViewInterfaceInfoProcessor(mElements, mMessager, mTypes))
 				.uniqueFilter()
 				.addValidator(new ViewInterfaceInfoValidator(mElements, currentMoxyReflectorPackage))
 				.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(mElements, mTypes, currentMoxyReflectorPackage, reflectorPackagesPublisher))

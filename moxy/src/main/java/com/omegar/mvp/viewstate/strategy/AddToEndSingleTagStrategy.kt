@@ -8,12 +8,12 @@ import com.omegar.mvp.viewstate.ViewCommand
  * an existing command will be removed.
  */
 object AddToEndSingleTagStrategy : StateStrategy {
-    override fun <View : MvpView?> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+    override fun <View : MvpView> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
         currentState.removeAll { it.tag == incomingCommand.tag }
         currentState.add(incomingCommand)
     }
 
-    override fun <View : MvpView?> afterApply(currentState: List<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+    override fun <View : MvpView> afterApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
         //Just do nothing
     }
 }

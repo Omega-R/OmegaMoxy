@@ -13,7 +13,6 @@ import com.omegar.mvp.viewstate.SerializeType
 import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy
 import com.omegar.mvp.viewstate.strategy.StateStrategyType
 import com.omegar.mvp.viewstate.strategy.StrategyType
-import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import javax.annotation.processing.Messager
@@ -21,12 +20,13 @@ import javax.lang.model.element.TypeElement
 import javax.lang.model.type.TypeMirror
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
+import javax.tools.Diagnostic
 
 
 class ElementToViewInterfaceInfoProcessor(
-        private val mElements: Elements,
-        private val mTypes: Types,
-        private val mUsedStrategiesPublisher: Publisher<TypeElement>
+        private val elements: Elements,
+        private val messager: Messager,
+        private val types: Types
 ) : ElementProcessor<TypeElement?, ViewInterfaceInfo?>() {
 
     companion object {
@@ -34,10 +34,10 @@ class ElementToViewInterfaceInfoProcessor(
     }
 
 
-    private val mViewMethodParser: UniversalViewMethodParser = UniversalViewMethodParser(mElements, mTypes)
-    private val mMvpViewTypeMirror: TypeMirror = mElements.getTypeElement(MvpView::class.java.canonicalName).asType()
+    private val mViewMethodParser: UniversalViewMethodParser = UniversalViewMethodParser(elements, types)
+    private val mMvpViewTypeMirror: TypeMirror = elements.getTypeElement(MvpView::class.java.canonicalName).asType()
 
-    private val addToEndSingleStrategyClass by lazy { mElements.getTypeElement(AddToEndSingleStrategy::class.java.canonicalName) }
+    private val addToEndSingleStrategyClass by lazy { elements.getTypeElement(AddToEndSingleStrategy::class.java.canonicalName) }
 
     @KotlinPoetMetadataPreview
     override fun process(element: TypeElement?, context: PipelineContext<ViewInterfaceInfo?>) {
@@ -67,7 +67,7 @@ class ElementToViewInterfaceInfoProcessor(
     private fun getSuperInterfaceTypeElement(element: TypeElement): TypeElement? {
         for (typeMirror in element.interfaces) {
             val interfaceElement = Util.asElement(typeMirror)
-            if (interfaceElement != null && mTypes.isAssignable(interfaceElement.asType(), mMvpViewTypeMirror)) {
+            if (interfaceElement != null && types.isAssignable(interfaceElement.asType(), mMvpViewTypeMirror)) {
                 return interfaceElement
             }
         }
@@ -82,7 +82,7 @@ class ElementToViewInterfaceInfoProcessor(
                 .map { method ->
                     val annotation = method.getAnnotation(STATE_STRATEGY_TYPE_ANNOTATION)
                     val strategyClass = annotation?.getStrategyClass()
-                            ?: method.getStrategyClass()
+                            ?: method.getStrategyClass(messager, simpleName.toString())
                             ?: throw IllegalArgumentException("""
 You are trying generate ViewState for ${simpleName}. But "${method.name}" method don't provide Strategy type. 
 Please annotate your method with Strategy.
@@ -92,8 +92,6 @@ For example:
 fun ${method.name}()
 
 """)
-                    // publish strategy
-                    mUsedStrategiesPublisher.next(strategyClass)
                     val methodTag = annotation.getMethodTag(method.name)
                     val singleInstance = annotation?.getValueAsBoolean("singleInstance") ?: false
                     val serializeType = annotation?.getValueAsEnum("serializeType") ?: SerializeType.NONE
@@ -119,13 +117,19 @@ fun ${method.name}()
     private fun ViewMethod.AnnotationData.getStrategyClass(): TypeElement? {
         return when (val type = getValueAsEnum<StrategyType>("value")) {
             StrategyType.CUSTOM, null -> {
-                getValueAsTypeElement("custom", mElements)
+                getValueAsTypeElement("custom", elements)
             }
-            else -> mElements.getTypeElement(type.strategyClass.canonicalName)
+            else -> elements.getTypeElement(type.strategyClass!!.canonicalName)
         }
     }
 
-    private fun ViewMethod.getStrategyClass(): TypeElement? {
+    private fun ViewMethod.getStrategyClass(messager: Messager, interfaceName: String): TypeElement? {
+        if (isSynthetic) {
+            messager.printMessage(Diagnostic.Kind.WARNING, """
+The '$name' method in $interfaceName is set to the ADD_TO_END_SINGLE strategy, since it is not possible to read annotations for synthetic methods                                         
+            """.trimIndent())
+            return addToEndSingleStrategyClass
+        }
         return when (type) {
             is ViewMethod.Type.Property -> addToEndSingleStrategyClass
             else -> null
@@ -135,11 +139,6 @@ fun ${method.name}()
     private fun ViewMethod.AnnotationData?.getMethodTag(defaultTag: String): String {
         // get tag from annotation
         return this?.getValue("tag") ?: defaultTag
-    }
-
-    override fun finish(nextContext: PipelineContext<ViewInterfaceInfo?>?) {
-        mUsedStrategiesPublisher.finish()
-        super.finish(nextContext)
     }
 
 }

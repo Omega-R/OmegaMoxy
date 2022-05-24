@@ -78,7 +78,7 @@ class JavaxViewMethodParser(private val types: Types) : ViewMethod.Parser() {
 
         val annotationDataList = methodElement.annotationMirrors.toAnnotationDataList()
 
-        return ViewMethod(methodName, parameterSpecs, exceptions, typeVariables, methodType, annotationDataList)
+        return ViewMethod(methodName, parameterSpecs, exceptions, typeVariables, methodType, annotationDataList, false)
     }
 
     private fun <T : VariableElement> List<T>.mapParametersSpecs(

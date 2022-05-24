@@ -14,12 +14,12 @@ import com.omegar.mvp.viewstate.ViewCommand
  * @author Alexander Blinov
  */
 object SingleStateStrategy : StateStrategy {
-    override fun <View : MvpView?> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+    override fun <View : MvpView> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
         currentState.clear()
         currentState.add(incomingCommand)
     }
 
-    override fun <View : MvpView?> afterApply(currentState: List<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+    override fun <View : MvpView> afterApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
         // pass
     }
 }

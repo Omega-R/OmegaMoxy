@@ -27,7 +27,6 @@ public abstract class MvpPresenter<View extends MvpView> {
         mViewState = (MvpViewState<View>) MoxyReflector.getViewState(getClass());
 	}
 
-
 	public void onCreate(Bundle bundle) {
 		if (bundle != null && mFirstLaunch) {
 			mViewState.loadState(bundle);
@@ -142,7 +141,6 @@ public abstract class MvpPresenter<View extends MvpView> {
 	void setTag(String tag) {
 		mTag = tag;
 	}
-
 
 	public void onSaveInstanceState(Bundle outState) {
 		mViewState.saveState(outState);

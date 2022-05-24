@@ -80,6 +80,10 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
     }
 
 
+    override fun test(duration: Duration) {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         const val TAG = "MoxyDebug"
     }

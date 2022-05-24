@@ -23,7 +23,7 @@ class ViewCommands<View : MvpView> {
 
     @Suppress("UNCHECKED_CAST")
     fun load(inBundle: Bundle) {
-        val savedState = inBundle.getParcelable<SavedState>(KEY_STATE)
+        val savedState = inBundle.getParcelable<SavedState>(KEY_STATE) ?: return
         currentState.addAll(savedState.list as List<ViewCommand<View>>)
     }
 
@@ -41,7 +41,7 @@ class ViewCommands<View : MvpView> {
     }
 
     fun reapply(view: View, currentState: Set<ViewCommand<View>>) {
-        if (this.currentState.isNotEmpty()) {
+        if (currentState.isNotEmpty()) {
             val commands = ArrayList(this.currentState)
             for (command in commands) {
                 if (currentState.contains(command)) {

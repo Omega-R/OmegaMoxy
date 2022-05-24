@@ -12,6 +12,14 @@ import javax.lang.model.util.Types
 import kotlin.collections.HashMap
 
 class KmViewMethodParser(elements: Elements, types: Types) : ViewMethod.Parser() {
+
+    companion object {
+
+        private const val ANNOTATION_JVM_SYNTHETICS_FUNC = "@kotlin.jvm.JvmSynthetic"
+        private const val ANNOTATION_JVM_SYNTHETICS_PROPERTY = "@set:kotlin.jvm.JvmSynthetic"
+
+    }
+
     @KotlinPoetMetadataPreview
     private val classInspector = ElementsClassInspector.create(elements, types)
 
@@ -27,13 +35,16 @@ class KmViewMethodParser(elements: Elements, types: Types) : ViewMethod.Parser()
     }
 
     @KotlinPoetMetadataPreview
-    override fun parse(element: TypeElement): List<ViewMethod> {
-        val typeSpec = element.typeSpec
+    override fun parse(targetInterfaceElement: TypeElement): List<ViewMethod> {
+        val typeSpec = targetInterfaceElement.typeSpec
 
         val properties = typeSpec.propertySpecs
                 .asSequence()
                 .filter { it.mutable }
                 .map { property ->
+                    if (property.name == "duration") {
+                        println(property.annotations)
+                    }
                     val param = ParameterSpec.builder("value", property.type).build()
                     ViewMethod(
                             name = property.name,
@@ -41,7 +52,11 @@ class KmViewMethodParser(elements: Elements, types: Types) : ViewMethod.Parser()
                             exceptions = emptyList(),
                             typeVariables = emptyList(),
                             type = ViewMethod.Type.Property(property),
-                            annotationData =  property.annotations.mapNotNull { it.tag(AnnotationMirror::class) }.toAnnotationDataList()
+                            annotationData = property.annotations.mapNotNull { it.tag(AnnotationMirror::class) }
+                                    .toAnnotationDataList(),
+                            isSynthetic = property.annotations.indexOfFirst {
+                                it.toString() == ANNOTATION_JVM_SYNTHETICS_PROPERTY
+                            } != -1
                     )
                 }
 
@@ -50,20 +65,21 @@ class KmViewMethodParser(elements: Elements, types: Types) : ViewMethod.Parser()
                 .filter { it.returnType == UNIT || it.returnType == null }
                 .map { func ->
                     ViewMethod(
-                            func.name,
-                            func.parameters,
-                            emptyList(),
-                            func.typeVariables,
-                            ViewMethod.Type.Method(func),
-                            func.annotations.mapNotNull { it.tag(AnnotationMirror::class) }.toAnnotationDataList()
+                            name = func.name,
+                            parameterSpecs = func.parameters,
+                            exceptions = emptyList(),
+                            typeVariables = func.typeVariables,
+                            type = ViewMethod.Type.Method(func),
+                            annotationData = func.annotations.mapNotNull { it.tag(AnnotationMirror::class) }.toAnnotationDataList(),
+                            isSynthetic = func.annotations.indexOfFirst { it.toString() == ANNOTATION_JVM_SYNTHETICS_FUNC } != -1
                     )
                 }
         return (properties + functions).toList()
     }
 
     @KotlinPoetMetadataPreview
-    private val TypeElement.typeSpec: TypeSpec get() = map.getOrPut(this) { toTypeSpec(classInspector) }
-
+    private val TypeElement.typeSpec: TypeSpec
+        get() = map.getOrPut(this) { toTypeSpec(classInspector) }
 
 
 }

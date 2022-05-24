@@ -1,12 +1,8 @@
-package com.omegar.mvp.viewstate;
+package com.omegar.mvp.viewstate
 
-import com.omegar.mvp.MoxyReflector;
-import com.omegar.mvp.MvpView;
-import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy;
-import com.omegar.mvp.viewstate.strategy.SkipStrategy;
-import com.omegar.mvp.viewstate.strategy.StateStrategy;
-
-import java.io.Serializable;
+import com.omegar.mvp.MvpView
+import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy
+import com.omegar.mvp.viewstate.strategy.StateStrategy
 
 /**
  * Date: 16-Dec-15
@@ -14,32 +10,14 @@ import java.io.Serializable;
  *
  * @author Alexander Blinov
  */
-public abstract class ViewCommand<View extends MvpView> {
-	private final String mTag;
-	private final StateStrategy mStateStrategy;
+abstract class ViewCommand<View : MvpView> protected constructor(
+        val tag: String = "",
+        val stateStrategy: StateStrategy = AddToEndSingleStrategy
+) {
 
-	protected ViewCommand(String tag, StateStrategy stateStrategy) {
-		mTag = tag;
-		mStateStrategy = stateStrategy;
-	}
+    abstract fun apply(view: View)
 
-	// default constructor for serializable
-	protected ViewCommand() {
-		this("", AddToEndSingleStrategy.INSTANCE);
-	}
-
-	public abstract void apply(View view);
-
-	public String getTag() {
-		return mTag;
-	}
-
-	public StateStrategy getStateStrategy() {
-		return mStateStrategy;
-	}
-
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
+    override fun toString(): String {
+        return javaClass.simpleName
+    }
 }

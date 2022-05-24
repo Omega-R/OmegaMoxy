@@ -11,7 +11,8 @@ data class ViewMethod(val name: String,
                       val exceptions: List<TypeName>,
                       val typeVariables: List<TypeVariableName>,
                       val type: Type,
-                      val annotationData: List<AnnotationData>
+                      val annotationData: List<AnnotationData>,
+                      val isSynthetic: Boolean
 ) {
     val argumentsString = parameterSpecs.joinToString(", ", transform = ParameterSpec::name)
 

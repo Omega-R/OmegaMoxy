@@ -12,11 +12,11 @@ import com.omegar.mvp.viewstate.ViewCommand
  * @author Alexander Blinov
  */
 object SkipStrategy : StateStrategy {
-    override fun <View : MvpView?> beforeApply(currentState: List<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+    override fun <View : MvpView> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
         //do nothing to skip
     }
 
-    override fun <View : MvpView?> afterApply(currentState: List<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
+    override fun <View : MvpView> afterApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
         // pass
     }
 }
