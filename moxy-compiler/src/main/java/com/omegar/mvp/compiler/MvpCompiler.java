@@ -148,7 +148,7 @@ public class MvpCompiler extends AbstractProcessor {
 
 		// moxyReflectorPipeline
 		new Pipeline.Builder<>(
-				TriplePublisher.collectQuad(
+				TriplePublisher.collectTriple(
 						presenterElementPublisher,
 						presenterContainerElementPublisher,
 						reflectorPackagesPublisher))

@@ -18,18 +18,13 @@ abstract class MvpViewState<View : MvpView> {
         get() = mutableViews
 
     protected val viewCommands = ViewCommands<View>()
-    protected val mutableViews: MutableSet<View> = Collections.newSetFromMap(WeakHashMap())
-    private val inRestoreState = Collections.newSetFromMap<View>(WeakHashMap())
+    protected val mutableViews = mutableWeakSet<View>()
+    private val inRestoreState = mutableWeakSet<View>()
     private val viewStates = WeakHashMap<View, Set<ViewCommand<View>>>()
 
+    fun loadState(inBundle: Bundle) = viewCommands.load(inBundle)
 
-    fun loadState(inBundle: Bundle) {
-        viewCommands.load(inBundle)
-    }
-
-    fun saveState(outBundle: Bundle) {
-        viewCommands.save(outBundle)
-    }
+    fun saveState(outBundle: Bundle) = viewCommands.save(outBundle)
 
     protected fun apply(command: ViewCommand<View>) {
         viewCommands.beforeApply(command)
@@ -39,12 +34,7 @@ abstract class MvpViewState<View : MvpView> {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    protected fun <C : ViewCommand<View>> findCommand(clz: Class<*>): C? {
-        return viewCommands.currentState.lastOrNull { it.javaClass == clz } as? C?
-    }
-
-    protected inline fun <reified C : ViewCommand<View>> findCommand(): C? = findCommand(C::class.java)
+    protected inline fun <reified C : ViewCommand<View>> findCommand(): C? = viewCommands.findCommand(C::class.java)
 
     /**
      * Apply saved state to attached view
@@ -52,9 +42,7 @@ abstract class MvpViewState<View : MvpView> {
      * @param view mvp view to restore state
      * @param currentState commands that was applied already
      */
-    private fun restoreState(view: View, currentState: Set<ViewCommand<View>>) {
-        viewCommands.reapply(view, currentState)
-    }
+    private fun restoreState(view: View, currentState: Set<ViewCommand<View>>) = viewCommands.reapply(view, currentState)
 
     /**
      * Attach view to view state and apply saves state
@@ -66,9 +54,8 @@ abstract class MvpViewState<View : MvpView> {
         if (!isViewAdded) {
             return
         }
-        inRestoreState.add(view)
-        val currentState = viewStates[view].orEmpty()
-        restoreState(view, currentState)
+        inRestoreState += view
+        restoreState(view, currentState = viewStates[view].orEmpty())
         viewStates.remove(view)
         inRestoreState.remove(view)
     }
@@ -82,15 +69,13 @@ abstract class MvpViewState<View : MvpView> {
      * @param view target mvp view to detach
      */
     fun detachView(view: View) {
-        mutableViews.remove(view)
-        inRestoreState.remove(view)
-        val currentState = Collections.newSetFromMap(WeakHashMap<ViewCommand<View>, Boolean>())
-        currentState.addAll(viewCommands.currentState)
-        viewStates[view] = currentState
+        mutableViews -= view
+        inRestoreState -= view
+        viewStates[view] = mutableWeakSet(viewCommands.commands)
     }
 
     fun destroyView(view: View) {
-        viewStates.remove(view)
+        viewStates -= view
     }
 
     /**
@@ -99,7 +84,7 @@ abstract class MvpViewState<View : MvpView> {
      * @param view view for check
      * @return true if view state restore state to incoming view. false otherwise.
      */
-    fun isInRestoreState(view: View): Boolean = inRestoreState.contains(view)
+    fun isInRestoreState(view: View) = inRestoreState.contains(view)
 
     override fun toString(): String {
         return "MvpViewState{" +
@@ -107,5 +92,12 @@ abstract class MvpViewState<View : MvpView> {
                 '}'
     }
 
+}
 
+private fun <E> mutableWeakSet(): MutableSet<E> = Collections.newSetFromMap(WeakHashMap())
+
+private fun <E> mutableWeakSet(collection: Collection<E>): MutableSet<E> {
+    return Collections.newSetFromMap<E>(WeakHashMap(collection.size)).apply {
+        addAll(collection)
+    }
 }

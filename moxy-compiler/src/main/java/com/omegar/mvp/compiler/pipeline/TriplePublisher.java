@@ -54,9 +54,9 @@ public class TriplePublisher<FI, SE, TH> extends Publisher<Triple<FI, SE, TH>> {
         }
     }
 
-    public static <FI, SE, TH> TriplePublisher<Set<FI>, Set<SE>, Set<TH>> collectQuad(Publisher<FI> publisher1,
-                                                                                                   Publisher<SE> publisher2,
-                                                                                                   Publisher<TH> publisher3) {
+    public static <FI, SE, TH> TriplePublisher<Set<FI>, Set<SE>, Set<TH>> collectTriple(Publisher<FI> publisher1,
+                                                                                        Publisher<SE> publisher2,
+                                                                                        Publisher<TH> publisher3) {
         return new TriplePublisher<>(
                 publisher1.collect(),
                 publisher2.collect(),

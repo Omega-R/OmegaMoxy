@@ -1,8 +1,6 @@
 package com.omegar.mvp.viewstate
 
 import android.os.Bundle
-import android.os.Parcelable
-import android.util.Log
 import com.omegar.mvp.MvpView
 import com.omegar.mvp.SavedState
 import java.util.ArrayList
@@ -13,49 +11,45 @@ import java.util.ArrayList
  *
  * @author Yuri Shmakov
  */
-class ViewCommands<View : MvpView> {
+@JvmInline
+value class ViewCommands<View : MvpView>(val commands: MutableList<ViewCommand<View>> = ArrayList()) {
 
     private companion object {
         private const val KEY_STATE = "state"
     }
 
-    val currentState: MutableList<ViewCommand<View>> = ArrayList()
-
     @Suppress("UNCHECKED_CAST")
     fun load(inBundle: Bundle) {
         val savedState = inBundle.getParcelable<SavedState>(KEY_STATE) ?: return
-        currentState.addAll(savedState.list as List<ViewCommand<View>>)
+        commands.addAll(savedState.list as List<ViewCommand<View>>)
     }
 
     fun save(outBundle: Bundle) {
-        val savedState = SavedState(currentState)
+        val savedState = SavedState(commands)
         outBundle.putParcelable(KEY_STATE, savedState)
     }
 
-    fun beforeApply(viewCommand: ViewCommand<View>) {
-        viewCommand.stateStrategy.beforeApply(currentState, viewCommand)
-    }
+    fun beforeApply(command: ViewCommand<View>) = command.beforeApply(commands)
 
-    fun afterApply(viewCommand: ViewCommand<View>) {
-        viewCommand.stateStrategy.afterApply(currentState, viewCommand)
-    }
+    fun afterApply(command: ViewCommand<View>) = command.afterApply(commands)
+
+    @Suppress("UNCHECKED_CAST")
+    fun <C : ViewCommand<View>> findCommand(clz: Class<*>): C? = commands.lastOrNull { it.javaClass == clz } as? C?
 
     fun reapply(view: View, currentState: Set<ViewCommand<View>>) {
-        if (currentState.isNotEmpty()) {
-            val commands = ArrayList(this.currentState)
-            for (command in commands) {
-                if (currentState.contains(command)) {
-                    continue
+        commands.toList()
+                .asSequence()
+                .filter { it in currentState }
+                .forEach { command ->
+                    command.apply(view)
+                    afterApply(command)
                 }
-                command.apply(view)
-                afterApply(command)
-            }
-        }
     }
 
     override fun toString(): String {
         return "ViewCommands{" +
-                "state=" + currentState +
+                "state=" + commands +
                 '}'
     }
+
 }
