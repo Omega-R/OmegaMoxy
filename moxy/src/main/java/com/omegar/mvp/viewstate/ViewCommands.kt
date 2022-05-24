@@ -39,7 +39,7 @@ value class ViewCommands<View : MvpView>(val commands: MutableList<ViewCommand<V
     fun reapply(view: View, currentState: Set<ViewCommand<View>>) {
         commands.toList()
                 .asSequence()
-                .filter { it in currentState }
+                .filter { it !in currentState }
                 .forEach { command ->
                     command.apply(view)
                     afterApply(command)
