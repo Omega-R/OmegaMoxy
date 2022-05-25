@@ -12,97 +12,97 @@ public class ChildView$$State extends MvpViewState<ChildView> implements ChildVi
 	@Override
 	public void parentMethod1() {
 		ParentMethod1Command parentMethod1Command = new ParentMethod1Command();
-		viewCommands.beforeApply(parentMethod1Command);
+		commands.beforeApply(parentMethod1Command);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ChildView view : mutableViews) {
+		for (ChildView view : views) {
 			view.parentMethod1();
 		}
 
-		viewCommands.afterApply(parentMethod1Command);
+		commands.afterApply(parentMethod1Command);
 	}
 
 	@Override
 	public void parentMethod2() {
 		ParentMethod2Command parentMethod2Command = new ParentMethod2Command();
-		viewCommands.beforeApply(parentMethod2Command);
+		commands.beforeApply(parentMethod2Command);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ChildView view : mutableViews) {
+		for (ChildView view : views) {
 			view.parentMethod2();
 		}
 
-		viewCommands.afterApply(parentMethod2Command);
+		commands.afterApply(parentMethod2Command);
 	}
 
 	@Override
 	public void childMethod() {
 		ChildMethodCommand childMethodCommand = new ChildMethodCommand();
-		viewCommands.beforeApply(childMethodCommand);
+		commands.beforeApply(childMethodCommand);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ChildView view : mutableViews) {
+		for (ChildView view : views) {
 			view.childMethod();
 		}
 
-		viewCommands.afterApply(childMethodCommand);
+		commands.afterApply(childMethodCommand);
 	}
 
 	@Override
 	public void childMethodWithStrategy() {
 		ChildMethodWithStrategyCommand childMethodWithStrategyCommand = new ChildMethodWithStrategyCommand();
-		viewCommands.beforeApply(childMethodWithStrategyCommand);
+		commands.beforeApply(childMethodWithStrategyCommand);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ChildView view : mutableViews) {
+		for (ChildView view : views) {
 			view.childMethodWithStrategy();
 		}
 
-		viewCommands.afterApply(childMethodWithStrategyCommand);
+		commands.afterApply(childMethodWithStrategyCommand);
 	}
 
 	@Override
 	public void parentMethod3() {
 		ParentMethod3Command parentMethod3Command = new ParentMethod3Command();
-		viewCommands.beforeApply(parentMethod3Command);
+		commands.beforeApply(parentMethod3Command);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ChildView view : mutableViews) {
+		for (ChildView view : views) {
 			view.parentMethod3();
 		}
 
-		viewCommands.afterApply(parentMethod3Command);
+		commands.afterApply(parentMethod3Command);
 	}
 
 	@Override
 	public void parentMethodWithStrategy() {
 		ParentMethodWithStrategyCommand parentMethodWithStrategyCommand = new ParentMethodWithStrategyCommand();
-		viewCommands.beforeApply(parentMethodWithStrategyCommand);
+		commands.beforeApply(parentMethodWithStrategyCommand);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ChildView view : mutableViews) {
+		for (ChildView view : views) {
 			view.parentMethodWithStrategy();
 		}
 
-		viewCommands.afterApply(parentMethodWithStrategyCommand);
+		commands.afterApply(parentMethodWithStrategyCommand);
 	}
 
 

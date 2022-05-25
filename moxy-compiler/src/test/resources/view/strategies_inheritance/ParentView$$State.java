@@ -11,65 +11,65 @@ public class ParentView$$State extends MvpViewState<ParentView> implements Paren
 	@Override
 	public void parentMethod1() {
 		ParentMethod1Command parentMethod1Command = new ParentMethod1Command();
-		viewCommands.beforeApply(parentMethod1Command);
+		commands.beforeApply(parentMethod1Command);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ParentView view : mutableViews) {
+		for (ParentView view : views) {
 			view.parentMethod1();
 		}
 
-		viewCommands.afterApply(parentMethod1Command);
+		commands.afterApply(parentMethod1Command);
 	}
 
 	@Override
 	public void parentMethod2() {
 		ParentMethod2Command parentMethod2Command = new ParentMethod2Command();
-		viewCommands.beforeApply(parentMethod2Command);
+		commands.beforeApply(parentMethod2Command);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ParentView view : mutableViews) {
+		for (ParentView view : views) {
 			view.parentMethod2();
 		}
 
-		viewCommands.afterApply(parentMethod2Command);
+		commands.afterApply(parentMethod2Command);
 	}
 
 	@Override
 	public void parentMethod3() {
 		ParentMethod3Command parentMethod3Command = new ParentMethod3Command();
-		viewCommands.beforeApply(parentMethod3Command);
+		commands.beforeApply(parentMethod3Command);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ParentView view : mutableViews) {
+		for (ParentView view : views) {
 			view.parentMethod3();
 		}
 
-		viewCommands.afterApply(parentMethod3Command);
+		commands.afterApply(parentMethod3Command);
 	}
 
 	@Override
 	public void parentMethodWithStrategy() {
 		ParentMethodWithStrategyCommand parentMethodWithStrategyCommand = new ParentMethodWithStrategyCommand();
-		viewCommands.beforeApply(parentMethodWithStrategyCommand);
+		commands.beforeApply(parentMethodWithStrategyCommand);
 
-		if (mutableViews == null || mutableViews.isEmpty()) {
+		if (views == null || views.isEmpty()) {
 			return;
 		}
 
-		for (ParentView view : mutableViews) {
+		for (ParentView view : views) {
 			view.parentMethodWithStrategy();
 		}
 
-		viewCommands.afterApply(parentMethodWithStrategyCommand);
+		commands.afterApply(parentMethodWithStrategyCommand);
 	}
 
 

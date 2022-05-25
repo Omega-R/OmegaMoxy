@@ -94,7 +94,7 @@ public abstract class MvpPresenter<View extends MvpView> {
 	 */
 	@SuppressWarnings("WeakerAccess")
 	protected Set<View> getAttachedViews() {
-		return mViewState.getViews();
+		return mViewState.getAttachedViews();
 	}
 
 	/**

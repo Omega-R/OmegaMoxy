@@ -12,20 +12,24 @@ import com.omegar.mvp.viewstate.strategy.StateStrategy
  */
 abstract class ViewCommand<View : MvpView> protected constructor(
         val tag: String = "",
-        val stateStrategy: StateStrategy = AddToEndSingleStrategy
+        private val stateStrategy: StateStrategy = AddToEndSingleStrategy
 ) {
 
-    abstract fun apply(view: View)
+    fun beforeApply(commands: MutableList<ViewCommand<View>>) = stateStrategy.beforeApply(commands, this)
 
-    fun beforeApply(commands: MutableList<ViewCommand<View>>) {
-        stateStrategy.beforeApply(commands, this)
-    }
+    abstract fun apply(mvpView: View)
 
-    fun afterApply(commands: MutableList<ViewCommand<View>>) {
-        stateStrategy.afterApply(commands, this)
-    }
+    fun afterApply(commands: MutableList<ViewCommand<View>>) = stateStrategy.afterApply(commands, this)
 
-    override fun toString(): String {
-        return javaClass.simpleName
+    override fun toString(): String = javaClass.simpleName
+
+    protected fun buildString(name: String, vararg args: Any?): String {
+        return (0 until args.size / 2)
+                .joinToString(prefix = "$name{", separator = ", ", postfix = "}") { i ->
+                    val key = args[i * 2]
+                    val value = args[i * 2 + 1]
+                    val mark = "'".takeIf { value is String } ?: ""
+                    "$key=$mark$value$mark"
+                }
     }
 }

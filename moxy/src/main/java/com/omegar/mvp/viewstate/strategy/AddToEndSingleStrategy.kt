@@ -13,7 +13,7 @@ import com.omegar.mvp.viewstate.ViewCommand
  */
 object AddToEndSingleStrategy : StateStrategy {
     override fun <View : MvpView> beforeApply(currentState: MutableList<ViewCommand<View>>, incomingCommand: ViewCommand<View>) {
-        currentState.removeAll { it.javaClass == incomingCommand.javaClass }
+        currentState.removeAll { it.javaClass === incomingCommand.javaClass }
         currentState.add(incomingCommand)
     }
 

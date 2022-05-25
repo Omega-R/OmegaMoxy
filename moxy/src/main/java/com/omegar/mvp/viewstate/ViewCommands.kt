@@ -12,7 +12,7 @@ import java.util.ArrayList
  * @author Yuri Shmakov
  */
 @JvmInline
-value class ViewCommands<View : MvpView>(val commands: MutableList<ViewCommand<View>> = ArrayList()) {
+value class ViewCommands<View : MvpView>(val list: MutableList<ViewCommand<View>> = ArrayList()) {
 
     private companion object {
         private const val KEY_STATE = "state"
@@ -21,23 +21,23 @@ value class ViewCommands<View : MvpView>(val commands: MutableList<ViewCommand<V
     @Suppress("UNCHECKED_CAST")
     fun load(inBundle: Bundle) {
         val savedState = inBundle.getParcelable<SavedState>(KEY_STATE) ?: return
-        commands.addAll(savedState.list as List<ViewCommand<View>>)
+        list.addAll(savedState.list as List<ViewCommand<View>>)
     }
 
     fun save(outBundle: Bundle) {
-        val savedState = SavedState(commands)
+        val savedState = SavedState(list)
         outBundle.putParcelable(KEY_STATE, savedState)
     }
 
-    fun beforeApply(command: ViewCommand<View>) = command.beforeApply(commands)
+    fun beforeApply(command: ViewCommand<View>) = command.beforeApply(list)
 
-    fun afterApply(command: ViewCommand<View>) = command.afterApply(commands)
+    fun afterApply(command: ViewCommand<View>) = command.afterApply(list)
 
     @Suppress("UNCHECKED_CAST")
-    fun <C : ViewCommand<View>> findCommand(clz: Class<*>): C? = commands.lastOrNull { it.javaClass == clz } as? C?
+    fun <C : ViewCommand<View>> findCommand(clz: Class<*>): C? = list.lastOrNull { it.javaClass === clz } as? C?
 
     fun reapply(view: View, currentState: Set<ViewCommand<View>>) {
-        commands.toList()
+        list.toList()
                 .asSequence()
                 .filter { it !in currentState }
                 .forEach { command ->
@@ -48,7 +48,7 @@ value class ViewCommands<View : MvpView>(val commands: MutableList<ViewCommand<V
 
     override fun toString(): String {
         return "ViewCommands{" +
-                "state=" + commands +
+                "state=" + list +
                 '}'
     }
 

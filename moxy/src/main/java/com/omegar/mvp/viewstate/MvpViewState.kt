@@ -2,6 +2,7 @@ package com.omegar.mvp.viewstate
 
 import android.os.Bundle
 import com.omegar.mvp.MvpView
+import com.omegar.mvp.viewstate.strategy.StateStrategy
 import java.util.*
 
 /**
@@ -11,38 +12,42 @@ import java.util.*
  * @author Yuri Shmakov
  */
 abstract class MvpViewState<View : MvpView> {
+
+    protected val views = mutableWeakSet<View>()
+    protected val commands = ViewCommands<View>()
+    private val restoreViews = mutableWeakSet<View>()
+    private val restoreMap = WeakHashMap<View, Set<ViewCommand<View>>>()
+
     /**
      * @return views, attached to this view state instance
      */
-    val views: Set<View>
-        get() = mutableViews
+    val attachedViews: Set<View>
+        get() = views
 
-    protected val viewCommands = ViewCommands<View>()
-    protected val mutableViews = mutableWeakSet<View>()
-    private val inRestoreState = mutableWeakSet<View>()
-    private val viewStates = WeakHashMap<View, Set<ViewCommand<View>>>()
+    fun loadState(inBundle: Bundle) = commands.load(inBundle)
 
-    fun loadState(inBundle: Bundle) = viewCommands.load(inBundle)
-
-    fun saveState(outBundle: Bundle) = viewCommands.save(outBundle)
+    fun saveState(outBundle: Bundle) = commands.save(outBundle)
 
     protected fun apply(command: ViewCommand<View>) {
-        viewCommands.beforeApply(command)
+        commands.beforeApply(command)
         if (views.isNotEmpty()) {
             views.forEach(command::apply)
-            viewCommands.afterApply(command)
+            commands.afterApply(command)
         }
     }
 
-    protected inline fun <reified C : ViewCommand<View>> findCommand(): C? = viewCommands.findCommand(C::class.java)
+    protected inline fun <reified C : ViewCommand<View>> findCommand(): C? = commands.findCommand(C::class.java)
 
     /**
      * Apply saved state to attached view
      *
-     * @param view mvp view to restore state
-     * @param currentState commands that was applied already
-     */
-    private fun restoreState(view: View, currentState: Set<ViewCommand<View>>) = viewCommands.reapply(view, currentState)
+     * */
+    private fun View.restoreState() {
+        restoreViews += this
+        commands.reapply(this, currentState = restoreMap[this].orEmpty())
+        restoreMap -= this
+        restoreViews -= this
+    }
 
     /**
      * Attach view to view state and apply saves state
@@ -50,18 +55,13 @@ abstract class MvpViewState<View : MvpView> {
      * @param view attachment
      */
     fun attachView(view: View) {
-        val isViewAdded = mutableViews.add(view)
-        if (!isViewAdded) {
-            return
+        val isViewAdded = views.add(view)
+        if (isViewAdded) {
+            view.restoreState()
         }
-        inRestoreState += view
-        restoreState(view, currentState = viewStates[view].orEmpty())
-        viewStates.remove(view)
-        inRestoreState.remove(view)
     }
 
     /**
-     *
      * Detach view from view state. After this moment view state save
      * commands via
      * [StateStrategy.beforeApply].
@@ -69,13 +69,13 @@ abstract class MvpViewState<View : MvpView> {
      * @param view target mvp view to detach
      */
     fun detachView(view: View) {
-        mutableViews -= view
-        inRestoreState -= view
-        viewStates[view] = mutableWeakSet(viewCommands.commands)
+        views -= view
+        restoreViews -= view
+        restoreMap[view] = mutableWeakSet(commands.list)
     }
 
     fun destroyView(view: View) {
-        viewStates -= view
+        restoreMap -= view
     }
 
     /**
@@ -84,11 +84,11 @@ abstract class MvpViewState<View : MvpView> {
      * @param view view for check
      * @return true if view state restore state to incoming view. false otherwise.
      */
-    fun isInRestoreState(view: View) = inRestoreState.contains(view)
+    fun isInRestoreState(view: View) = restoreViews.contains(view)
 
     override fun toString(): String {
         return "MvpViewState{" +
-                "viewCommands=" + viewCommands +
+                "viewCommands=" + commands +
                 '}'
     }
 

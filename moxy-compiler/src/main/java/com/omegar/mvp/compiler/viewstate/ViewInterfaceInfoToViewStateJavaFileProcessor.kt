@@ -139,6 +139,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
 
     private fun generateCommandClass(typeElement: TypeElement, command: ViewCommandInfo, variableNames: List<TypeVariableName>):
             TypeSpec {
+        val mvpView = "mvpView"
         var updateMethodBuilder: FunSpec.Builder? = null
         if (command.singleInstance) {
             updateMethodBuilder = FunSpec.builder("update")
@@ -151,13 +152,13 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
 
         val applyMethodBuilder = FunSpec.builder("apply")
                 .addModifiers(KModifier.OVERRIDE)
-                .addParameter("mvpView", GENERIC_TYPE_VARIABLE_NAME)
+                .addParameter(mvpView, GENERIC_TYPE_VARIABLE_NAME)
         when (command.method.type) {
             is Property -> {
-                applyMethodBuilder.addStatement("mvpView.%L = %L", command.method.name, command.method.argumentsStringWithStar)
+                applyMethodBuilder.addStatement("$mvpView.%L = %L", command.method.name, command.method.argumentsStringWithStar)
             }
             is Method -> {
-                applyMethodBuilder.addStatement("mvpView.%L(%L)", command.method.name, command.method.argumentsStringWithStar)
+                applyMethodBuilder.addStatement("$mvpView.%L(%L)", command.method.name, command.method.argumentsStringWithStar)
             }
         }
 
@@ -181,11 +182,12 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                 .superclass(VIEW_COMMAND_TYPE_NAME)
                 .addSuperclassConstructorParameter(CodeBlock.of("%S, %T", command.tag, command.strategy.asClassName()))
                 .addFunction(applyMethodBuilder.build())
-        if (command.method.parameterSpecs.isNotEmpty()) {
-            classBuilder.addModifiers(KModifier.DATA)
-        }
+
         if (updateMethodBuilder != null) {
             classBuilder.addFunction(updateMethodBuilder.build())
+        }
+        if (command.method.parameterSpecs.isNotEmpty()) {
+            classBuilder.addFunction(generateToStringMethodSpec(command))
         }
         when (command.serializeType) {
             SerializeType.PARCELABLE -> {
@@ -266,6 +268,21 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         }
         return builder
     }
+
+    private fun generateToStringMethodSpec(command: ViewCommandInfo): FunSpec {
+        val statement = command.method.parameterSpecs.joinToString(
+                prefix = "return buildString(\"${command.name}\",",
+                separator = ",",
+                postfix = ")") { parameter ->
+            "\"${parameter.name}\",${parameter.name}"
+        }
+
+        return FunSpec.builder("toString")
+                .addModifiers(KModifier.OVERRIDE)
+                .addStatement(statement)
+                .build()
+    }
+
 
     override fun finish(nextContext: PipelineContext<FileSpec>) {
         mReflectorPackagesPublisher.finish()
