@@ -1,11 +1,13 @@
-package com.omegar.mvp;
+package com.omegar.mvp
 
-import android.os.Bundle;
-
-import com.omegar.mvp.presenter.PresenterType;
-import com.omegar.mvp.viewstate.MvpViewState;
-
-import java.util.Set;
+import android.os.Bundle
+import android.os.Parcelable
+import android.util.Log
+import com.omegar.mvp.presenter.PresenterType
+import com.omegar.mvp.viewstate.MvpViewState
+import java.io.Serializable
+import java.lang.ref.WeakReference
+import java.util.*
 
 /**
  * Date: 15.12.2015
@@ -16,141 +18,173 @@ import java.util.Set;
  * @author Konstantin Tckhovrebov
  */
 @InjectViewState
-public abstract class MvpPresenter<View extends MvpView> {
-	private boolean mFirstLaunch = true;
-	private String mTag;
-	private PresenterType mPresenterType;
-	private MvpViewState<View> mViewState;
+abstract class MvpPresenter<View : MvpView> {
 
-	@SuppressWarnings("unchecked")
-	public MvpPresenter() {
-        mViewState = (MvpViewState<View>) MoxyReflector.getViewState(getClass());
-	}
+    internal companion object {
+        private const val KEY_FIELDS = "fields"
+        var weakBundle: WeakReference<Bundle>? = null
+    }
 
-	public void onCreate(Bundle bundle) {
-		if (bundle != null && mFirstLaunch) {
-			mViewState.loadState(bundle);
-		}
-	}
+    /**
+     * @return view state, casted to view interface for simplify
+     */
+    @Suppress("UNCHECKED_CAST")
+    protected val viewState: View
+        get() = mvpViewState as View
 
-	/**
-	 * <p>Attach view to view state or to presenter(if view state not exists).</p>
-	 * <p>If you use {@link MvpDelegate}, you should not call this method directly.
-	 * It will be called on {@link MvpDelegate#onAttach()}, if view does not attached.</p>
-	 *
-	 * @param view to attachment
-	 */
-	protected void attachView(View view) {
-		mViewState.attachView(view);
+    private var firstLaunch = true
+    internal var tag: String? = null
+        @JvmName("getTag") get
+        @JvmName("setTag") set
+    internal var presenterType: PresenterType? = null
+        @JvmName("getPresenterType") get
+        @JvmName("setPresenterType") set
 
-		attachView(view, mFirstLaunch);
+    @Suppress("UNCHECKED_CAST")
+    private var mvpViewState: MvpViewState<View> = MoxyReflector.getViewState(javaClass) as MvpViewState<View>
 
-		if (mFirstLaunch) {
-			mFirstLaunch = false;
+    protected val savedFields: MutableList<SavedField<*>> = mutableListOf()
 
-			onFirstViewAttach();
-		}
-	}
+    /**
+     * @return views attached to view state, or attached to presenter(if view state not exists)
+     */
+    val attachedViews: Set<View>
+        get() = mvpViewState.attachedViews
 
-	/**
-	 * <p>Attach view to view state or to presenter(if view state not exists).</p>
-	 * <p>If you use {@link MvpDelegate}, you should not call this method directly.
-	 * It will be called on {@link MvpDelegate#onAttach()}, if view does not attached.</p>
-	 *
-	 * @param view to attachment
+    init {
+        weakBundle?.get()?.let {
+            onRestoreInstanceState(it)
+        }
+    }
+
+    protected fun <T : Serializable> savedState(key: String, initValue: T): SavedField<T> {
+        return SavedField.SerializableSavedField(initValue, key).applyField()
+    }
+
+    protected fun <T : Serializable> savedNullState(key: String, initValue: T?): SavedField<T?> {
+        return SavedField.NullSerializableSavedField(initValue, key).applyField()
+    }
+
+    protected fun <T : Serializable> savedState(key: String) = savedNullState<T>(key, null)
+
+    protected fun <T : Parcelable> savedState(key: String, initValue: T): SavedField<T> {
+        return SavedField.ParcelableSavedField(initValue, key).applyField()
+    }
+
+    protected fun <T : Parcelable> savedNullParcelableState(key: String, initValue: T? = null): SavedField<T?> {
+        return SavedField.NullParcelableSavedField(initValue, key).applyField()
+    }
+
+    private fun <T> SavedField<T>.applyField() = apply {
+        savedFields += this
+        weakBundle?.get()?.getBundle(KEY_FIELDS)?.let { bundle ->
+            load(bundle)
+        }
+    }
+
+    protected open fun onRestoreInstanceState(bundle: Bundle) {
+        mvpViewState.loadState(bundle)
+        bundle.getBundle(KEY_FIELDS)?.let { fieldsBundle ->
+            savedFields.forEach { field ->
+                field.load(fieldsBundle)
+            }
+        }
+    }
+
+    open fun onSaveInstanceState(outState: Bundle) {
+        mvpViewState.saveState(outState)
+        val fieldsBundle = Bundle()
+        savedFields.forEach { field ->
+            field.save(fieldsBundle)
+        }
+        outState.putBundle(KEY_FIELDS, fieldsBundle)
+    }
+
+    /**
+     *
+     * Attach view to view state or to presenter(if view state not exists).
+     *
+     * If you use [MvpDelegate], you should not call this method directly.
+     * It will be called on [MvpDelegate.onAttach], if view does not attached.
+     *
+     * @param view to attachment
+     */
+    open fun attachView(view: View) {
+        mvpViewState.attachView(view)
+        attachView(view, firstLaunch)
+        if (firstLaunch) {
+            firstLaunch = false
+            onFirstViewAttach()
+        }
+    }
+
+    /**
+     *
+     * Attach view to view state or to presenter(if view state not exists).
+     *
+     * If you use [MvpDelegate], you should not call this method directly.
+     * It will be called on [MvpDelegate.onAttach], if view does not attached.
+     *
+     * @param view to attachment
      * @param isFirstAttach is first presenter init and view binding
-	 */
-	@SuppressWarnings("unused")
-	protected void attachView(View view, boolean isFirstAttach) {
-	}
+     */
+    protected open fun attachView(view: View, isFirstAttach: Boolean) {
+        // nothing
+    }
 
-	/**
-	 * <p>Callback after first presenter init and view binding. If this
-	 * presenter instance will have to attach some view in future, this method
-	 * will not be called.</p>
-	 * <p>There you can to interact with {@link #mViewState}.</p>
-	 */
-	protected void onFirstViewAttach() {
-	}
+    /**
+     *
+     * Callback after first presenter init and view binding. If this
+     * presenter instance will have to attach some view in future, this method
+     * will not be called.
+     *
+     * There you can to interact with [.mViewState].
+     */
+    protected open fun onFirstViewAttach() {
+        // nothing
+    }
 
-	/**
-	 * <p>Detach view from view state or from presenter(if view state not exists).</p>
-	 * <p>If you use {@link MvpDelegate}, you should not call this method directly.
-	 * It will be called on {@link MvpDelegate#onDetach()}.</p>
-	 *
-	 * @param view view to detach
-	 */
-	@SuppressWarnings("WeakerAccess")
-	protected void detachView(View view) {
-		mViewState.detachView(view);
-	}
+    /**
+     *
+     * Detach view from view state or from presenter(if view state not exists).
+     *
+     * If you use [MvpDelegate], you should not call this method directly.
+     * It will be called on [MvpDelegate.onDetach].
+     *
+     * @param view view to detach
+     */
+    open fun detachView(view: View) {
+        mvpViewState.detachView(view)
+    }
 
-	protected void destroyView(View view) {
-		mViewState.destroyView(view);
-	}
+    open fun destroyView(view: View) {
+        mvpViewState.destroyView(view)
+    }
 
-	/**
-	 * @return views attached to view state, or attached to presenter(if view state not exists)
-	 */
-	@SuppressWarnings("WeakerAccess")
-	protected Set<View> getAttachedViews() {
-		return mViewState.getAttachedViews();
-	}
+    /**
+     * Set view state to presenter
+     *
+     * @param viewState that implements type, setted as View generic param
+     */
+    protected fun setViewState(viewState: MvpViewState<View>) {
+        mvpViewState = viewState
+    }
 
-	/**
-	 * @return view state, casted to view interface for simplify
-	 */
-	@SuppressWarnings("unchecked")
-	protected View getViewState() {
-		return (View) mViewState;
-	}
+    /**
+     * Check if view is in restore state or not
+     *
+     * @param view view for check
+     * @return true if view state restore state to incoming view. false otherwise.
+     */
+    protected fun isInRestoreState(view: View): Boolean = mvpViewState.isInRestoreState(view)
 
-	/**
-	 * Set view state to presenter
-	 *
-	 * @param viewState that implements type, setted as View generic param
-	 */
-	@SuppressWarnings("unused")
-	protected void setViewState(MvpViewState<View> viewState) {
-		mViewState = viewState;
-	}
-
-	/**
-	 * Check if view is in restore state or not
-	 *
-	 * @param view view for check
-	 * @return true if view state restore state to incoming view. false otherwise.
-	 */
-	@SuppressWarnings("unused")
-	protected boolean isInRestoreState(View view) {
-		return mViewState.isInRestoreState(view);
-	}
-
-	PresenterType getPresenterType() {
-		return mPresenterType;
-	}
-
-	void setPresenterType(PresenterType presenterType) {
-		mPresenterType = presenterType;
-	}
-
-	String getTag() {
-		return mTag;
-	}
-
-	void setTag(String tag) {
-		mTag = tag;
-	}
-
-	public void onSaveInstanceState(Bundle outState) {
-		mViewState.saveState(outState);
-	}
-
-	/**
-	 * <p>Called before reference on this presenter will be cleared and instance of presenter
-	 * will be never used.</p>
-	 */
-	protected void onDestroy() {
-	}
+    /**
+     *
+     * Called before reference on this presenter will be cleared and instance of presenter
+     * will be never used.
+     */
+    open fun onDestroy() {
+        // nothing
+    }
 
 }

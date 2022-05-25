@@ -1,5 +1,6 @@
 package com.omegar.mvp;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -130,12 +131,13 @@ public class MvpDelegate<Delegated> {
 		//get base tag for presenters
 		mDelegateTag = mBundle.containsKey(mKeyTag) ? bundle.getString(mKeyTag) : generateTag();
 
+		Bundle presenterBundle = bundle != null ? bundle.getBundle(MOXY_PRESENTER_BUNDLE_KEY) : null;
+		if (presenterBundle != null) {
+			MvpPresenter.Companion.setWeakBundle(new WeakReference<>(presenterBundle));
+		}
+
 		//bind presenters to view
 		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag, mCustomPresenterFields);
-
-		for (MvpPresenter<?> presenter : mPresenters) {
-			presenter.onCreate(bundle != null ? bundle.getBundle(MOXY_PRESENTER_BUNDLE_KEY) : null);
-		}
 
 		for (MvpDelegate childDelegate : mChildDelegates) {
 			childDelegate.onCreate(bundle);

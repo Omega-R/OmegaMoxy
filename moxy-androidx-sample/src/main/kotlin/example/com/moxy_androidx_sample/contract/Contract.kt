@@ -30,6 +30,7 @@ interface Contract {
 
         var mutableMap: MutableMap<Int, Int>
 
+        @set:StateStrategyType(ADD_TO_END_SINGLE, serializeType = SerializeType.PARCELABLE)
         var random: Int
 
         @StateStrategyType(ADD_TO_END_SINGLE_TAG, singleInstance = false, serializeType = SerializeType.PARCELABLE)
