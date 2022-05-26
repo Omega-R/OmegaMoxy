@@ -134,6 +134,8 @@ public class MvpDelegate<Delegated> {
 		Bundle presenterBundle = bundle != null ? bundle.getBundle(MOXY_PRESENTER_BUNDLE_KEY) : null;
 		if (presenterBundle != null) {
 			MvpPresenter.Companion.setWeakBundle(new WeakReference<>(presenterBundle));
+		}  else {
+			MvpPresenter.Companion.setWeakBundle(null);
 		}
 
 		//bind presenters to view
