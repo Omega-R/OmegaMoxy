@@ -20,13 +20,12 @@ value class ViewCommands<View : MvpView>(val list: MutableList<ViewCommand<View>
 
     @Suppress("UNCHECKED_CAST")
     fun load(inBundle: Bundle) {
-        val savedState = inBundle.getParcelable<SavedState>(KEY_STATE) ?: return
+        val savedState = inBundle.getParcelable<SavedState<ViewCommand<View>>>(KEY_STATE) ?: return
         list.addAll(savedState.list as List<ViewCommand<View>>)
     }
 
     fun save(outBundle: Bundle) {
-        val savedState = SavedState(list)
-        outBundle.putParcelable(KEY_STATE, savedState)
+        outBundle.putParcelable(KEY_STATE, SavedState(list))
     }
 
     fun beforeApply(command: ViewCommand<View>) = command.beforeApply(list)
@@ -37,9 +36,7 @@ value class ViewCommands<View : MvpView>(val list: MutableList<ViewCommand<View>
     fun <C : ViewCommand<View>> findCommand(clz: Class<*>): C? = list.lastOrNull { it.javaClass === clz } as? C?
 
     fun reapply(view: View, currentState: Set<ViewCommand<View>>) {
-        list.toList()
-                .asSequence()
-                .filter { it !in currentState }
+        list.filter { it !in currentState }
                 .forEach { command ->
                     command.apply(view)
                     afterApply(command)
