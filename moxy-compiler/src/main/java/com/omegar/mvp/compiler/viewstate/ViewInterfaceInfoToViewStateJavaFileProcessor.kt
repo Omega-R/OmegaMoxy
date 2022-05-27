@@ -8,12 +8,15 @@ import com.omegar.mvp.compiler.entity.*
 import com.omegar.mvp.compiler.entity.ViewMethod.Type.*
 import com.omegar.mvp.compiler.pipeline.PipelineContext
 import com.omegar.mvp.compiler.pipeline.Publisher
+import com.omegar.mvp.viewstate.DefaultValue
 import com.omegar.mvp.viewstate.MvpViewState
 import com.omegar.mvp.viewstate.SerializeType
 import com.omegar.mvp.viewstate.ViewCommand
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
+import java.util.*
+import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
@@ -24,10 +27,12 @@ import javax.lang.model.util.Types
  *
  * @author Yuri Shmakov
  */
-class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Elements,
-                                                    private val mTypes: Types,
-                                                    private val mCurrentMoxyReflectorPackage: String,
-                                                    private val mReflectorPackagesPublisher: Publisher<String>) : KotlinFileProcessor<ViewInterfaceInfo?>() {
+class ViewInterfaceInfoToViewStateJavaFileProcessor(
+        private val mElements: Elements,
+        private val mTypes: Types,
+        private val mCurrentMoxyReflectorPackage: String,
+        private val mReflectorPackagesPublisher: Publisher<String>
+) : KotlinFileProcessor<ViewInterfaceInfo?>() {
 
 
     companion object {
@@ -39,6 +44,10 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         private val ANNOTATION_PARCELIZE = ClassName("kotlinx.android.parcel", "Parcelize")
         private val CLASS_NAME_PARCELABLE = ClassName("android.os", "Parcelable")
         private val CLASS_NAME_SERIALIZABLE = ClassName("java.io", "Serializable")
+        private val DURATION = ClassName("kotlin.time", "Duration")
+        private val SECONDS = MemberName(ClassName("kotlin.time", "Duration", "Companion"), "seconds")
+
+        private val DEFAULT_VALUE_TYPE_ANNOTATION = DefaultValue::class.java.name
 
         private val VIEW_COMMAND_TYPE_NAME = VIEW_COMMAND_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
         private val MVP_VIEW_STATE_TYPE_NAME = MVP_VIEW_STATE_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
@@ -105,7 +114,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
                             .getter(generateGetterBuilder(command, getter, variableNames).build())
                             .initializer(null)
                             .also {
-                               it.annotations.clear()
+                                it.annotations.clear()
                             }
                             .build()
                     classBuilder.addProperty(property)
@@ -113,7 +122,6 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
             }
 
         }
-
 
         return FileSpec.builder(viewName.packageName, className)
                 .addType(classBuilder.build())
@@ -222,6 +230,16 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
         builder.parameters.clear()
         builder.parameters.addAll(parameters)
         builder.annotations.clear()
+        if (command.existsDefaultImpl) {
+            when (command.method.type) {
+                is Property -> {
+                    builder.addStatement("super.${command.method.name} = ${command.method.argumentsString}")
+                }
+                is Method -> {
+                    builder.addStatement("super.${command.method.name}(${command.method.argumentsStringWithStar})")
+                }
+            }
+        }
         if (command.singleInstance) {
             builder.addCode(
                     "apply(findCommand<%1L<%4L>>()?.also { it.update(%2L) } ?: %1L(%3L))",
@@ -239,34 +257,52 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(private val mElements: Eleme
 
     private fun generateGetterBuilder(command: ViewCommandInfo, funSpec: FunSpec.Builder, variableNames: List<TypeVariableName>): FunSpec.Builder {
         val returnType = command.method.parameterSpecs.firstOrNull()?.type
-        val defaultValue = when ((returnType as? ParameterizedTypeName)?.rawType ?: returnType) {
-            BOOLEAN -> "false"
-            FLOAT -> "0f"
-            CHAR -> "\\u0000"
-            DOUBLE -> "0.0"
-            BYTE, SHORT, INT, LONG -> "0"
-            STRING -> "\"\""
-            LIST -> "emptyList()"
-            MAP -> "emptyMap()"
-            SET -> "emptySet()"
-            ARRAY -> "emptyArray()"
-            MUTABLE_MAP -> "mutableMapOf()"
-            MUTABLE_LIST -> "mutableListOf()"
-            MUTABLE_SET -> "mutableSetOf()"
-            else -> "null"
-        }
+        val defaultValue = getDefaultValue(command, returnType)
         val commandClassName = command.name
         val builder = funSpec.clearBody()
         builder.modifiers.remove(KModifier.ABSTRACT)
         builder.annotations.clear()
         val generics = variableNames.joinToString(separator = ",") { it.name }
-        if ("null" == defaultValue || returnType?.isNullable == true) {
+        if ("null" == defaultValue.toString() || returnType?.isNullable == true) {
             builder.addStatement("return findCommand<%1L<%3L>>()?.%2L", commandClassName, command.method.argumentsStringWithStar, generics)
         } else {
             builder.addStatement("return findCommand<%1L<%4L>>()?.%2L ?: %3L", commandClassName, command.method
                     .argumentsStringWithStar, defaultValue, generics)
         }
         return builder
+    }
+
+    private fun getDefaultValue(command: ViewCommandInfo, returnType: TypeName?): CodeBlock {
+        return command.method.getAnnotation(DEFAULT_VALUE_TYPE_ANNOTATION)
+                ?.getValue("value")?.let {
+                    CodeBlock.of(it)
+                }
+                ?: command.getSuperDefaultValue()
+                ?: returnType.determineDefaultValue()
+    }
+
+    private fun ViewCommandInfo.getSuperDefaultValue(): CodeBlock? {
+        return if (existsDefaultImpl) CodeBlock.of("super.${method.name}") else null
+    }
+
+    private fun TypeName?.determineDefaultValue(): CodeBlock {
+        return when ((this as? ParameterizedTypeName)?.rawType ?: this) {
+            BOOLEAN -> CodeBlock.of("false")
+            FLOAT -> CodeBlock.of("0f")
+            CHAR -> CodeBlock.of("\\u0000")
+            DOUBLE -> CodeBlock.of("0.0")
+            BYTE, SHORT, INT, LONG -> CodeBlock.of("0")
+            STRING -> CodeBlock.of("\"\"")
+            LIST -> CodeBlock.of("emptyList()")
+            MAP -> CodeBlock.of("emptyMap()")
+            SET -> CodeBlock.of("emptySet()")
+            ARRAY -> CodeBlock.of("emptyArray()")
+            MUTABLE_MAP -> CodeBlock.of("mutableMapOf()")
+            MUTABLE_LIST -> CodeBlock.of("mutableListOf()")
+            MUTABLE_SET -> CodeBlock.of("mutableSetOf()")
+            DURATION -> CodeBlock.of("0.%M", SECONDS)
+            else -> CodeBlock.of("null")
+        }
     }
 
     private fun generateToStringMethodSpec(command: ViewCommandInfo): FunSpec {

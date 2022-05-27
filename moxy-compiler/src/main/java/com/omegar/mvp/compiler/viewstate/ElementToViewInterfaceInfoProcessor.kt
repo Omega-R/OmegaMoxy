@@ -8,7 +8,6 @@ import com.omegar.mvp.compiler.entity.ViewMethod
 import com.omegar.mvp.compiler.entity.parser.UniversalViewMethodParser
 import com.omegar.mvp.compiler.pipeline.ElementProcessor
 import com.omegar.mvp.compiler.pipeline.PipelineContext
-import com.omegar.mvp.compiler.pipeline.Publisher
 import com.omegar.mvp.viewstate.SerializeType
 import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy
 import com.omegar.mvp.viewstate.strategy.StateStrategyType
@@ -16,11 +15,13 @@ import com.omegar.mvp.viewstate.strategy.StrategyType
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import javax.annotation.processing.Messager
+import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.lang.model.type.TypeMirror
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 import javax.tools.Diagnostic
+import kotlin.collections.HashMap
 
 
 class ElementToViewInterfaceInfoProcessor(
@@ -78,6 +79,15 @@ class ElementToViewInterfaceInfoProcessor(
     private fun TypeElement.getCommands(): List<ViewCommandInfo> {
         val methodsCounter: MutableMap<String, Int> = HashMap()
 
+
+        val defaultImplList = enclosedElements
+                .filterIsInstance(TypeElement::class.java)
+                .firstOrNull { it.simpleName.toString() == "DefaultImpls" }
+                ?.enclosedElements
+                ?.filterIsInstance(ExecutableElement::class.java)
+                ?.map { it.simpleName.toString().toStandardGetMethodName() }
+                .orEmpty()
+
         return mViewMethodParser.parse(this)
                 .map { method ->
                     val annotation = method.getAnnotation(STATE_STRATEGY_TYPE_ANNOTATION)
@@ -97,8 +107,20 @@ fun ${method.name}()
                     val serializeType = annotation?.getValueAsEnum("serializeType") ?: SerializeType.NONE
                     // Allow methods be with same names
                     val uniqueSuffix = getUniqueSuffix(methodsCounter, method.name)
-                    ViewCommandInfo(method, uniqueSuffix, strategyClass, methodTag, singleInstance, serializeType)
+                    ViewCommandInfo(
+                            method = method,
+                            uniqueSuffix = uniqueSuffix,
+                            strategy = strategyClass,
+                            tag = methodTag,
+                            singleInstance = singleInstance,
+                            serializeType = serializeType,
+                            existsDefaultImpl = method.name.toStandardGetMethodName() in defaultImplList
+                    )
                 }
+    }
+
+    private fun String.toStandardGetMethodName(): String {
+        return removePrefix("get").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
 
     private fun getUniqueSuffix(methodsCounter: MutableMap<String, Int>, methodName: String): String {

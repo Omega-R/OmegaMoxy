@@ -5,13 +5,15 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import com.squareup.kotlinpoet.metadata.classinspectors.ElementsClassInspector
 import com.squareup.kotlinpoet.metadata.specs.toTypeSpec
+import com.sun.source.util.Trees
 import javax.lang.model.element.AnnotationMirror
+import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
 import kotlin.collections.HashMap
 
-class KmViewMethodParser(elements: Elements, types: Types) : ViewMethod.Parser() {
+class KmViewMethodParser(private val elements: Elements, types: Types) : ViewMethod.Parser() {
 
     companion object {
 
@@ -42,9 +44,15 @@ class KmViewMethodParser(elements: Elements, types: Types) : ViewMethod.Parser()
                 .asSequence()
                 .filter { it.mutable }
                 .map { property ->
-                    if (property.name == "duration") {
-                        println(property.annotations)
-                    }
+//                    if (property.name == "boolean") {
+//
+//                        println(
+//                                targetInterfaceElement.enclosedElements
+//                                        .filterIsInstance(TypeElement::class.java)
+//                                        .firstOrNull { it.simpleName.toString() == "DefaultImpls" }
+//                                        ?.asType()?.toString()
+//                        )
+//                    }
                     val param = ParameterSpec.builder("value", property.type).build()
                     ViewMethod(
                             name = property.name,

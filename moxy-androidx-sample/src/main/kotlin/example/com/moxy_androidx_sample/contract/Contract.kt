@@ -8,11 +8,11 @@ import kotlin.time.Duration
 
 interface Contract {
 
-    interface MainView<D: Number> : BaseView {
+    interface MainView<D : Number> : BaseView {
 
         var value: String?
 
-        var duration: Duration?
+        var duration: Duration
 
         var boolean: Boolean
 
@@ -33,8 +33,11 @@ interface Contract {
         @set:StateStrategyType(ADD_TO_END_SINGLE, serializeType = SerializeType.PARCELABLE)
         var random: Int
 
+
         @StateStrategyType(ADD_TO_END_SINGLE_TAG, singleInstance = false, serializeType = SerializeType.PARCELABLE)
-        fun printLog(msg: D? = null, vararg log: String?)
+        fun printLog(msg: D? = null, vararg log: String?) {
+
+        }
 
         @StateStrategyType(ADD_TO_END_SINGLE)
         fun test(duration: Duration)

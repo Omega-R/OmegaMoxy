@@ -9,7 +9,8 @@ data class ViewCommandInfo(
         val strategy: TypeElement,
         val tag: String,
         val singleInstance: Boolean,
-        val serializeType: SerializeType?
+        val serializeType: SerializeType?,
+        val existsDefaultImpl: Boolean
 ) {
 
     val name: String = method.name.replaceFirstChar { it.titlecase() } + uniqueSuffix + "Command"

@@ -6,6 +6,7 @@ import android.util.Log
 import com.omegar.mvp.ktx.providePresenter
 import example.com.moxy_androidx_sample.contract.Contract
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Double>, SecondInterface {
 //	override fun fourth(item: String?) {
@@ -112,7 +113,7 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
     override var mutableMap: MutableMap<Int, Int>
         get() = TODO("Not yet implemented")
         set(value) {}
-    override var duration: Duration? = null
+    override var duration: Duration = 0.seconds
         set(value) {
             field = value
         }
