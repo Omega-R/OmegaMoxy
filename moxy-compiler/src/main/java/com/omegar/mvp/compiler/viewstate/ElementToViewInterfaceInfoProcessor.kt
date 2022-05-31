@@ -10,7 +10,7 @@ import com.omegar.mvp.compiler.pipeline.ElementProcessor
 import com.omegar.mvp.compiler.pipeline.PipelineContext
 import com.omegar.mvp.viewstate.SerializeType
 import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy
-import com.omegar.mvp.viewstate.strategy.StateStrategyType
+import com.omegar.mvp.viewstate.strategy.MoxyViewCommand
 import com.omegar.mvp.viewstate.strategy.StrategyType
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
@@ -31,7 +31,7 @@ class ElementToViewInterfaceInfoProcessor(
 ) : ElementProcessor<TypeElement?, ViewInterfaceInfo?>() {
 
     companion object {
-        private val STATE_STRATEGY_TYPE_ANNOTATION = StateStrategyType::class.java.name
+        private val MOXY_VIEW_STATE_TYPE_ANNOTATION = MoxyViewCommand::class.java.name
     }
 
 
@@ -85,12 +85,12 @@ class ElementToViewInterfaceInfoProcessor(
                 .firstOrNull { it.simpleName.toString() == "DefaultImpls" }
                 ?.enclosedElements
                 ?.filterIsInstance(ExecutableElement::class.java)
-                ?.map { it.simpleName.toString().toStandardGetMethodName() }
+                ?.map { it.simpleName.toStandardGetMethodName() }
                 .orEmpty()
 
         return mViewMethodParser.parse(this)
                 .map { method ->
-                    val annotation = method.getAnnotation(STATE_STRATEGY_TYPE_ANNOTATION)
+                    val annotation = method.getAnnotation(MOXY_VIEW_STATE_TYPE_ANNOTATION)
                     val strategyClass = annotation?.getStrategyClass()
                             ?: method.getStrategyClass(messager, simpleName.toString())
                             ?: throw IllegalArgumentException("""
@@ -98,7 +98,7 @@ You are trying generate ViewState for ${simpleName}. But "${method.name}" method
 Please annotate your method with Strategy.
 
 For example:
-@StateStrategyType(ADD_TO_END_SINGLE)
+@MoxyViewCommand(ADD_TO_END_SINGLE)
 fun ${method.name}()
 
 """)
@@ -119,8 +119,8 @@ fun ${method.name}()
                 }
     }
 
-    private fun String.toStandardGetMethodName(): String {
-        return removePrefix("get").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    private fun CharSequence.toStandardGetMethodName(): String {
+        return toString().removePrefix("get").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
 
     private fun getUniqueSuffix(methodsCounter: MutableMap<String, Int>, methodName: String): String {

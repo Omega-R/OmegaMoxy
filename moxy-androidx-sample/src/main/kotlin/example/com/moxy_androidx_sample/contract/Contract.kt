@@ -1,7 +1,8 @@
 package example.com.moxy_androidx_sample.contract
 
+import com.omegar.mvp.viewstate.MoxyDefaultValue
 import com.omegar.mvp.viewstate.SerializeType
-import com.omegar.mvp.viewstate.strategy.StateStrategyType
+import com.omegar.mvp.viewstate.strategy.MoxyViewCommand
 import com.omegar.mvp.viewstate.strategy.StrategyType.*
 import example.com.moxy_androidx_sample.BaseView
 import kotlin.time.Duration
@@ -12,9 +13,13 @@ interface Contract {
 
         var value: String?
 
+        @set:MoxyViewCommand(ADD_TO_END_SINGLE)
         var duration: Duration
 
-        var boolean: Boolean
+        var boolean: Boolean?
+            get() { return true }
+            set(value) {}
+
 
         var list: List<Int>
 
@@ -30,17 +35,20 @@ interface Contract {
 
         var mutableMap: MutableMap<Int, Int>
 
-        @set:StateStrategyType(ADD_TO_END_SINGLE, serializeType = SerializeType.PARCELABLE)
+        @set:MoxyViewCommand(ADD_TO_END_SINGLE, serializeType = SerializeType.PARCELABLE)
         var random: Int
 
 
-        @StateStrategyType(ADD_TO_END_SINGLE_TAG, singleInstance = false, serializeType = SerializeType.PARCELABLE)
+        @MoxyViewCommand(ADD_TO_END_SINGLE_TAG, singleInstance = false, serializeType = SerializeType.PARCELABLE)
         fun printLog(msg: D? = null, vararg log: String?) {
 
         }
 
-        @StateStrategyType(ADD_TO_END_SINGLE)
+        @MoxyViewCommand(ADD_TO_END_SINGLE)
         fun test(duration: Duration)
+
+        @MoxyViewCommand(ADD_TO_END_SINGLE)
+        override fun testFunction()
 
     }
 

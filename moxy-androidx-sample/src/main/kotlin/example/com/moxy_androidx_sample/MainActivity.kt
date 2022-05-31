@@ -89,7 +89,7 @@ class MainActivity : BaseActivity(R.layout.activity_main), Contract.MainView<Dou
         const val TAG = "MoxyDebug"
     }
 
-    override var boolean: Boolean
+    override var boolean: Boolean?
         get() = TODO("Not yet implemented")
         set(value) {}
     override var list: List<Int>

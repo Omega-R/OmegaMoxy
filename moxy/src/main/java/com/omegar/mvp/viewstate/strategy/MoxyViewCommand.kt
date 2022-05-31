@@ -11,10 +11,14 @@ import kotlin.reflect.KClass
  * @author Alexander Blinov
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_SETTER)
-@Retention(value = AnnotationRetention.RUNTIME)
-annotation class StateStrategyType(
+@Retention(AnnotationRetention.SOURCE)
+annotation class MoxyViewCommand(
         val value: StrategyType,
         val custom: KClass<out StateStrategy> = SkipStrategy::class,
         val tag: String = "",
         val singleInstance: Boolean = false,
-        val serializeType: SerializeType = SerializeType.NONE)
+        val serializeType: SerializeType = SerializeType.NONE
+)
+
+@Deprecated("Use MoxyViewCommand instead.", replaceWith = ReplaceWith("MoxyViewCommand"))
+typealias StateStrategyType = MoxyViewCommand

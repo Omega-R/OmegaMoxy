@@ -8,15 +8,13 @@ import com.omegar.mvp.compiler.entity.*
 import com.omegar.mvp.compiler.entity.ViewMethod.Type.*
 import com.omegar.mvp.compiler.pipeline.PipelineContext
 import com.omegar.mvp.compiler.pipeline.Publisher
-import com.omegar.mvp.viewstate.DefaultValue
+import com.omegar.mvp.viewstate.MoxyDefaultValue
 import com.omegar.mvp.viewstate.MvpViewState
 import com.omegar.mvp.viewstate.SerializeType
 import com.omegar.mvp.viewstate.ViewCommand
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
-import java.util.*
-import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
@@ -47,7 +45,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(
         private val DURATION = ClassName("kotlin.time", "Duration")
         private val SECONDS = MemberName(ClassName("kotlin.time", "Duration", "Companion"), "seconds")
 
-        private val DEFAULT_VALUE_TYPE_ANNOTATION = DefaultValue::class.java.name
+        private val DEFAULT_VALUE_TYPE_ANNOTATION = MoxyDefaultValue::class.java.name
 
         private val VIEW_COMMAND_TYPE_NAME = VIEW_COMMAND_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
         private val MVP_VIEW_STATE_TYPE_NAME = MVP_VIEW_STATE_CLASS_NAME.parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)

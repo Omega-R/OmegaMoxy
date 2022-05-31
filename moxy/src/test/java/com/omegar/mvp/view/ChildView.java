@@ -1,6 +1,6 @@
 package com.omegar.mvp.view;
 
-import com.omegar.mvp.viewstate.strategy.StateStrategyType;
+import com.omegar.mvp.viewstate.strategy.MoxyViewCommand;
 
 import static com.omegar.mvp.viewstate.strategy.StrategyType.SKIP;
 
@@ -11,7 +11,7 @@ import static com.omegar.mvp.viewstate.strategy.StrategyType.SKIP;
  * @author Savin Mikhail
  */
 public interface ChildView extends ParentView, SimpleInterface {
-	@StateStrategyType(SKIP)
+	@MoxyViewCommand(SKIP)
 	@Override
 	void parentOverrideMethodWithCustomStrategy();
 }

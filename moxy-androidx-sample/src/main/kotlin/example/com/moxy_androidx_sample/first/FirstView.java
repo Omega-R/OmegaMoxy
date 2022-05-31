@@ -2,7 +2,7 @@ package example.com.moxy_androidx_sample.first;
 
 import android.location.Location;
 
-import com.omegar.mvp.viewstate.strategy.StateStrategyType;
+import com.omegar.mvp.viewstate.strategy.MoxyViewCommand;
 
 import java.util.List;
 
@@ -13,13 +13,13 @@ import static com.omegar.mvp.viewstate.strategy.StrategyType.ADD_TO_END_SINGLE;
 
 public interface FirstView<M> extends BaseView, ThirdView {
 
-    @StateStrategyType(ADD_TO_END_SINGLE)
+    @MoxyViewCommand(ADD_TO_END_SINGLE)
     void firstMethod(List<M> item);
 
-    @StateStrategyType(ADD_TO_END_SINGLE)
+    @MoxyViewCommand(ADD_TO_END_SINGLE)
     void firstCopyMethod(List<Location> item);
 
-    @StateStrategyType(ADD_TO_END_SINGLE)
+    @MoxyViewCommand(ADD_TO_END_SINGLE)
     void firstLog(M m);
 
 }

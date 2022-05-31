@@ -2,7 +2,7 @@ package view;
 
 import com.omegar.mvp.MvpView;
 import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy;
-import com.omegar.mvp.viewstate.strategy.StateStrategyType;
+import com.omegar.mvp.viewstate.strategy.MoxyViewCommand;
 
 /**
  * Date: 26.02.2016
@@ -12,9 +12,9 @@ import com.omegar.mvp.viewstate.strategy.StateStrategyType;
  */
 
 public interface ViewStateParentView extends MvpView {
-	@StateStrategyType(value = AddToEndSingleStrategy.class)
+	@MoxyViewCommand(value = AddToEndSingleStrategy.class)
 	void method1();
 
-	@StateStrategyType(value = AddToEndSingleStrategy.class, tag = "Test")
+	@MoxyViewCommand(value = AddToEndSingleStrategy.class, tag = "Test")
 	void method2();
 }
