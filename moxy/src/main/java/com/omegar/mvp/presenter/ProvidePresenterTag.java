@@ -1,12 +1,11 @@
 package com.omegar.mvp.presenter;
 
+import com.omegar.mvp.MvpPresenter;
+import com.omegar.mvp.PresenterStore;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import com.omegar.mvp.MvpPresenter;
-import com.omegar.mvp.PresenterStore;
 
 /**
  * <p>Called when Moxy generate presenter tag for search Presenter in {@link PresenterStore}.</p>

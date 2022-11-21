@@ -1,8 +1,8 @@
 package com.omegar.mvp;
 
-import java.lang.annotation.Target;
-
 import static java.lang.annotation.ElementType.TYPE;
+
+import java.lang.annotation.Target;
 
 /**
  * Created by Anton Knyazev on 25.11.2020.

@@ -1,9 +1,9 @@
 package com.omegar.mvp.viewstate
 
-import android.os.Bundle
 import com.omegar.mvp.MvpView
 import com.omegar.mvp.viewstate.strategy.StateStrategy
-import java.util.*
+import java.util.Collections
+import java.util.WeakHashMap
 
 /**
  * Date: 15.12.2015
@@ -23,10 +23,6 @@ abstract class MvpViewState<View : MvpView> {
      */
     val attachedViews: Set<View>
         get() = views
-
-    fun loadState(inBundle: Bundle) = commands.load(inBundle)
-
-    fun saveState(outBundle: Bundle) = commands.save(outBundle)
 
     protected fun apply(command: ViewCommand<View>) {
         commands.beforeApply(command)

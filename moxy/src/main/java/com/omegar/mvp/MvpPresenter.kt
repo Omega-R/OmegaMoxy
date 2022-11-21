@@ -1,12 +1,7 @@
 package com.omegar.mvp
 
-import android.os.Bundle
-import android.os.Parcelable
 import com.omegar.mvp.presenter.PresenterType
 import com.omegar.mvp.viewstate.MvpViewState
-import java.io.Serializable
-import java.lang.ref.WeakReference
-import java.util.*
 
 /**
  * Date: 15.12.2015
@@ -18,13 +13,6 @@ import java.util.*
  */
 @InjectViewState
 abstract class MvpPresenter<View : MvpView> {
-
-    internal companion object {
-        private const val KEY_FIELDS = "fields"
-        var weakBundle: WeakReference<Bundle>? = null
-
-        private var weakSavedState: SavedState<*>? = null
-    }
 
     /**
      * @return view state, casted to view interface for simplify
@@ -51,53 +39,6 @@ abstract class MvpPresenter<View : MvpView> {
      */
     val attachedViews: Set<View>
         get() = mvpViewState.attachedViews
-
-    private val fieldsKey: String
-        get() = KEY_FIELDS + "_" + javaClass.simpleName
-
-    init {
-        weakBundle?.get()?.let {
-            weakSavedState = it.getParcelable(fieldsKey)
-
-            onRestoreInstanceState(it)
-        } ?: run {
-            weakSavedState = null
-        }
-    }
-
-    protected fun <T : Serializable> savedState(initValue: T): SavedField<T> = SavedField(initValue).applyField()
-
-    protected fun <T : Serializable> savedNullState(initValue: T?): SavedField<T?> = SavedField(initValue, null).applyField()
-
-    protected fun <T : Serializable> savedState() = savedNullState<T>(null)
-
-    protected fun <T : Parcelable?> savedState(initValue: T): SavedField<T> = SavedField(initValue).applyField()
-
-    protected fun <T : Parcelable> savedNullParcelableState(initValue: T? = null): SavedField<T?> {
-        return SavedField(initValue, null).applyField()
-    }
-
-    protected fun <T> SavedField<T>.applyField() = apply {
-        savedFields += this
-        weakBundle?.get()?.let { bundle ->
-            weakSavedState?.list?.getOrNull(savedFields.lastIndex)?.let {
-                @Suppress("UNCHECKED_CAST")
-                (it as? T)?.let { newValue ->
-                    value = newValue
-                }
-            }
-        }
-    }
-
-    private fun onRestoreInstanceState(bundle: Bundle) {
-        mvpViewState.loadState(bundle)
-    }
-
-    open fun onSaveInstanceState(outState: Bundle) {
-        mvpViewState.saveState(outState)
-        val state = SavedState(savedFields.map { it.value })
-        outState.putParcelable(fieldsKey, state)
-    }
 
     /**
      *

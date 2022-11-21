@@ -1,58 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-
-buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-        google()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.1'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
-    }
-}
-
-allprojects {
-    repositories {
-        jcenter()
-        mavenCentral()
-        google()
-        maven { url 'https://jitpack.io' }
-    }
-}
-
-ext {
-    targetVersionCode = 46
-    targetVersionName = "1.5.6"
-    kotlin_version = '1.6.20'
-    def autoServiceVersion = '1.0-rc5'
-    def gradleIncapHelperVersion = '0.3'
-
-    deps = [
-            android                     : 'com.google.android:android:1.6_r2',
-            javapoet                    : 'com.squareup:javapoet:1.10.0',
-            kotlinpoet                  : 'com.squareup:kotlinpoet:1.11.0',
-            kotlinpoetMetadata          : 'com.squareup:kotlinpoet-metadata:1.11.0',
-            kotlinpoetMetadataSpecs     : 'com.squareup:kotlinpoet-metadata-specs:1.11.0',
-
-            kotlin                      : "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version",
-            kotlinReflect               : "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version",
-
-            junit                       : 'junit:junit:4.12',
-            mockito                     : 'org.mockito:mockito-core:1.10.19',
-            truth                       : 'com.google.truth:truth:0.34',
-            robolectric                 : 'org.robolectric:robolectric:3.0',
-            compiletesting              : 'com.google.testing.compile:compile-testing:0.15',
-            asm                         : ['org.ow2.asm:asm:6.0', 'org.ow2.asm:asm-util:6.0'],
-            autoservice                 : "com.google.auto.service:auto-service:$autoServiceVersion",
-            autoserviceAnnotations      : "com.google.auto.service:auto-service-annotations:$autoServiceVersion",
-            autocommon                  : 'com.google.auto:auto-common:0.10',
-            guava                       : 'com.google.guava:guava:21.0',
-            gradleIncapHelperAnnotations: "net.ltgt.gradle.incap:incap:$gradleIncapHelperVersion",
-            gradleIncapHelperProcessor  : "net.ltgt.gradle.incap:incap-processor:$gradleIncapHelperVersion"
-    ]
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
+plugins {
+    id 'com.android.application' version '7.3.0' apply false
+    id 'com.android.library' version '7.3.0' apply false
+    id 'org.jetbrains.kotlin.android' version '1.7.21' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.7.21' apply false
 }

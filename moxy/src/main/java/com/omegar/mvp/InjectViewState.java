@@ -1,12 +1,9 @@
 package com.omegar.mvp;
 
+import static java.lang.annotation.ElementType.TYPE;
+
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Target;
-
-import com.omegar.mvp.viewstate.MvpViewState;
-
-
-import static java.lang.annotation.ElementType.TYPE;
 
 /**
  * Inject view state to {@link MvpPresenter#mViews} and

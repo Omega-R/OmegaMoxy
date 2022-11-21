@@ -1,14 +1,12 @@
 package com.omegar.mvp;
 
-import java.lang.ref.WeakReference;
+import com.omegar.mvp.presenter.PresenterField;
+import com.omegar.mvp.presenter.PresenterType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import android.os.Bundle;
-
-import com.omegar.mvp.presenter.PresenterField;
-import com.omegar.mvp.presenter.PresenterType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Date: 18-Dec-15
@@ -18,9 +16,9 @@ import com.omegar.mvp.presenter.PresenterType;
  * <p>
  * When using an {@link MvpDelegate}, lifecycle methods which should be proxied to the delegate:
  * <ul>
- * <li>{@link #onCreate(Bundle)}</li>
+ * <li>{@link #onCreate(MvpKeyStore)}</li>
  * <li>{@link #onAttach()}: inside onStart() of Activity or Fragment</li>
- * <li>{@link #onSaveInstanceState(android.os.Bundle)}</li>
+ * <li>{@link #onSaveInstanceState(MvpKeyStore)}</li>
  * <li>{@link #onDetach()}: inside onDestroy() for Activity or onDestroyView() for Fragment</li>
  * <li>{@link #onDestroy()}</li>
  * </ul>
@@ -41,41 +39,42 @@ public class MvpDelegate<Delegated> {
 
 	private final List<PresenterField<Delegated>> mCustomPresenterFields = new ArrayList<>();
 
-	private String mKeyTag = KEY_TAG;
-	private String mDelegateTag;
-	private final Delegated mDelegated;
-	private boolean mIsAttached;
-	private MvpDelegate mParentDelegate;
-	private List<MvpPresenter<? super Delegated>> mPresenters;
-	private List<MvpDelegate> mChildDelegates;
-	private Bundle mBundle;
+	private String keyTag = KEY_TAG;
+	private String delegateTag;
+	private final Delegated delegated;
+	private boolean isAttached;
+	private MvpDelegate parentDelegate;
+	private List<MvpPresenter<? super Delegated>> presenters;
+	private List<MvpDelegate> childDelegates = new ArrayList<>();
+	@Nullable
+	private MvpKeyStore keyStore;
 
 	public MvpDelegate(Delegated delegated) {
-		mDelegated = delegated;
-		mChildDelegates = new ArrayList<>();
+		this.delegated = delegated;
+
 	}
 
 	@SuppressWarnings("unused")
 	public void setParentDelegate(MvpDelegate delegate, String childId) {
-		if (mBundle != null) {
+		if (keyStore != null) {
 			throw new IllegalStateException("You should call setParentDelegate() before first onCreate()");
 		}
-		if (mChildDelegates != null && mChildDelegates.size() > 0) {
+		if (childDelegates != null && childDelegates.size() > 0) {
 			throw new IllegalStateException("You could not set parent delegate when there are already has child presenters");
 		}
 
-		mParentDelegate = delegate;
-		mKeyTag = mParentDelegate.mKeyTag + "$" + childId;
+		parentDelegate = delegate;
+		keyTag = parentDelegate.keyTag + "$" + childId;
 
 		delegate.addChildDelegate(this);
 	}
 
 	private void addChildDelegate(MvpDelegate delegate) {
-		mChildDelegates.add(delegate);
+		childDelegates.add(delegate);
 	}
 
 	private void removeChildDelegate(MvpDelegate delegate) {
-		mChildDelegates.remove(delegate);
+		childDelegates.remove(delegate);
 	}
 
 	/**
@@ -84,33 +83,32 @@ public class MvpDelegate<Delegated> {
 	 * parent bundle for save state in {@link #onSaveInstanceState()}
 	 */
 	public void freeParentDelegate() {
-
-		if (mParentDelegate == null) {
+		if (parentDelegate == null) {
 			throw new IllegalStateException("You should call freeParentDelegate() before first setParentDelegate()");
 		}
 
-		mParentDelegate.removeChildDelegate(this);
+		parentDelegate.removeChildDelegate(this);
 	}
 
 	@SuppressWarnings("unused")
 	public void removeAllChildDelegates() {
 		// For avoiding ConcurrentModificationException when removing by removeChildDelegate()
-		List<MvpDelegate> childDelegatesClone = new ArrayList<>(mChildDelegates.size());
-		childDelegatesClone.addAll(mChildDelegates);
+		List<MvpDelegate> childDelegatesClone = new ArrayList<>(childDelegates.size());
+		childDelegatesClone.addAll(childDelegates);
 
 		for (MvpDelegate childDelegate : childDelegatesClone) {
 			childDelegate.freeParentDelegate();
 		}
 
-		mChildDelegates = new ArrayList<>();
+		childDelegates = new ArrayList<>();
 	}
 
 	/**
-	 * <p>Similar like {@link #onCreate(Bundle)}. But this method try to get saved
+	 * <p>Similar like {@link #onCreate(MvpKeyStore)}. But this method try to get saved
 	 * state from parent presenter before get presenters</p>
 	 */
 	public void onCreate() {
-		Bundle bundle = mParentDelegate != null ? mParentDelegate.mBundle : null;
+		MvpKeyStore bundle = parentDelegate != null ? parentDelegate.keyStore : null;
 		onCreate(bundle);
 	}
 
@@ -120,69 +118,62 @@ public class MvpDelegate<Delegated> {
 	 *
 	 * @param bundle with saved state
 	 */
-	public void onCreate(Bundle bundle) {
-		if (mParentDelegate == null && bundle != null) {
-			bundle = bundle.getBundle(MOXY_DELEGATE_BUNDLE_KEY);
+	public void onCreate(@Nullable MvpKeyStore bundle) {
+		if (parentDelegate == null && bundle != null) {
+			bundle = bundle.getKeyStore(MOXY_DELEGATE_BUNDLE_KEY);
 		}
 
-		mIsAttached = false;
-		mBundle = bundle != null ? bundle : new Bundle();
+		isAttached = false;
+		keyStore = bundle;
 
 		//get base tag for presenters
-		mDelegateTag = mBundle.containsKey(mKeyTag) ? bundle.getString(mKeyTag) : generateTag();
-
-		Bundle presenterBundle = bundle != null ? bundle.getBundle(MOXY_PRESENTER_BUNDLE_KEY) : null;
-		if (presenterBundle != null) {
-			MvpPresenter.Companion.setWeakBundle(new WeakReference<>(presenterBundle));
-		}  else {
-			MvpPresenter.Companion.setWeakBundle(null);
-		}
+		delegateTag = (keyStore != null && keyStore.containsKey(keyTag)) ? keyStore.getString(keyTag) : generateTag();
 
 		//bind presenters to view
-		mPresenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(mDelegated, mDelegateTag, mCustomPresenterFields);
+		presenters = MvpFacade.getInstance().getMvpProcessor().getMvpPresenters(delegated, delegateTag, mCustomPresenterFields);
 
-		for (MvpDelegate childDelegate : mChildDelegates) {
+		for (MvpDelegate childDelegate : childDelegates) {
 			childDelegate.onCreate(bundle);
 		}
 	}
 
 	/**
 	 * <p>Attach delegated object as view to presenter fields of this object.
-	 * If delegate did not enter at {@link #onCreate(Bundle)}(or
+	 * If delegate did not enter at {@link #onCreate(MvpKeyStore)}(or
 	 * {@link #onCreate()}) before this method, then view will not be attached to
 	 * presenters</p>
 	 */
 	public void onAttach() {
-		for (MvpPresenter<? super Delegated> presenter : mPresenters) {
-			if (mIsAttached && presenter.getAttachedViews().contains(mDelegated)) {
+		for (MvpPresenter<? super Delegated> presenter : presenters) {
+			if (isAttached && presenter.getAttachedViews().contains(delegated)) {
 				continue;
 			}
 
-			presenter.attachView(mDelegated);
+			presenter.attachView(delegated);
 		}
 
-		for (MvpDelegate<?> childDelegate : mChildDelegates) {
+		for (MvpDelegate<?> childDelegate : childDelegates) {
 			childDelegate.onAttach();
 		}
 
-		mIsAttached = true;
+		isAttached = true;
 	}
 
 	/**
 	 * <p>Detach delegated object from their presenters.</p>
 	 */
 	public void onDetach() {
-		for (MvpPresenter<? super Delegated> presenter : mPresenters) {
-			if (!mIsAttached && !presenter.getAttachedViews().contains(mDelegated)) {
+		for (MvpPresenter<? super Delegated> presenter : presenters) {
+			if (!isAttached && !presenter.getAttachedViews().contains(delegated)) {
 				continue;
 			}
 
-			presenter.detachView(mDelegated);
+			presenter.detachView(delegated);
 		}
 
-		mIsAttached = false;
+		isAttached = false;
 
-		for (MvpDelegate<?> childDelegate : mChildDelegates) {
+		for (MvpDelegate<?> childDelegate : childDelegates) {
 			childDelegate.onDetach();
 		}
 	}
@@ -191,20 +182,20 @@ public class MvpDelegate<Delegated> {
 	 * <p>View was being destroyed, but logical unit still alive</p>
 	 */
 	public void onDestroyView() {
-		for (MvpPresenter<? super Delegated> presenter : mPresenters) {
-			presenter.destroyView(mDelegated);
+		for (MvpPresenter<? super Delegated> presenter : presenters) {
+			presenter.destroyView(delegated);
 		}
 
 		// For avoiding ConcurrentModificationException when removing from mChildDelegates
-		List<MvpDelegate> childDelegatesClone = new ArrayList<>(mChildDelegates.size());
-		childDelegatesClone.addAll(mChildDelegates);
+		List<MvpDelegate> childDelegatesClone = new ArrayList<>(childDelegates.size());
+		childDelegatesClone.addAll(childDelegates);
 
 		for (MvpDelegate childDelegate : childDelegatesClone) {
 			childDelegate.onSaveInstanceState();
 			childDelegate.onDestroyView();
 		}
 
-		if (mParentDelegate != null) {
+		if (parentDelegate != null) {
 			freeParentDelegate();
 		}
 	}
@@ -216,9 +207,9 @@ public class MvpDelegate<Delegated> {
 		PresentersCounter presentersCounter = MvpFacade.getInstance().getPresentersCounter();
 		PresenterStore presenterStore = MvpFacade.getInstance().getPresenterStore();
 
-		Set<MvpPresenter> allChildPresenters = presentersCounter.getAll(mDelegateTag);
+		Set<MvpPresenter> allChildPresenters = presentersCounter.getAll(delegateTag);
 		for (MvpPresenter presenter : allChildPresenters) {
-			boolean isRejected = presentersCounter.rejectPresenter(presenter, mDelegateTag);
+			boolean isRejected = presentersCounter.rejectPresenter(presenter, delegateTag);
 			if (isRejected && presenter.getPresenterType() != PresenterType.GLOBAL) {
 				presenterStore.remove(presenter.getTag());
 				presenter.onDestroy();
@@ -227,16 +218,13 @@ public class MvpDelegate<Delegated> {
 	}
 
 	/**
-	 * <p>Similar like {@link #onSaveInstanceState(Bundle)}. But this method try to save
+	 * <p>Similar like {@link #onSaveInstanceState(MvpKeyStore)}. But this method try to save
 	 * state to parent presenter Bundle</p>
 	 */
 	public void onSaveInstanceState() {
-		Bundle bundle = new Bundle();
-		if (mParentDelegate != null && mParentDelegate.mBundle != null) {
-			bundle = mParentDelegate.mBundle;
+		if (parentDelegate != null && parentDelegate.keyStore != null) {
+			onSaveInstanceState(parentDelegate.keyStore);
 		}
-
-		onSaveInstanceState(bundle);
 	}
 
 	/**
@@ -244,31 +232,24 @@ public class MvpDelegate<Delegated> {
 	 *
 	 * @param outState out state from Android component
 	 */
-	public void onSaveInstanceState(Bundle outState) {
-		if (mParentDelegate == null) {
-			Bundle moxyDelegateBundle = new Bundle();
-			outState.putBundle(MOXY_DELEGATE_BUNDLE_KEY, moxyDelegateBundle);
-			outState = moxyDelegateBundle;
+	public void onSaveInstanceState(@NotNull MvpKeyStore outState) {
+		if (parentDelegate == null) {
+			outState = outState.putKeyStore(MOXY_DELEGATE_BUNDLE_KEY);
 		}
 
-		outState.putAll(mBundle);
-		outState.putString(mKeyTag, mDelegateTag);
+		if (keyStore != null) {
+			outState.putAll(keyStore);
+		}
+		outState.putString(keyTag, delegateTag);
 
-		for (MvpDelegate childDelegate : mChildDelegates) {
+		for (MvpDelegate childDelegate : childDelegates) {
 			childDelegate.onSaveInstanceState(outState);
 		}
-
-		Bundle moxyPresenterBundle = new Bundle();
-
-		for (MvpPresenter<?> presenter: mPresenters) {
-			presenter.onSaveInstanceState(moxyPresenterBundle);
-		}
-		outState.putBundle(MOXY_PRESENTER_BUNDLE_KEY, moxyPresenterBundle);
 	}
 
 	@SuppressWarnings("unused")
-	public Bundle getChildrenSaveState() {
-		return mBundle;
+	public MvpKeyStore getChildrenSaveState() {
+		return keyStore;
 	}
 
 	public void addCustomPresenterFields(PresenterField<Delegated> customPresenterField) {
@@ -281,8 +262,8 @@ public class MvpDelegate<Delegated> {
 	 * example: SampleFragment$MvpDelegate@32649b0
 	 */
 	private String generateTag() {
-		String tag = mParentDelegate != null ? mParentDelegate.mDelegateTag  + " " : "";
-		tag += mDelegated.getClass().getSimpleName() + "$" + getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
+		String tag = parentDelegate != null ? parentDelegate.delegateTag + " " : "";
+		tag += delegated.getClass().getSimpleName() + "$" + getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 		return tag;
 	}
 }

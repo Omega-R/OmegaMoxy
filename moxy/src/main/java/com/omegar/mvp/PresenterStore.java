@@ -3,7 +3,6 @@ package com.omegar.mvp;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.util.Log;
 
 /**
  * Date: 17-Dec-15
@@ -50,8 +49,7 @@ public class PresenterStore {
 	@SuppressWarnings("unused")
 	public void logPresenters() {
 		for (Map.Entry<String, MvpPresenter> currentEntry : mPresenters.entrySet()) {
-			Log.d("PresenterStore", currentEntry.getKey() + " -> " +
-			                        currentEntry.getValue());
+			System.out.println("PresenterStore: " + currentEntry.getKey() + " -> " + currentEntry.getValue());
 		}
 	}
 }

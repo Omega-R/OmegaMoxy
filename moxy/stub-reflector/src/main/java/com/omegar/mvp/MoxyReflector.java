@@ -11,20 +11,21 @@ import java.util.Map;
  * @author Yuri Shmakov
  */
 public class MoxyReflector {
-	private static Map<Class<?>, Object> sViewStateProviders;
-	private static Map<Class<?>, List<Object>> sPresenterBinders;
+    private static Map<Class<?>, Object> sViewStateProviders;
+    private static Map<Class<?>, List<Object>> sPresenterBinders;
 
-	static {
-		sViewStateProviders = new HashMap<>();
-		sPresenterBinders = new HashMap<>();
-	}
+    static {
+        sViewStateProviders = new HashMap<>();
+        sPresenterBinders = new HashMap<>();
+    }
 
-	public static Object getViewState(Class<?> presenterClass) {
-		return sViewStateProviders.get(presenterClass);
-	}
+    public static Object getViewState(Class<?> presenterClass) {
+        return sViewStateProviders.get(presenterClass);
+    }
 
-	public static List<Object> getPresenterBinders(Class<?> delegated) {
-		return sPresenterBinders.get(delegated);
-	}
+    public static List<Object> getPresenterBinders(Class<?> delegated) {
+        return sPresenterBinders.get(delegated);
+    }
 
 }
+

@@ -1,9 +1,6 @@
 package com.omegar.mvp.viewstate
 
-import android.os.Bundle
 import com.omegar.mvp.MvpView
-import com.omegar.mvp.SavedState
-import java.util.ArrayList
 
 /**
  * Date: 17.12.2015
@@ -16,16 +13,6 @@ value class ViewCommands<View : MvpView>(val list: MutableList<ViewCommand<View>
 
     private companion object {
         private const val KEY_STATE = "state"
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun load(inBundle: Bundle) {
-        val savedState = inBundle.getParcelable<SavedState<ViewCommand<View>>>(KEY_STATE) ?: return
-        list.addAll(savedState.list as List<ViewCommand<View>>)
-    }
-
-    fun save(outBundle: Bundle) {
-        outBundle.putParcelable(KEY_STATE, SavedState(list))
     }
 
     fun beforeApply(command: ViewCommand<View>) = command.beforeApply(list)
