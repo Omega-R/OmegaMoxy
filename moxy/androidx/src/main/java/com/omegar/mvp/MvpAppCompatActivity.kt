@@ -14,12 +14,23 @@ import androidx.appcompat.app.AppCompatActivity
  */
 open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
 
-    private val mvpDelegate: MvpDelegate<out MvpAppCompatActivity> = MvpDelegate(this)
+    companion object {
+        private var startActivityClassName: String? = null
+    }
+
+    private val mvpDelegate: MvpDelegate<out MvpAppCompatActivity> = MvpDelegate(
+        this,
+        startActivityClassName == this::class.java.name
+    )
 
     constructor() : super()
 
     @ContentView
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
+
+    init {
+        startActivityClassName = null
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +50,7 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
     @Suppress("DEPRECATION")
     override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
         super.startActivityForResult(intent, requestCode, options)
+        startActivityClassName = intent.component?.className
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

@@ -42,16 +42,21 @@ public class MvpDelegate<Delegated> {
 	private String keyTag = KEY_TAG;
 	private String delegateTag;
 	private final Delegated delegated;
+	private boolean initAutoCreate;
 	private boolean isAttached;
 	private MvpDelegate parentDelegate;
 	private List<MvpPresenter<? super Delegated>> presenters;
 	private List<MvpDelegate> childDelegates = new ArrayList<>();
 	@Nullable
-	private MvpKeyStore keyStore;
+	private MvpKeyStore<?> keyStore;
+
+	public MvpDelegate(Delegated delegated, boolean canAutoCreate) {
+		this.delegated = delegated;
+		this.initAutoCreate = canAutoCreate;
+	}
 
 	public MvpDelegate(Delegated delegated) {
-		this.delegated = delegated;
-
+		this(delegated, false);
 	}
 
 	@SuppressWarnings("unused")
@@ -101,6 +106,13 @@ public class MvpDelegate<Delegated> {
 		}
 
 		childDelegates = new ArrayList<>();
+	}
+
+	public void autoCreate() {
+		if (initAutoCreate) {
+			initAutoCreate = false;
+			onCreate();
+		}
 	}
 
 	/**
@@ -252,8 +264,11 @@ public class MvpDelegate<Delegated> {
 		return keyStore;
 	}
 
-	public void addCustomPresenterFields(PresenterField<Delegated> customPresenterField) {
+	public void addCustomPresenterFields(PresenterField<Delegated> customPresenterField, boolean canAutoCreate) {
 		mCustomPresenterFields.add(customPresenterField);
+		if (canAutoCreate) {
+			autoCreate();
+		}
 	}
 
 	/**

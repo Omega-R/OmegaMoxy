@@ -1,8 +1,8 @@
 package com.omegar.mvp
 
-import androidx.annotation.LayoutRes
 import android.os.Bundle
 import androidx.annotation.ContentView
+import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
 
 /**
@@ -14,7 +14,7 @@ import androidx.fragment.app.Fragment
 open class MvpAppCompatFragment : Fragment, MvpDelegateHolder {
 
     private var stateSaved = false
-    private var mvpDelegate = MvpDelegate(this)
+    private val mvpDelegate = MvpDelegate(this)
 
     constructor() : super()
 

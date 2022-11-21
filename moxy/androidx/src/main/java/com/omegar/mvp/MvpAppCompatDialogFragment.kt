@@ -53,7 +53,7 @@ open class MvpAppCompatDialogFragment : AppCompatDialogFragment, MvpDelegateHold
 
         // When we rotate device isRemoving() return true for fragment placed in backstack
         // http://stackoverflow.com/questions/34649126/fragment-back-stack-and-isremoving
-        if (isStateSaved) {
+        if (stateSaved) {
             stateSaved = false
             return
         }
