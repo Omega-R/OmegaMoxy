@@ -96,8 +96,8 @@ class KmViewMethodParser(elements: Elements, private val types: Types) : ViewMet
 
     private fun FunSpec.toAnnotationDataList(annotationMap: Map<String, List<AnnotationMirror>>): List<ViewMethod.AnnotationData> {
         val signature = tag(KmFunction::class.java)?.signature?.asString()
-        return (annotationMap[signature].orEmpty() + annotations.mapNotNull { it.tag(AnnotationMirror::class) })
-                .toAnnotationDataList()
+        return ((annotationMap[signature].orEmpty() + annotations.mapNotNull { it.tag(AnnotationMirror::class) })
+                .toAnnotationDataList())
     }
 
     @KotlinPoetMetadataPreview

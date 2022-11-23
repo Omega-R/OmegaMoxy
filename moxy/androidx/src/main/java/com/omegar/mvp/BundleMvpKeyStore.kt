@@ -3,7 +3,7 @@ package com.omegar.mvp
 import android.os.Bundle
 
 @JvmInline
-internal value class BundleMvpKeyStore(private val bundle: Bundle) : MvpKeyStore<BundleMvpKeyStore> {
+internal value class BundleMvpKeyStore(private val bundle: Bundle) : MvpSaveStore<BundleMvpKeyStore> {
 
     override fun getString(key: String): String? = bundle.getString(key)
 

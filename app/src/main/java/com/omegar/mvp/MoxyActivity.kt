@@ -11,24 +11,22 @@ class MoxyActivity: MvpAppCompatActivity(R.layout.activity_moxy), MoxyView {
 
     companion object {
         var first: Boolean = true
-        var time = SystemClock.elapsedRealtime()
     }
 
     private val presenter: MoxyPresenter by providePresenter()
 
     override var duration: Duration = 0.seconds
 
-    init {
-        println("TestAnt: init activity " + (SystemClock.elapsedRealtime() - time))
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        println("TestAnt: onCreate activity " + (SystemClock.elapsedRealtime() - time))
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.test, MoxyFragment())
+                .commit()
+        }
     }
 
     override fun test() {
-        Toast.makeText(this, "Test", Toast.LENGTH_LONG).show()
         if (first) {
             first = false
             startActivity(Intent(this, MoxyActivity::class.java))

@@ -8,10 +8,8 @@ import kotlin.reflect.KProperty
  * Created by Anton Knyazev on 25.11.2020.
  */
 
-class CustomPresenterFactory<P : MvpPresenter<*>>(
-    tag: String,
-    private val factoryBlock: () -> P
-) : PresenterField<Any?>(tag, PresenterType.LOCAL, null) {
+class CustomPresenterFactory<P : MvpPresenter<*>>(tag: String, private val factoryBlock: () -> P) :
+    PresenterField<Any?>(tag, PresenterType.LOCAL, null) {
 
     private var presenter: P? = null
 
@@ -31,20 +29,30 @@ class CustomPresenterFactory<P : MvpPresenter<*>>(
 }
 
 inline fun <reified P : MvpPresenter<*>> MvpDelegateHolder.providePresenter(
-    name: String = "presenter"
+    name: String = "presenter",
 ): CustomPresenterFactory<P> {
-    return CustomPresenterFactory(P::class.java.name + "." + name) { P::class.java.newInstance() }
-        .also {
-            mvpDelegate.addCustomPresenterFields(it, true)
-        }
+    val factoryBlock = { P::class.java.newInstance() }
+    return CustomPresenterFactory(P::class.java.name + "." + name, factoryBlock).also {
+        mvpDelegate.enableAutoCreate()
+        mvpDelegate.addCustomPresenterFields(it)
+    }
 }
 
 inline fun <reified P : MvpPresenter<*>> MvpDelegateHolder.providePresenter(
     name: String = "presenter",
+    noinline factoryBlock: () -> P
+): CustomPresenterFactory<P> {
+    return CustomPresenterFactory(P::class.java.name + "." + name, factoryBlock).also {
+        mvpDelegate.addCustomPresenterFields(it)
+    }
+}
+
+inline fun <reified P : MvpPresenter<*>> MvpDelegateHolder.providePresenterWithoutAutoCreate(
+    name: String = "presenter",
     noinline factoryBlock: () -> P = { P::class.java.newInstance() }
 ): CustomPresenterFactory<P> {
-    return CustomPresenterFactory(P::class.java.name + "." + name, factoryBlock)
-        .also {
-            mvpDelegate.addCustomPresenterFields(it, false)
-        }
+    return CustomPresenterFactory(P::class.java.name + "." + name, factoryBlock).also {
+        mvpDelegate.disableAutoCreate()
+        mvpDelegate.addCustomPresenterFields(it)
+    }
 }

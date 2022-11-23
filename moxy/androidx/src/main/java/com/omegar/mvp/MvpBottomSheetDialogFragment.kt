@@ -2,11 +2,29 @@ package com.omegar.mvp
 
 import android.os.Bundle
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.omegar.mvp.MvpAppCompatDialogFragment.Companion
 
 open class MvpBottomSheetDialogFragment : BottomSheetDialogFragment(), MvpDelegateHolder {
 
+    companion object {
+
+        private const val KEY_UNIQUE_KEY = "UNIQUE_KEY"
+    }
+
     private var stateSaved = false
     private var mvpDelegate: MvpDelegate<out MvpBottomSheetDialogFragment> = MvpDelegate(this)
+
+    override fun setArguments(args: Bundle?) {
+        val arguments = args ?: Bundle()
+        if (!arguments.containsKey(KEY_UNIQUE_KEY)) {
+            arguments.putInt(KEY_UNIQUE_KEY, mvpDelegate.uniqueKey)
+        } else {
+            mvpDelegate.uniqueKey = arguments.getInt(KEY_UNIQUE_KEY)
+        }
+
+        super.setArguments(args)
+        mvpDelegate.autoCreate()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

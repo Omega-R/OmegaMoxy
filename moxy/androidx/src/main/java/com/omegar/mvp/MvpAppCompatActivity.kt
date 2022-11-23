@@ -15,25 +15,38 @@ import androidx.appcompat.app.AppCompatActivity
 open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
 
     companion object {
-        private var startActivityClassName: String? = null
+
+        private const val EXTRA_UNIQUE_KEY = "MVP_UNIQUE_KEY"
+        private var lastStartIntent: Intent? = null
     }
 
-    private val mvpDelegate: MvpDelegate<out MvpAppCompatActivity> = MvpDelegate(
-        this,
-        startActivityClassName == this::class.java.name
-    )
+    private val mvpDelegate: MvpDelegate<out MvpAppCompatActivity> = MvpDelegate(this)
 
+    @Suppress("unused")
     constructor() : super()
 
     @ContentView
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
 
     init {
-        startActivityClassName = null
+        if (lastStartIntent?.component?.className == this::class.java.name) {
+            intent = lastStartIntent
+            mvpDelegate.uniqueKey = intent.getIntExtra(EXTRA_UNIQUE_KEY, mvpDelegate.uniqueKey)
+            mvpDelegate.enableAutoCreate()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val uniqueKey = intent.getIntExtra(EXTRA_UNIQUE_KEY, 0)
+        when {
+            uniqueKey == 0 -> {
+                intent.putExtra(EXTRA_UNIQUE_KEY, mvpDelegate.uniqueKey)
+            }
+            uniqueKey != mvpDelegate.uniqueKey -> {
+                mvpDelegate.uniqueKey = uniqueKey
+            }
+        }
         mvpDelegate.onCreate(savedInstanceState?.toKeyStore())
     }
 
@@ -49,8 +62,11 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
 
     @Suppress("DEPRECATION")
     override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
+        if (!intent.hasExtra(EXTRA_UNIQUE_KEY)) {
+            intent.putExtra(EXTRA_UNIQUE_KEY, System.identityHashCode(intent))
+        }
+        lastStartIntent = intent
         super.startActivityForResult(intent, requestCode, options)
-        startActivityClassName = intent.component?.className
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

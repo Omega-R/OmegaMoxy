@@ -1,8 +1,8 @@
 package com.omegar.mvp
 
+import androidx.annotation.LayoutRes
 import android.os.Bundle
 import androidx.annotation.ContentView
-import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
 
 /**
@@ -13,13 +13,29 @@ import androidx.fragment.app.Fragment
  */
 open class MvpAppCompatFragment : Fragment, MvpDelegateHolder {
 
+    companion object {
+        private const val KEY_UNIQUE_KEY = "MVP_UNIQUE_KEY"
+    }
+
     private var stateSaved = false
-    private val mvpDelegate = MvpDelegate(this)
+    private var mvpDelegate = MvpDelegate(this, true)
 
     constructor() : super()
 
     @ContentView
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
+
+    override fun setArguments(args: Bundle?) {
+        val arguments = args ?: Bundle()
+        if (!arguments.containsKey(KEY_UNIQUE_KEY)) {
+            arguments.putInt(KEY_UNIQUE_KEY, mvpDelegate.uniqueKey)
+        } else {
+            mvpDelegate.uniqueKey = arguments.getInt(KEY_UNIQUE_KEY)
+        }
+
+        super.setArguments(args)
+        mvpDelegate.autoCreate()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

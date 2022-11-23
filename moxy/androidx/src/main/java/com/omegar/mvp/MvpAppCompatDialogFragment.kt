@@ -3,8 +3,14 @@ package com.omegar.mvp
 import android.os.Bundle
 import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatDialogFragment
+import com.omegar.mvp.MvpAppCompatFragment.Companion
 
 open class MvpAppCompatDialogFragment : AppCompatDialogFragment, MvpDelegateHolder {
+
+    companion object {
+
+        private const val KEY_UNIQUE_KEY = "UNIQUE_KEY"
+    }
 
     private var stateSaved = false
     private var mvpDelegate: MvpDelegate<out MvpAppCompatDialogFragment> = MvpDelegate(this)
@@ -12,6 +18,18 @@ open class MvpAppCompatDialogFragment : AppCompatDialogFragment, MvpDelegateHold
     constructor() : super()
 
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
+
+    override fun setArguments(args: Bundle?) {
+        val arguments = args ?: Bundle()
+        if (!arguments.containsKey(KEY_UNIQUE_KEY)) {
+            arguments.putInt(KEY_UNIQUE_KEY, mvpDelegate.uniqueKey)
+        } else {
+            mvpDelegate.uniqueKey = arguments.getInt(KEY_UNIQUE_KEY)
+        }
+
+        super.setArguments(args)
+        mvpDelegate.autoCreate()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +71,7 @@ open class MvpAppCompatDialogFragment : AppCompatDialogFragment, MvpDelegateHold
 
         // When we rotate device isRemoving() return true for fragment placed in backstack
         // http://stackoverflow.com/questions/34649126/fragment-back-stack-and-isremoving
-        if (stateSaved) {
+        if (isStateSaved) {
             stateSaved = false
             return
         }
