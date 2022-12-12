@@ -75,7 +75,7 @@ public class MvpDelegate<Delegated> {
 	}
 
 	public void autoCreate() {
-		if (autoCreate) {
+		if (autoCreate && uniqueKey != hashCode()) {
 			onCreate(null);
 		}
 	}
@@ -87,6 +87,9 @@ public class MvpDelegate<Delegated> {
 	 * @param saveStore with saved state
 	 */
 	public void onCreate(@Nullable MvpSaveStore saveStore) {
+		if (saveStore != null) {
+			saveStore = saveStore.getKeyStore(MOXY_DELEGATE_BUNDLE_KEY);
+		}
 		isAttached = false;
 		this.saveStore = saveStore;
 
