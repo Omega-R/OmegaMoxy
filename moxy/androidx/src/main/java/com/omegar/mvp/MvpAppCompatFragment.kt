@@ -18,7 +18,7 @@ open class MvpAppCompatFragment : Fragment, MvpDelegateHolder {
     }
 
     private var stateSaved = false
-    private var mvpDelegate = MvpDelegate(this, true)
+    private var mvpDelegate = MvpDelegate(this, false)
 
     constructor() : super()
 
