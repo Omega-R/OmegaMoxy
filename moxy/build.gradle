@@ -1,7 +1,21 @@
 plugins {
     id 'java-library'
     id 'org.jetbrains.kotlin.jvm'
+    id 'maven-publish'
 }
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            artifactId = 'moxy'
+
+            afterEvaluate {
+                from components.java
+            }
+        }
+    }
+}
+
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_7
