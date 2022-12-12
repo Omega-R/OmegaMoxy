@@ -1,6 +1,19 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'maven-publish'
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            artifactId = 'moxy-androidx'
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
 }
 
 android {
