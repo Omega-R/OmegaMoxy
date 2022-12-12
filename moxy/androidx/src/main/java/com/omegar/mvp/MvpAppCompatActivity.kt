@@ -75,6 +75,13 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
         super.startActivityForResult(intent, requestCode, options)
     }
 
+    override fun startActivities(intents: Array<out Intent>, options: Bundle?) {
+        if (intents.isNotEmpty()) {
+            updateLastStartIntent(intents.last())
+        }
+        super.startActivities(intents, options)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         mvpDelegate.onSaveInstanceState(outState.toKeyStore())

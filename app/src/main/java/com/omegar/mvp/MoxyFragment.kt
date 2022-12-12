@@ -1,5 +1,6 @@
 package com.omegar.mvp
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
 import com.omegar.mvp.MoxyActivity.Companion
@@ -13,7 +14,10 @@ class MoxyFragment : MvpAppCompatFragment(R.layout.activity_moxy), MoxyView {
     override var duration: Duration = 0.seconds
 
     override fun test() {
-
+        if (MoxyActivity.first) {
+            MoxyActivity.first = false
+            startActivity(Intent(context, MoxyActivity::class.java))
+        }
     }
 
 

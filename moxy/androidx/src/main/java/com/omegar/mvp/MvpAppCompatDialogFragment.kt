@@ -44,13 +44,13 @@ open class MvpAppCompatDialogFragment : AppCompatDialogFragment, MvpDelegateHold
     }
 
     override fun startActivity(intent: Intent, options: Bundle?) {
-        super.startActivity(intent, options)
         MvpAppCompatActivity.updateLastStartIntent(intent)
+        super.startActivity(intent, options)
     }
 
     override fun startActivityForResult(intent: Intent, requestCode: Int) {
-        super.startActivityForResult(intent, requestCode)
         MvpAppCompatActivity.updateLastStartIntent(intent)
+        super.startActivityForResult(intent, requestCode)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

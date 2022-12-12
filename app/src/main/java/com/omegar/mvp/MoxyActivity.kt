@@ -27,10 +27,7 @@ class MoxyActivity: MvpAppCompatActivity(R.layout.activity_moxy), MoxyView {
     }
 
     override fun test() {
-        if (first) {
-            first = false
-            startActivity(Intent(this, MoxyActivity::class.java))
-        }
+
     }
 
 }
