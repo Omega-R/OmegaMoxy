@@ -18,6 +18,15 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
 
         private const val EXTRA_UNIQUE_KEY = "MVP_UNIQUE_KEY"
         private var lastStartIntent: Intent? = null
+
+
+        internal fun updateLastStartIntent(intent: Intent) {
+            if (!intent.hasExtra(EXTRA_UNIQUE_KEY)) {
+                intent.putExtra(EXTRA_UNIQUE_KEY, System.identityHashCode(intent))
+            }
+            lastStartIntent = intent
+        }
+
     }
 
     private val mvpDelegate: MvpDelegate<out MvpAppCompatActivity> = MvpDelegate(this)
@@ -62,10 +71,7 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
 
     @Suppress("DEPRECATION")
     override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
-        if (!intent.hasExtra(EXTRA_UNIQUE_KEY)) {
-            intent.putExtra(EXTRA_UNIQUE_KEY, System.identityHashCode(intent))
-        }
-        lastStartIntent = intent
+        updateLastStartIntent(intent)
         super.startActivityForResult(intent, requestCode, options)
     }
 

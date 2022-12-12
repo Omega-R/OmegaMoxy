@@ -27,7 +27,10 @@ class MoxyActivity: MvpAppCompatActivity(R.layout.activity_moxy), MoxyView {
     }
 
     override fun test() {
-        Toast.makeText(this, "Test", Toast.LENGTH_LONG).show()
+        if (first) {
+            first = false
+            startActivity(Intent(this, MoxyActivity::class.java))
+        }
     }
 
 }

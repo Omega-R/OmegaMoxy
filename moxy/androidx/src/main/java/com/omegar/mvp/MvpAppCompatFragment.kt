@@ -1,5 +1,6 @@
 package com.omegar.mvp
 
+import android.content.Intent
 import androidx.annotation.LayoutRes
 import android.os.Bundle
 import androidx.annotation.ContentView
@@ -52,6 +53,16 @@ open class MvpAppCompatFragment : Fragment, MvpDelegateHolder {
         super.onResume()
         stateSaved = false
         mvpDelegate.onAttach()
+    }
+
+    override fun startActivity(intent: Intent, options: Bundle?) {
+        super.startActivity(intent, options)
+        MvpAppCompatActivity.updateLastStartIntent(intent)
+    }
+
+    override fun startActivityForResult(intent: Intent, requestCode: Int) {
+        super.startActivityForResult(intent, requestCode)
+        MvpAppCompatActivity.updateLastStartIntent(intent)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
