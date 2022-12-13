@@ -1,8 +1,6 @@
-package com.omegar.mvp;
+package com.omegar.mvp
 
-import java.util.List;
-
-import com.omegar.mvp.presenter.PresenterField;
+import com.omegar.mvp.presenter.PresenterField
 
 /**
  * Date: 18-Dec-15
@@ -10,6 +8,6 @@ import com.omegar.mvp.presenter.PresenterField;
  *
  * @author Alexander Blinov
  */
-public abstract class PresenterBinder<PresentersContainer> {
-	public abstract List<PresenterField<PresentersContainer>> getPresenterFields();
+abstract class PresenterBinder<PresentersContainer> {
+    abstract val presenterFields: List<PresenterField<PresentersContainer>>
 }

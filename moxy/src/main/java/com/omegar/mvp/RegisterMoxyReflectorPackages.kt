@@ -1,13 +1,7 @@
-package com.omegar.mvp;
-
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.TYPE;
+package com.omegar.mvp
 
 /**
  * Register MoxyReflector packages from other modules
  */
-@Target(value = TYPE)
-public @interface RegisterMoxyReflectorPackages {
-	String[] value();
-}
+@Target(AnnotationTarget.CLASS)
+annotation class RegisterMoxyReflectorPackages(vararg val value: String)

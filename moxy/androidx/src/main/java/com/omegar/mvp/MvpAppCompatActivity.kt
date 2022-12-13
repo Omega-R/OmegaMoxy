@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
  *
  * @author Vova Stelmashchuk
  */
-open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
+open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder<MvpAppCompatActivity> {
 
     companion object {
 
@@ -29,7 +29,7 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
 
     }
 
-    private val mvpDelegate: MvpDelegate<out MvpAppCompatActivity> = MvpDelegate(this)
+    final override val mvpDelegate = MvpDelegate(this)
 
     @Suppress("unused")
     constructor() : super()
@@ -101,8 +101,4 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder {
         }
     }
 
-    /**
-     * @return The [MvpDelegate] being used by this Activity.
-     */
-    override fun getMvpDelegate(): MvpDelegate<*> = mvpDelegate
 }

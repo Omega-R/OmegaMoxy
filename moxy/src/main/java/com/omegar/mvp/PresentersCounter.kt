@@ -1,10 +1,4 @@
-package com.omegar.mvp;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+package com.omegar.mvp
 
 /**
  * Date: 14-Nov-16
@@ -12,90 +6,60 @@ import java.util.Set;
  *
  * @author Yuri Shmakov
  */
-@SuppressWarnings("rawtypes")
-public class PresentersCounter {
+object PresentersCounter {
+    private val connections = HashMap<MvpPresenter<*>, MutableSet<String>>().withDefault { HashSet() }
+    private val tags = HashMap<String, MutableSet<MvpPresenter<*>>>().withDefault { HashSet() }
 
-	private final Map<MvpPresenter<?>, Set<String>> mConnections = new HashMap<>();
-	private final Map<String, Set<MvpPresenter>> mTags = new HashMap<>();
+    /**
+     * Save delegate tag when it inject presenter to delegate's object
+     *
+     * @param presenter     Injected presenter
+     * @param delegateTag   Delegate tag
+     */
+    fun injectPresenter(presenter: MvpPresenter<*>, delegateTag: String) {
+        connections.getValue(presenter).add(delegateTag)
+        tags.getValue(delegateTag).add(presenter)
+    }
 
-	/**
-	 * Save delegate tag when it inject presenter to delegate's object
-	 *
-	 * @param presenter     Injected presenter
-	 * @param delegateTag   Delegate tag
-	 */
-	public void injectPresenter(MvpPresenter<?> presenter, String delegateTag) {
-		Set<String> delegateTags = mConnections.get(presenter);
-		if (delegateTags == null) {
-			delegateTags = new HashSet<>();
-			mConnections.put(presenter, delegateTags);
-		}
+    /**
+     * Remove tag when delegate's object was fully destroyed
+     *
+     * @param presenter     Rejected presenter
+     * @param delegateTag   Delegate tag
+     * @return              True if there are no links to this presenter and presenter be able to destroy. False otherwise
+     */
+    fun rejectPresenter(presenter: MvpPresenter<*>, delegateTag: String): Boolean {
+        tags[delegateTag]?.let { presenters ->
+            presenters.remove(presenter)
 
-		delegateTags.add(delegateTag);
+            if (presenters.isEmpty()) {
+                tags.remove(delegateTag)
+            }
+        }
 
-		Set<MvpPresenter> presenters = mTags.get(delegateTag);
-		if (presenters == null) {
-			presenters = new HashSet<>();
-			mTags.put(delegateTag, presenters);
-		}
-		presenters.add(presenter);
-	}
+        val delegateTags = connections[presenter]
+            ?.takeIf { it.isNotEmpty() }
+            ?: let {
+                connections.remove(presenter)
+                return true
+            }
 
-	/**
-	 * Remove tag when delegate's object was fully destroyed
-	 *
-	 * @param presenter     Rejected presenter
-	 * @param delegateTag   Delegate tag
-	 * @return              True if there are no links to this presenter and presenter be able to destroy. False otherwise
-	 */
-	public boolean rejectPresenter(MvpPresenter<?> presenter, String delegateTag) {
-		Set<MvpPresenter> presenters = mTags.get(delegateTag);
-		if (presenters != null) {
-			presenters.remove(presenter);
-		}
-		if (presenters == null || presenters.isEmpty()) {
-			mTags.remove(delegateTag);
-		}
+        if (delegateTags.removeAll { tag -> tag.startsWith(delegateTag) }) {
+            if (delegateTags.isEmpty()) {
+                connections.remove(presenter)
+                return true
+            }
+        }
 
-		Set<String> delegateTags = mConnections.get(presenter);
-		if (delegateTags == null) {
-			mConnections.remove(presenter);
-			return true;
-		}
+        return false
+    }
 
-		Iterator<String> tagsIterator = delegateTags.iterator();
-		while (tagsIterator.hasNext()) {
-			String tag = tagsIterator.next();
+    fun getAll(delegateTag: String): Set<MvpPresenter<*>> {
+        return tags.flatMapTo(HashSet()) { (key, value) ->
+            if (key.startsWith(delegateTag)) value else emptyList()
+        }
+    }
 
-			if (tag.startsWith(delegateTag)) {
-				tagsIterator.remove();
-			}
-		}
+    fun isInjected(presenter: MvpPresenter<*>): Boolean = connections[presenter]?.isNotEmpty() == true
 
-		boolean noTags = delegateTags.isEmpty();
-
-		if (noTags) {
-			mConnections.remove(presenter);
-		}
-
-		return noTags;
-	}
-
-	public Set<MvpPresenter> getAll(String delegateTag) {
-		Set<MvpPresenter> presenters = new HashSet<>();
-		for (Map.Entry<String, Set<MvpPresenter>> tagsWithPresenters : mTags.entrySet()) {
-			if (tagsWithPresenters.getKey().startsWith(delegateTag)) {
-				presenters.addAll(tagsWithPresenters.getValue());
-			}
-		}
-
-		return presenters;
-	}
-
-	@SuppressWarnings("unused")
-	public boolean isInjected(MvpPresenter<?> presenter) {
-		Set<String> mDelegateTags = mConnections.get(presenter);
-
-		return mDelegateTags != null && !mDelegateTags.isEmpty();
-	}
 }

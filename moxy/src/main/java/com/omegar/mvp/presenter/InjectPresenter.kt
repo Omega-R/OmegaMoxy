@@ -1,9 +1,4 @@
-package com.omegar.mvp.presenter;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.omegar.mvp.presenter
 
 /**
  * Date: 17.12.2015
@@ -12,14 +7,10 @@ import java.lang.annotation.Target;
  * @author Yuri Shmakov
  * @author Alexander BLinov
  */
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface InjectPresenter {
-	String EMPTY = "";
-
-	String tag() default EMPTY;
-
-	PresenterType type() default PresenterType.LOCAL;
-
-	String presenterId() default EMPTY;
-}
+@Target(AnnotationTarget.FIELD)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class InjectPresenter(
+    val tag: String = "",
+    val type: PresenterType = PresenterType.LOCAL,
+    val presenterId: String = ""
+)

@@ -1,7 +1,7 @@
-package com.omegar.mvp;
+package com.omegar.mvp
 
-public interface MvpDelegateHolder {
+interface MvpDelegateHolder<D: Any> {
 
-    MvpDelegate getMvpDelegate();
+    val mvpDelegate: MvpDelegate<D>
 
 }

@@ -3,9 +3,8 @@ package com.omegar.mvp
 import android.content.Intent
 import android.os.Bundle
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.omegar.mvp.MvpAppCompatDialogFragment.Companion
 
-open class MvpBottomSheetDialogFragment : BottomSheetDialogFragment(), MvpDelegateHolder {
+open class MvpBottomSheetDialogFragment : BottomSheetDialogFragment(), MvpDelegateHolder<MvpBottomSheetDialogFragment> {
 
     companion object {
 
@@ -13,7 +12,7 @@ open class MvpBottomSheetDialogFragment : BottomSheetDialogFragment(), MvpDelega
     }
 
     private var stateSaved = false
-    private var mvpDelegate: MvpDelegate<out MvpBottomSheetDialogFragment> = MvpDelegate(this)
+    final override val mvpDelegate = MvpDelegate(this)
 
     override fun setArguments(args: Bundle?) {
         val arguments = args ?: Bundle()
@@ -94,8 +93,4 @@ open class MvpBottomSheetDialogFragment : BottomSheetDialogFragment(), MvpDelega
         }
     }
 
-    /**
-     * @return The [MvpDelegate] being used by this Fragment.
-     */
-    override fun getMvpDelegate(): MvpDelegate<*> = mvpDelegate
 }

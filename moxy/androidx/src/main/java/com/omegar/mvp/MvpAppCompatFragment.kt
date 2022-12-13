@@ -12,14 +12,15 @@ import androidx.fragment.app.Fragment
  *
  * @author Vova Stelmashchuk
  */
-open class MvpAppCompatFragment : Fragment, MvpDelegateHolder {
+open class MvpAppCompatFragment : Fragment, MvpDelegateHolder<MvpAppCompatFragment> {
 
     companion object {
         private const val KEY_UNIQUE_KEY = "MVP_UNIQUE_KEY"
     }
 
     private var stateSaved = false
-    private var mvpDelegate = MvpDelegate(this, false)
+    @Suppress("LeakingThis")
+    final override val mvpDelegate = MvpDelegate(this)
 
     constructor() : super()
 
@@ -115,8 +116,4 @@ open class MvpAppCompatFragment : Fragment, MvpDelegateHolder {
         }
     }
 
-    /**
-     * @return The [MvpDelegate] being used by this Fragment.
-     */
-    override fun getMvpDelegate(): MvpDelegate<*> = mvpDelegate
 }

@@ -1,15 +1,7 @@
-package com.omegar.mvp;
-
-import static java.lang.annotation.ElementType.TYPE;
-
-import java.lang.annotation.Target;
+package com.omegar.mvp
 
 /**
  * Created by Anton Knyazev on 25.11.2020.
  */
-@Target(value = TYPE)
-public @interface Moxy {
-
-    String reflectorPackage();
-
-}
+@Target(AnnotationTarget.CLASS)
+annotation class Moxy(val reflectorPackage: String)

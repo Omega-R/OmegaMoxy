@@ -4,9 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatDialogFragment
-import com.omegar.mvp.MvpAppCompatFragment.Companion
 
-open class MvpAppCompatDialogFragment : AppCompatDialogFragment, MvpDelegateHolder {
+open class MvpAppCompatDialogFragment : AppCompatDialogFragment, MvpDelegateHolder<MvpAppCompatDialogFragment> {
 
     companion object {
 
@@ -14,7 +13,8 @@ open class MvpAppCompatDialogFragment : AppCompatDialogFragment, MvpDelegateHold
     }
 
     private var stateSaved = false
-    private var mvpDelegate: MvpDelegate<out MvpAppCompatDialogFragment> = MvpDelegate(this)
+    @Suppress("LeakingThis")
+    final override val mvpDelegate = MvpDelegate(this)
 
     constructor() : super()
 
@@ -99,8 +99,4 @@ open class MvpAppCompatDialogFragment : AppCompatDialogFragment, MvpDelegateHold
         }
     }
 
-    /**
-     * @return The [MvpDelegate] being used by this Fragment.
-     */
-    override fun getMvpDelegate(): MvpDelegate<*> = mvpDelegate
 }

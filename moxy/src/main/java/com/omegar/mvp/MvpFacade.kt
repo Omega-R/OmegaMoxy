@@ -8,9 +8,9 @@ package com.omegar.mvp
  * @author Yuri Shmakov
  */
 object MvpFacade {
-    var presenterStore = PresenterStore()
-    var mvpProcessor = MvpProcessor()
-    var presentersCounter = PresentersCounter()
+    var presenterStore = PresenterStore
+    var mvpProcessor = MvpProcessor
+    var presentersCounter = PresentersCounter
 
     @JvmStatic
     val instance

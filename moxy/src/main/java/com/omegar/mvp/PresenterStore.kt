@@ -1,8 +1,4 @@
-package com.omegar.mvp;
-
-import java.util.HashMap;
-import java.util.Map;
-
+package com.omegar.mvp
 
 /**
  * Date: 17-Dec-15
@@ -11,45 +7,42 @@ import java.util.Map;
  * @author Yuri Shmakov
  * @author Alexander Blinov
  */
-@SuppressWarnings("rawtypes")
-public class PresenterStore {
-	private final Map<String, MvpPresenter> mPresenters = new HashMap<>();
+object PresenterStore {
+    private val presenters: MutableMap<String, MvpPresenter<*>> = HashMap()
 
-	/**
-	 * Add presenter to storage
-	 *
-	 * @param tag      Tag of presenter. Local presenters contains also delegate's tag as prefix
-	 * @param instance Instance of MvpPresenter implementation to store
-	 * @param <T>      Type of presenter
-	 */
-	public <T extends MvpPresenter> void add(String tag, T instance) {
-		mPresenters.put(tag, instance);
-	}
+    /**
+     * Add presenter to storage
+     *
+     * @param tag      Tag of presenter. Local presenters contains also delegate's tag as prefix
+     * @param instance Instance of MvpPresenter implementation to store
+     * @param <T>      Type of presenter
+    </T> */
+    operator fun set(tag: String, instance: MvpPresenter<*>) = presenters.put(tag, instance)
 
-	/**
-	 * Get presenter on existing params
-	 *
-	 * @param tag      Tag of presenter. Local presenters contains also delegate's tag as prefix
-	 * @return         Presenter if it's exists. Null otherwise (if it's no exists)
-	 */
-	public MvpPresenter get(String tag) {
-		return mPresenters.get(tag);
-	}
+    /**
+     * Get presenter on existing params
+     *
+     * @param tag      Tag of presenter. Local presenters contains also delegate's tag as prefix
+     * @return         Presenter if it's exists. Null otherwise (if it's no exists)
+     */
+    operator fun get(tag: String): MvpPresenter<*>? = presenters[tag]
 
-	/**
-	 * Remove presenter from store.
-	 *
-	 * @param tag      Tag of presenter. Local presenters contains also delegate's tag as prefix
-	 * @return         Presenter which was removed
-	 */
-	public MvpPresenter remove(String tag) {
-		return mPresenters.remove(tag);
-	}
+    /**
+     * Remove presenter from store.
+     *
+     * @param tag      Tag of presenter. Local presenters contains also delegate's tag as prefix
+     * @return         Presenter which was removed
+     */
+    fun remove(tag: String): MvpPresenter<*>? = presenters.remove(tag)
 
-	@SuppressWarnings("unused")
-	public void logPresenters() {
-		for (Map.Entry<String, MvpPresenter> currentEntry : mPresenters.entrySet()) {
-			System.out.println("PresenterStore: " + currentEntry.getKey() + " -> " + currentEntry.getValue());
-		}
-	}
+    /**
+     * Log all presenters from store.
+     */
+    fun logPresenters() {
+        presenters.forEach { (key, value) ->
+            println("PresenterStore: $key -> $value")
+        }
+    }
+
+
 }

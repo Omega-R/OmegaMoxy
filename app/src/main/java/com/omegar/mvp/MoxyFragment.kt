@@ -1,15 +1,15 @@
 package com.omegar.mvp
 
 import android.content.Intent
-import android.os.Bundle
-import android.os.SystemClock
-import com.omegar.mvp.MoxyActivity.Companion
+import com.omegar.mvp.ktx.providePresenter
+import com.omegar.mvp.presenter.InjectPresenter
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class MoxyFragment : MvpAppCompatFragment(R.layout.activity_moxy), MoxyView {
 
-    private val presenter: MoxyPresenter by providePresenter()
+    @InjectPresenter
+    lateinit var presenter: MoxyPresenter
 
     override var duration: Duration = 0.seconds
 

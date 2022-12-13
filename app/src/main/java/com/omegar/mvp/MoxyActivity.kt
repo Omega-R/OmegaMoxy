@@ -1,9 +1,7 @@
 package com.omegar.mvp
 
-import android.content.Intent
 import android.os.Bundle
-import android.os.SystemClock
-import android.widget.Toast
+import com.omegar.mvp.ktx.providePresenter
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

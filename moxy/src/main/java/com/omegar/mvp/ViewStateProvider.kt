@@ -1,6 +1,6 @@
-package com.omegar.mvp;
+package com.omegar.mvp
 
-import com.omegar.mvp.viewstate.MvpViewState;
+import com.omegar.mvp.viewstate.MvpViewState
 
 /**
  * Date: 18.12.2015
@@ -8,11 +8,12 @@ import com.omegar.mvp.viewstate.MvpViewState;
  *
  * @author Yuri Shmakov
  */
-public abstract class ViewStateProvider {
-	/**
-	 * <p>Presenter creates view state object by calling this method.</p>
-	 *
-	 * @return view state class name
-	 */
-	public abstract MvpViewState getViewState();
+abstract class ViewStateProvider {
+    /**
+     *
+     * Presenter creates view state object by calling this method.
+     *
+     * @return view state class name
+     */
+    abstract val viewState: MvpViewState<*>
 }

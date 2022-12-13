@@ -1,12 +1,9 @@
-package com.omegar.mvp;
+package com.omegar.mvp
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import com.omegar.mvp.presenter.PresenterField;
-import com.omegar.mvp.presenter.PresenterType;
-import com.omegar.mvp.presenter.InjectPresenter;
+import com.omegar.mvp.MvpFacade.presenterStore
+import com.omegar.mvp.MvpFacade.presentersCounter
+import com.omegar.mvp.presenter.PresenterField
+import com.omegar.mvp.presenter.PresenterType
 
 /**
  * Date: 18-Dec-15
@@ -15,138 +12,107 @@ import com.omegar.mvp.presenter.InjectPresenter;
  * @author Yuri Shmakov
  * @author Alexander Blinov
  */
-public class MvpProcessor {
-	public static final String PRESENTER_BINDER_SUFFIX = "$$PresentersBinder";
-	public static final String PRESENTER_BINDER_INNER_SUFFIX = "Binder";
-	public static final String VIEW_STATE_SUFFIX = "$$State";
-	public static final String VIEW_STATE_PROVIDER_SUFFIX = "$$ViewStateProvider";
+object MvpProcessor {
 
-	/**
-	 * <p>1) Generates tag for identification MvpPresenter</p>
-	 * <p>2) Checks if presenter with tag is already exist in {@link PresenterStore}, and returns it</p>
-	 * <p>3) If {@link PresenterStore} doesn't contain MvpPresenter with current tag, {@link PresenterField} will create it</p>
-	 *
-	 * @param <Delegated>    type of delegated
-	 * @param target         object that want injection
-	 * @param presenterField info about presenter from {@link InjectPresenter}
-	 * @param delegateTag    unique tag @return MvpPresenter instance
-	 */
-	private <Delegated> MvpPresenter<? super Delegated> getMvpPresenter(Delegated target,
-																		PresenterField<Delegated> presenterField,
-																		String delegateTag) {
-		PresenterStore presenterStore = MvpFacade.getInstance().getPresenterStore();
+    const val PRESENTER_BINDER_SUFFIX = "$\$PresentersBinder"
+    const val PRESENTER_BINDER_INNER_SUFFIX = "Binder"
+    const val VIEW_STATE_SUFFIX = "$\$State"
+    const val VIEW_STATE_PROVIDER_SUFFIX = "$\$ViewStateProvider"
+    private var hasMoxyReflector: Boolean = try {
+        MoxyReflector()
+        true
+    } catch (error: NoClassDefFoundError) {
+        false
+    }
 
-		PresenterType type = presenterField.getPresenterType();
-		String tag;
-		if (type == PresenterType.LOCAL) {
-			tag = delegateTag + "$" + presenterField.getTag(target);
-		} else {
-			tag = presenterField.getTag(target);
-		}
+    /**
+     *
+     * 1) Generates tag for identification MvpPresenter
+     *
+     * 2) Checks if presenter with tag is already exist in [PresenterStore], and returns it
+     *
+     * 3) If [PresenterStore] doesn't contain MvpPresenter with current tag, [PresenterField] will create it
+     *
+     * @param <Delegated>    type of delegated
+     * @param target         object that want injection
+     * @param presenterField info about presenter from [InjectPresenter]
+     * @param delegateTag    unique tag @return MvpPresenter instance
+    </Delegated> */
+    private fun <Delegated> getMvpPresenter(
+        target: Delegated,
+        presenterField: PresenterField<Delegated>,
+        delegateTag: String
+    ): MvpPresenter<*>? {
+        val type = presenterField.presenterType
+        val tag = when (type) {
+            PresenterType.LOCAL -> delegateTag + "$" + presenterField.getTag(target)
+            else -> presenterField.getTag(target)
+        }
 
-		//noinspection unchecked
-		MvpPresenter<? super Delegated> presenter = presenterStore.get(tag);
-		if (presenter != null) {
-			return presenter;
-		}
+        return presenterStore[tag] ?: let {
+            presenterField.providePresenter(target)?.also { presenter ->
+                presenter.presenterType = type
+                presenter.tag = tag
+                presenterStore[tag] = presenter
+            }
+        }
+    }
 
-		//noinspection unchecked
-		presenter = (MvpPresenter<? super Delegated>) presenterField.providePresenter(target);
+    /**
+     *
+     * Gets presenters [List] annotated with [InjectPresenter] for view.
+     *
+     * See full info about getting presenter instance in [.getMvpPresenter]
+     *
+     * @param delegated   class contains presenter
+     * @param delegateTag unique tag
+     * @param <Delegated> type of delegated
+     * @return presenters list for specifies presenters container
+    </Delegated> */
+    fun <Delegated : Any> getMvpPresenters(
+        delegated: Delegated,
+        delegateTag: String,
+        customPresenterFields: List<PresenterField<Delegated>>?
+    ): List<MvpPresenter<*>> {
+        val presenters: MutableList<MvpPresenter<*>> = ArrayList()
 
-		if (presenter == null) {
-			return null;
-		}
+        getPresenterBinders(delegated).forEach { presenterBinder ->
+            presenterBinder.presenterFields.forEach { presenterField ->
+                handlePresenterField(delegated, delegateTag, presenters, presenterField)
+            }
+        }
 
-		presenter.setPresenterType(type);
-		presenter.setTag(tag);
-		presenterStore.add(tag, presenter);
+        // handle custom presenter fields
+        customPresenterFields?.forEach { presenterField ->
+            handlePresenterField(delegated, delegateTag, presenters, presenterField)
+        }
+        return presenters
+    }
 
-		return presenter;
-	}
+    private fun <Delegated : Any> getPresenterBinders(delegated: Delegated): List<PresenterBinder<Delegated>> {
+        if (!hasMoxyReflector) return emptyList()
 
-	/**
-	 * <p>Gets presenters {@link List} annotated with {@link InjectPresenter} for view.</p>
-	 * <p>See full info about getting presenter instance in {@link #getMvpPresenter}</p>
-	 *
-	 * @param delegated   class contains presenter
-	 * @param delegateTag unique tag
-	 * @param <Delegated> type of delegated
-	 * @return presenters list for specifies presenters container
-	 */
-	<Delegated> List<MvpPresenter<? super Delegated>> getMvpPresenters(Delegated delegated,
-																	   String delegateTag,
-																	   List<PresenterField<Delegated>> customPresenterFields) {
-		List<MvpPresenter<? super Delegated>> presenters = new ArrayList<>();
+        var aClass: Class<*> = delegated::class.java
+        var presenterBinders: List<Any>?
+        do {
+            presenterBinders = MoxyReflector.getPresenterBinders(aClass)
+            aClass = aClass.superclass
+        } while (aClass != Any::class.java && presenterBinders == null)
 
-		List<Object> presenterBinders = getPresenterBinders(delegated);
+        return presenterBinders?.takeIf { it.isNotEmpty() }.orEmpty() as List<PresenterBinder<Delegated>>
+    }
 
-		for (Object presenterBinderObject : presenterBinders) {
-			//noinspection unchecked
-			PresenterBinder<Delegated> presenterBinder = (PresenterBinder<Delegated>) presenterBinderObject;
-			List<PresenterField<Delegated>> presenterFields = presenterBinder.getPresenterFields();
+    private fun <Delegated> handlePresenterField(
+        delegated: Delegated,
+        delegateTag: String,
+        presenters: MutableList<MvpPresenter<*>>,
+        presenterField: PresenterField<Delegated>
+    ) {
+        getMvpPresenter(delegated, presenterField, delegateTag)?.let { presenter ->
+            presentersCounter.injectPresenter(presenter, delegateTag)
+            presenters.add(presenter)
+            presenterField.bind(delegated, presenter)
+        }
+    }
 
-			for (PresenterField<Delegated> presenterField : presenterFields) {
-				handlePresenterField(delegated, delegateTag, presenters, presenterField);
-			}
-		}
-
-		// handle custom presenter fields
-		if (customPresenterFields != null) {
-			for (PresenterField<Delegated> presenterField : customPresenterFields) {
-				handlePresenterField(delegated, delegateTag, presenters, presenterField);
-			}
-		}
-
-		return presenters;
-	}
-
-	private <Delegated> List<Object> getPresenterBinders(Delegated delegated) {
-		if (!hasMoxyReflector()) return Collections.emptyList();
-
-		@SuppressWarnings("unchecked")
-		Class<? super Delegated> aClass = (Class<Delegated>) delegated.getClass();
-		List<Object> presenterBinders = null;
-
-		while (aClass != Object.class && presenterBinders == null) {
-			presenterBinders = MoxyReflector.getPresenterBinders(aClass);
-
-			aClass = aClass.getSuperclass();
-		}
-
-		if (presenterBinders == null || presenterBinders.isEmpty()) {
-			return Collections.emptyList();
-		}
-		return presenterBinders;
-	}
-
-	private <Delegated> void handlePresenterField(Delegated delegated, String delegateTag, List<MvpPresenter<? super Delegated>> presenters, PresenterField<Delegated> presenterField) {
-		PresentersCounter presentersCounter = MvpFacade.getInstance().getPresentersCounter();
-
-		MvpPresenter<? super Delegated> presenter = getMvpPresenter(delegated, presenterField, delegateTag);
-
-		if (presenter != null) {
-			presentersCounter.injectPresenter(presenter, delegateTag);
-			presenters.add(presenter);
-			presenterField.bind(delegated, presenter);
-		}
-	}
-
-	private static Boolean hasMoxyReflector = null;
-
-	// Check is it have generated MoxyReflector without usage of reflection API
-	private static boolean hasMoxyReflector() {
-		if (hasMoxyReflector != null) {
-			return hasMoxyReflector;
-		}
-
-		try {
-			new MoxyReflector();
-
-			hasMoxyReflector = true;
-		} catch (NoClassDefFoundError error) {
-			hasMoxyReflector = false;
-		}
-
-		return hasMoxyReflector;
-	}
 }

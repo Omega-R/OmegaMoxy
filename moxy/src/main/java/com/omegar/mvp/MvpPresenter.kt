@@ -40,22 +40,10 @@ abstract class MvpPresenter<View : MvpView> {
     val attachedViews: Set<View>
         get() = mvpViewState.attachedViews
 
-    /**
-     *
-     * Attach view to view state or to presenter(if view state not exists).
-     *
-     * If you use [MvpDelegate], you should not call this method directly.
-     * It will be called on [MvpDelegate.onAttach], if view does not attached.
-     *
-     * @param view to attachment
-     */
-    open fun attachView(view: View) {
-        mvpViewState.attachView(view)
+    internal fun attachView(mvpView: MvpView) {
+        val view = mvpView as View
         attachView(view, firstLaunch)
-        if (firstLaunch) {
-            firstLaunch = false
-            onFirstViewAttach()
-        }
+        firstLaunch = false
     }
 
     /**
@@ -69,7 +57,23 @@ abstract class MvpPresenter<View : MvpView> {
      * @param isFirstAttach is first presenter init and view binding
      */
     protected open fun attachView(view: View, isFirstAttach: Boolean) {
-        // nothing
+        attachView(view)
+        if (isFirstAttach) {
+            onFirstViewAttach()
+        }
+    }
+
+    /**
+     *
+     * Attach view to view state or to presenter(if view state not exists).
+     *
+     * If you use [MvpDelegate], you should not call this method directly.
+     * It will be called on [MvpDelegate.onAttach], if view does not attached.
+     *
+     * @param view to attachment
+     */
+    protected open fun attachView(view: View) {
+        mvpViewState.attachView(view)
     }
 
     /**
@@ -84,6 +88,14 @@ abstract class MvpPresenter<View : MvpView> {
         // nothing
     }
 
+    internal fun detachView(view: MvpView) {
+        detachView(view as View)
+    }
+
+    internal fun destroyView(view: MvpView) {
+        destroyView(view as View)
+    }
+
     /**
      *
      * Detach view from view state or from presenter(if view state not exists).
@@ -93,11 +105,11 @@ abstract class MvpPresenter<View : MvpView> {
      *
      * @param view view to detach
      */
-    open fun detachView(view: View) {
+    protected open fun detachView(view: View) {
         mvpViewState.detachView(view)
     }
 
-    open fun destroyView(view: View) {
+    protected open fun destroyView(view: View) {
         mvpViewState.destroyView(view)
     }
 

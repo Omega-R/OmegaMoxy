@@ -1,6 +1,6 @@
-package com.omegar.mvp.presenter;
+package com.omegar.mvp.presenter
 
-import com.omegar.mvp.MvpPresenter;
+import com.omegar.mvp.MvpPresenter
 
 /**
  * Date: 18-Dec-15
@@ -9,33 +9,19 @@ import com.omegar.mvp.MvpPresenter;
  * @author Alexander Blinov
  * @author Yuri Shmakov
  */
-@SuppressWarnings("rawtypes")
-public abstract class PresenterField<PresentersContainer> {
-	protected final String tag;
-	protected final PresenterType presenterType;
-	protected final String presenterId;
+abstract class PresenterField<PresentersContainer> protected constructor(
+    protected val tag: String,
+    val presenterType: PresenterType,
+    val presenterId: String?
+) {
 
-	protected PresenterField(String tag, PresenterType presenterType, String presenterId) {
-		this.tag = tag;
-		this.presenterType = presenterType;
-		this.presenterId = presenterId;
-	}
+    abstract fun bind(container: PresentersContainer, presenter: MvpPresenter<*>?)
 
-	public abstract void bind(PresentersContainer container, MvpPresenter presenter);
+    abstract fun providePresenter(delegated: PresentersContainer): MvpPresenter<*>?
 
-	// Delegated may be used from generated code if user plane to generate tag at runtime
-	@SuppressWarnings("unused")
-	public String getTag(PresentersContainer delegated) {
-		return tag;
-	}
+    // Delegated may be used from generated code if user plane to generate tag at runtime
+    open fun getTag(delegated: PresentersContainer): String {
+        return tag
+    }
 
-	public PresenterType getPresenterType() {
-		return presenterType;
-	}
-
-	public String getPresenterId() {
-		return presenterId;
-	}
-
-	public abstract MvpPresenter<?> providePresenter(PresentersContainer delegated);
 }
