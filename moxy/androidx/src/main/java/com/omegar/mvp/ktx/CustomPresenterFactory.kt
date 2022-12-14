@@ -15,7 +15,7 @@ class CustomPresenterFactory<P : MvpPresenter<*>, D>(tag: String, private val fa
 
     private var presenter: P? = null
 
-    override fun bind(container: D, presenter: MvpPresenter<*>?) {
+    override fun bind(container: D, presenter: MvpPresenter<*>) {
         @Suppress("UNCHECKED_CAST")
         this.presenter = presenter as P
     }

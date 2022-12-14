@@ -15,9 +15,9 @@ abstract class PresenterField<PresentersContainer> protected constructor(
     val presenterId: String?
 ) {
 
-    abstract fun bind(container: PresentersContainer, presenter: MvpPresenter<*>?)
+    abstract fun bind(container: PresentersContainer, presenter: MvpPresenter<*>)
 
-    abstract fun providePresenter(delegated: PresentersContainer): MvpPresenter<*>?
+    abstract fun providePresenter(delegated: PresentersContainer): MvpPresenter<*>
 
     // Delegated may be used from generated code if user plane to generate tag at runtime
     open fun getTag(delegated: PresentersContainer): String {

@@ -9,10 +9,12 @@ import com.omegar.mvp.compiler.entity.ViewInterfaceInfo;
 import com.omegar.mvp.compiler.pipeline.ElementProcessor;
 import com.omegar.mvp.compiler.pipeline.PipelineContext;
 import com.omegar.mvp.compiler.pipeline.Publisher;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.DeclaredType;
@@ -20,76 +22,84 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
-public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElement, PresenterInfo>  {
-	private static final String MVP_PRESENTER_CLASS = MvpPresenter.class.getCanonicalName();
+public class ElementToPresenterInfoProcessor extends ElementProcessor<TypeElement, PresenterInfo> {
+    private static final String MVP_PRESENTER_CLASS = MvpPresenter.class.getCanonicalName();
 
-	private final Elements mElements;
-	private final Publisher<TypeElement> mUsedViewsPublisher;
+    private final Elements mElements;
+    private final Publisher<TypeElement> mUsedViewsPublisher;
 
-	public ElementToPresenterInfoProcessor(Elements elements, Publisher<TypeElement> usedViewsPublisher) {
-		mElements = elements;
-		mUsedViewsPublisher = usedViewsPublisher;
-	}
+    public ElementToPresenterInfoProcessor(Elements elements, Publisher<TypeElement> usedViewsPublisher) {
+        mElements = elements;
+        mUsedViewsPublisher = usedViewsPublisher;
+    }
 
-	@Override
-	public PresenterInfo process(TypeElement element) {
-		return new PresenterInfo(element, getViewStateClassName(element));
-	}
+    @Override
+    public PresenterInfo process(TypeElement element) {
+        TypeElement viewClassName = getViewClassName(element);
 
-	private String getViewStateClassName(TypeElement typeElement) {
-		String view = getViewClassFromGeneric(typeElement);
+        String viewFullName = ViewInterfaceInfo.getViewFullName(mElements, viewClassName);
 
-		// Remove generic from view class name
-		String viewWithoutGeneric = Util.substringBefore(view, '<');
+        return new PresenterInfo(
+                element,
+                ViewInterfaceInfo.getViewStateFullName(viewFullName),
+                viewClassName
+        );
+    }
 
-		TypeElement viewTypeElement = mElements.getTypeElement(viewWithoutGeneric);
+    private TypeElement getViewClassName(TypeElement typeElement) {
+        String view = getViewClassFromGeneric(typeElement);
 
-		if (viewTypeElement == null) {
-			throw new IllegalArgumentException("View \"" + view + "\" for " + typeElement + " cannot be found. \n " + view);
-		}
+        // Remove generic from view class name
+        String viewWithoutGeneric = Util.substringBefore(view, '<');
 
-		mUsedViewsPublisher.next(viewTypeElement);
+        TypeElement viewTypeElement = mElements.getTypeElement(viewWithoutGeneric);
 
-		return ViewInterfaceInfo.getViewStateFullName(mElements, viewTypeElement);
-	}
+        if (viewTypeElement == null) {
+            throw new IllegalArgumentException("View \"" + view + "\" for " + typeElement + " cannot be found. \n " + view);
+        }
+
+        mUsedViewsPublisher.next(viewTypeElement);
+
+        return viewTypeElement;
+    }
 
 
-	private String getViewClassFromGeneric(TypeElement typeElement) {
-		TypeMirror superclass = typeElement.asType();
+    private String getViewClassFromGeneric(TypeElement typeElement) {
+        TypeMirror superclass = typeElement.asType();
 
-		Map<String, String> parentTypes = Collections.emptyMap();
+        Map<String, String> parentTypes = Collections.emptyMap();
 
-		while (superclass.getKind() != TypeKind.NONE) {
-			TypeElement superclassElement = (TypeElement) ((DeclaredType) superclass).asElement();
+        while (superclass.getKind() != TypeKind.NONE) {
+            TypeElement superclassElement = (TypeElement) ((DeclaredType) superclass).asElement();
 
-			final List<? extends TypeMirror> typeArguments = ((DeclaredType) superclass).getTypeArguments();
-			final List<? extends TypeParameterElement> typeParameters = superclassElement.getTypeParameters();
+            final List<? extends TypeMirror> typeArguments = ((DeclaredType) superclass).getTypeArguments();
+            final List<? extends TypeParameterElement> typeParameters = superclassElement.getTypeParameters();
 
-			if (typeArguments.size() > typeParameters.size()) {
-				throw new IllegalArgumentException("Code generation for interface " + typeElement.getSimpleName() + " failed. Simplify your generics. (" + typeArguments + " vs " + typeParameters + ")");
-			}
+            if (typeArguments.size() > typeParameters.size()) {
+                throw new IllegalArgumentException("Code generation for interface " + typeElement.getSimpleName() + " failed. Simplify your generics. (" + typeArguments + " vs " + typeParameters + ")");
+            }
 
-			Map<String, String> types = new HashMap<>();
-			for (int i = 0; i < typeArguments.size(); i++) {
-				types.put(typeParameters.get(i).toString(), fillGenerics(parentTypes, typeArguments.get(i)));
-			}
+            Map<String, String> types = new HashMap<>();
+            for (int i = 0; i < typeArguments.size(); i++) {
+                types.put(typeParameters.get(i).toString(), fillGenerics(parentTypes, typeArguments.get(i)));
+            }
 
-			if (superclassElement.toString().equals(MVP_PRESENTER_CLASS)) {
-				// MvpPresenter is typed only on View class
-				return fillGenerics(parentTypes, typeArguments);
-			}
+            if (superclassElement.toString().equals(MVP_PRESENTER_CLASS)) {
+                // MvpPresenter is typed only on View class
+                return fillGenerics(parentTypes, typeArguments);
+            }
 
-			parentTypes = types;
+            parentTypes = types;
 
-			superclass = superclassElement.getSuperclass();
-		}
+            superclass = superclassElement.getSuperclass();
+        }
 
-		return "";
-	}
+        return "";
+    }
 
-	@Override
-	protected void finish(PipelineContext<PresenterInfo> nextContext) {
-		mUsedViewsPublisher.finish();
-		super.finish(nextContext);
-	}
+    @Override
+    protected void finish(PipelineContext<PresenterInfo> nextContext) {
+        mUsedViewsPublisher.finish();
+        super.finish(nextContext);
+    }
 }

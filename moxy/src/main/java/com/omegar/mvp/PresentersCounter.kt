@@ -7,8 +7,8 @@ package com.omegar.mvp
  * @author Yuri Shmakov
  */
 object PresentersCounter {
-    private val connections = HashMap<MvpPresenter<*>, MutableSet<String>>().withDefault { HashSet() }
-    private val tags = HashMap<String, MutableSet<MvpPresenter<*>>>().withDefault { HashSet() }
+    private val connections = HashMap<MvpPresenter<*>, MutableSet<String>>()
+    private val tags = HashMap<String, MutableSet<MvpPresenter<*>>>()
 
     /**
      * Save delegate tag when it inject presenter to delegate's object
@@ -17,9 +17,11 @@ object PresentersCounter {
      * @param delegateTag   Delegate tag
      */
     fun injectPresenter(presenter: MvpPresenter<*>, delegateTag: String) {
-        connections.getValue(presenter).add(delegateTag)
-        tags.getValue(delegateTag).add(presenter)
+        connections.getOrPut(presenter).add(delegateTag)
+        tags.getOrPut(delegateTag).add(presenter)
     }
+
+    private fun <K, V> MutableMap<K, MutableSet<V>>.getOrPut(key: K) = getOrPut(key) { HashSet() }
 
     /**
      * Remove tag when delegate's object was fully destroyed

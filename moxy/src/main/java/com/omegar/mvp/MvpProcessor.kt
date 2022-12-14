@@ -4,6 +4,7 @@ import com.omegar.mvp.MvpFacade.presenterStore
 import com.omegar.mvp.MvpFacade.presentersCounter
 import com.omegar.mvp.presenter.PresenterField
 import com.omegar.mvp.presenter.PresenterType
+import kotlin.reflect.KClass
 
 /**
  * Date: 18-Dec-15
@@ -19,7 +20,7 @@ object MvpProcessor {
     const val VIEW_STATE_SUFFIX = "$\$State"
     const val VIEW_STATE_PROVIDER_SUFFIX = "$\$ViewStateProvider"
     private var hasMoxyReflector: Boolean = try {
-        MoxyReflector()
+        MoxyReflector
         true
     } catch (error: NoClassDefFoundError) {
         false
@@ -92,12 +93,8 @@ object MvpProcessor {
     private fun <Delegated : Any> getPresenterBinders(delegated: Delegated): List<PresenterBinder<Delegated>> {
         if (!hasMoxyReflector) return emptyList()
 
-        var aClass: Class<*> = delegated::class.java
-        var presenterBinders: List<Any>?
-        do {
-            presenterBinders = MoxyReflector.getPresenterBinders(aClass)
-            aClass = aClass.superclass
-        } while (aClass != Any::class.java && presenterBinders == null)
+        val aClass: KClass<*> = delegated::class
+        val presenterBinders: List<Any>? = MoxyReflector.getPresenterBinders(aClass)
 
         return presenterBinders?.takeIf { it.isNotEmpty() }.orEmpty() as List<PresenterBinder<Delegated>>
     }

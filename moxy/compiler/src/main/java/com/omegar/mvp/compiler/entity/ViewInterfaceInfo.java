@@ -118,6 +118,14 @@ public class ViewInterfaceInfo implements TypeElementHolder {
         return Util.getFullClassName(elements, viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX;
     }
 
+    public static String getViewStateFullName(String fullViewName) {
+        return fullViewName + MvpProcessor.VIEW_STATE_SUFFIX;
+    }
+
+    public static String getViewFullName(Elements elements, TypeElement viewTypeElement) {
+        return Util.getFullClassName(elements, viewTypeElement);
+    }
+
     public static String getViewStateSimpleName(Elements elements, TypeElement viewTypeElement) {
         return Util.getSimpleClassName(elements, viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX;
     }

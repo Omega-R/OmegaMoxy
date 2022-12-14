@@ -17,11 +17,11 @@ import com.omegar.mvp.compiler.presenterbinder.TargetClassInfoToPresenterBinderJ
 import com.omegar.mvp.compiler.presenterbinder.VariableToContainerElementProcessor;
 import com.omegar.mvp.compiler.reflector.MoxyReflectorProcessor;
 import com.omegar.mvp.compiler.viewstate.ElementToViewInterfaceInfoProcessor;
-import com.omegar.mvp.compiler.viewstate.ViewInterfaceInfoToViewStateJavaFileProcessor;
+import com.omegar.mvp.compiler.viewstate.ViewInterfaceInfoToViewStateKotlinFileProcessor;
 import com.omegar.mvp.compiler.viewstate.ViewInterfaceInfoValidator;
 import com.omegar.mvp.compiler.viewstateprovider.ElementToPresenterInfoProcessor;
 import com.omegar.mvp.compiler.viewstateprovider.NormalPresenterValidator;
-import com.omegar.mvp.compiler.viewstateprovider.PresenterInfoToViewStateProviderJavaFileProcessor;
+import com.omegar.mvp.compiler.viewstateprovider.PresenterInfoToViewStateProviderKotlinFileProcessor;
 import com.omegar.mvp.presenter.InjectPresenter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -140,7 +140,6 @@ public class MvpCompiler extends AbstractProcessor {
 		Publisher<TypeElement> viewElementPublisher = new Publisher<>();
 		Publisher<String> reflectorPackagesPublisher = new Publisher<>(getAdditionalMoxyReflectorPackages(roundEnv));
 
-		JavaFileWriter javaFileWriter = new JavaFileWriter(processingEnv.getFiler());
 		KotlinFileWriter kotlinFileWriter = new KotlinFileWriter(processingEnv.getFiler());
 
 		// moxyReflectorPipeline
@@ -150,7 +149,7 @@ public class MvpCompiler extends AbstractProcessor {
 						presenterContainerElementPublisher,
 						reflectorPackagesPublisher))
 				.addProcessor(new MoxyReflectorProcessor(currentMoxyReflectorPackage))
-				.buildPipeline(javaFileWriter)
+				.buildPipeline(kotlinFileWriter)
 				.start();
 
 
@@ -159,7 +158,7 @@ public class MvpCompiler extends AbstractProcessor {
 				.addProcessor(new ElementToViewInterfaceInfoProcessor(mElements, mMessager, mTypes))
 				.uniqueFilter()
 				.addValidator(new ViewInterfaceInfoValidator(mElements, currentMoxyReflectorPackage))
-				.addProcessor(new ViewInterfaceInfoToViewStateJavaFileProcessor(mElements, mTypes, currentMoxyReflectorPackage, reflectorPackagesPublisher))
+				.addProcessor(new ViewInterfaceInfoToViewStateKotlinFileProcessor(mElements, mTypes, currentMoxyReflectorPackage, reflectorPackagesPublisher))
 				.buildPipeline(kotlinFileWriter)
 				.start();
 
@@ -168,8 +167,8 @@ public class MvpCompiler extends AbstractProcessor {
 				.addProcessor(new ElementToPresenterInfoProcessor(mElements, viewElementPublisher))
 				.addValidator(new NormalPresenterValidator())
 				.copyTypeElementTo(presenterElementPublisher)
-				.addProcessor(new PresenterInfoToViewStateProviderJavaFileProcessor().withCache())
-				.buildPipeline(javaFileWriter)
+				.addProcessor(new PresenterInfoToViewStateProviderKotlinFileProcessor().withCache())
+				.buildPipeline(kotlinFileWriter)
 				.start();
 
 		if (mInjectPresenterAnnotation.contains(annotations)) {
@@ -182,7 +181,7 @@ public class MvpCompiler extends AbstractProcessor {
 					.copyPublishTo(presenterContainerElementPublisher)
 					.addProcessor(new ElementToTargetClassInfoProcessor())
 					.addProcessor(new TargetClassInfoToPresenterBinderJavaFileProcessor())
-					.buildPipeline(javaFileWriter)
+					.buildPipeline(kotlinFileWriter)
 					.start();
 		} else {
 			presenterContainerElementPublisher.finish();

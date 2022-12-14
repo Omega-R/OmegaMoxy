@@ -7,6 +7,7 @@ import com.omegar.mvp.compiler.entity.ViewCommandInfo
 import com.omegar.mvp.compiler.entity.ViewInterfaceInfo
 import com.omegar.mvp.compiler.entity.ViewMethod.Type.Method
 import com.omegar.mvp.compiler.entity.ViewMethod.Type.Property
+import com.omegar.mvp.compiler.pipeline.KotlinFile
 import com.omegar.mvp.compiler.pipeline.KotlinFileProcessor
 import com.omegar.mvp.compiler.pipeline.PipelineContext
 import com.omegar.mvp.compiler.pipeline.Publisher
@@ -56,7 +57,7 @@ import javax.lang.model.util.Types
  *
  * @author Yuri Shmakov
  */
-class ViewInterfaceInfoToViewStateJavaFileProcessor(
+class ViewInterfaceInfoToViewStateKotlinFileProcessor(
         private val mElements: Elements,
         private val mTypes: Types,
         private val mCurrentMoxyReflectorPackage: String,
@@ -84,7 +85,7 @@ class ViewInterfaceInfoToViewStateJavaFileProcessor(
 
 
     @OptIn(KotlinPoetMetadataPreview::class)
-    override fun process(viewInterfaceInfo: ViewInterfaceInfo?): FileSpec {
+    override fun process(viewInterfaceInfo: ViewInterfaceInfo?): KotlinFile {
         val viewName = viewInterfaceInfo!!.name
         val nameWithTypeVariables = viewInterfaceInfo.nameWithTypeVariables
         val variableName = TypeVariableName(VIEW, nameWithTypeVariables)

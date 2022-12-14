@@ -30,7 +30,7 @@ abstract class MvpPresenter<View : MvpView> {
         @JvmName("setPresenterType") set
 
     @Suppress("UNCHECKED_CAST")
-    private var mvpViewState: MvpViewState<View> = MoxyReflector.getViewState(javaClass) as MvpViewState<View>
+    private var mvpViewState: MvpViewState<View> = MoxyReflector.getViewState(this::class) as MvpViewState<View>
 
     private val savedFields: MutableList<SavedField<*>> = mutableListOf()
 
