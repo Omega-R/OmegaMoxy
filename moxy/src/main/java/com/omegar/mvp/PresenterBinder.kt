@@ -8,6 +8,6 @@ import com.omegar.mvp.presenter.PresenterField
  *
  * @author Alexander Blinov
  */
-abstract class PresenterBinder<PresentersContainer> {
-    abstract val presenterFields: List<PresenterField<PresentersContainer>>
+abstract class PresenterBinder<PresentersContainer, Presenter: MvpPresenter<*>> {
+    abstract val presenterFields: List<PresenterField<PresentersContainer, Presenter>>
 }

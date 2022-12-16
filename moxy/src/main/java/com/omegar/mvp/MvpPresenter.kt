@@ -22,10 +22,10 @@ abstract class MvpPresenter<View : MvpView> {
         get() = mvpViewState as View
 
     private var firstLaunch = true
-    internal var tag: String? = null
+    internal lateinit var presenterTag: String
         @JvmName("getTag") get
         @JvmName("setTag") set
-    internal var presenterType: PresenterType? = null
+    internal lateinit var presenterType: PresenterType
         @JvmName("getPresenterType") get
         @JvmName("setPresenterType") set
 

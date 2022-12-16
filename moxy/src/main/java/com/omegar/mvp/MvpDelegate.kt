@@ -3,6 +3,7 @@ package com.omegar.mvp
 import com.omegar.mvp.MvpFacade.mvpProcessor
 import com.omegar.mvp.MvpFacade.presenterStore
 import com.omegar.mvp.MvpFacade.presentersCounter
+import com.omegar.mvp.MvpProcessor.generateDelegateTag
 import com.omegar.mvp.presenter.PresenterField
 import com.omegar.mvp.presenter.PresenterType
 
@@ -38,27 +39,13 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
         private const val KEY_TAG = "MvpDelegate.KEY_TAG"
     }
 
-    private val mCustomPresenterFields: MutableList<PresenterField<Delegated>> = ArrayList()
+    private val mCustomPresenterFields: MutableList<PresenterField<Delegated, MvpPresenter<*>>> = ArrayList()
     private lateinit var delegateTag: String
     private var isAttached = false
     private lateinit var presenters: List<MvpPresenter<*>>
-    private var autoCreate = false
 
-    var uniqueKey = hashCode()
-
-    fun enableAutoCreate() {
-        autoCreate = true
-    }
-
-    fun disableAutoCreate() {
-        autoCreate = false
-    }
-
-    fun autoCreate() {
-        if (autoCreate && uniqueKey != hashCode()) {
-            onCreate(null)
-        }
-    }
+    @Suppress("LeakingThis")
+    var uniqueKey = System.identityHashCode(this)
 
     /**
      *
@@ -71,10 +58,11 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
         isAttached = false
 
         //get base tag for presenters
-        delegateTag = (saveStore?.getString(KEY_TAG) ?: generateTag()).also { delegateTag ->
-            //bind presenters to view
-            presenters = mvpProcessor.getMvpPresenters(delegated, delegateTag, mCustomPresenterFields)
-        }
+        delegateTag = (saveStore?.getString(KEY_TAG) ?: generateDelegateTag(delegated::class, this::class, uniqueKey))
+            .also { delegateTag ->
+                //bind presenters to view
+                presenters = mvpProcessor.getMvpPresenters(delegated, delegateTag, mCustomPresenterFields)
+            }
     }
 
     /**
@@ -127,7 +115,7 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
             .forEach { presenter ->
                 val isRejected = presentersCounter.rejectPresenter(presenter, delegateTag)
                 if (isRejected && presenter.presenterType !== PresenterType.GLOBAL) {
-                    presenterStore.remove(presenter.tag!!)
+                    presenterStore.remove(presenter.presenterTag)
                     presenter.onDestroy()
                 }
             }
@@ -142,19 +130,9 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
         outState.putString(KEY_TAG, delegateTag)
     }
 
-    fun addCustomPresenterFields(customPresenterField: PresenterField<Delegated>) {
-        mCustomPresenterFields.add(customPresenterField)
-        autoCreate()
-    }
-
-    /**
-     * @return generated tag in format: &lt;parent_delegate_tag&gt; &lt;delegated_class_full_name&gt;$MvpDelegate@&lt;hashCode&gt;
-     *
-     *
-     * example: SampleFragment$MvpDelegate@32649b0
-     */
-    private fun generateTag(): String {
-        return delegated::class.simpleName + "$" + this::class.simpleName + "@" + Integer.toHexString(uniqueKey)
+    fun <P : MvpPresenter<*>> addCustomPresenterFields(customPresenterField: PresenterField<Delegated, P>) {
+        @Suppress("UNCHECKED_CAST")
+        mCustomPresenterFields.add(customPresenterField as PresenterField<Delegated, MvpPresenter<*>>)
     }
 
 }

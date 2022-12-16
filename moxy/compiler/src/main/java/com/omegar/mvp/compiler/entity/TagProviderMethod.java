@@ -8,7 +8,6 @@ public class TagProviderMethod {
 	private final TypeMirror presenterClass;
 	private final String methodName;
 	private final PresenterType type;
-	private final String presenterId;
 
 	public TagProviderMethod(TypeMirror presenterClass, String methodName, String type, String presenterId) {
 		this.presenterClass = presenterClass;
@@ -18,7 +17,6 @@ public class TagProviderMethod {
 		} else {
 			this.type = PresenterType.valueOf(type);
 		}
-		this.presenterId = presenterId;
 	}
 
 	public TypeMirror getPresenterClass() {
@@ -33,7 +31,4 @@ public class TagProviderMethod {
 		return type;
 	}
 
-	public String getPresenterId() {
-		return presenterId;
-	}
 }

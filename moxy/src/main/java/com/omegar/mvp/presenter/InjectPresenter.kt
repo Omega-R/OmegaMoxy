@@ -10,7 +10,5 @@ package com.omegar.mvp.presenter
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class InjectPresenter(
-    val tag: String = "",
     val type: PresenterType = PresenterType.LOCAL,
-    val presenterId: String = ""
 )

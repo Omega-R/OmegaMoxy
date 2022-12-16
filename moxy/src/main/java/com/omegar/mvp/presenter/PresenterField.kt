@@ -1,6 +1,7 @@
 package com.omegar.mvp.presenter
 
 import com.omegar.mvp.MvpPresenter
+import kotlin.reflect.KClass
 
 /**
  * Date: 18-Dec-15
@@ -9,19 +10,13 @@ import com.omegar.mvp.MvpPresenter
  * @author Alexander Blinov
  * @author Yuri Shmakov
  */
-abstract class PresenterField<PresentersContainer> protected constructor(
-    protected val tag: String,
+abstract class PresenterField<PresentersContainer, Presenter : MvpPresenter<*>> protected constructor(
     val presenterType: PresenterType,
-    val presenterId: String?
+    val presenterClass: KClass<Presenter>
 ) {
 
-    abstract fun bind(container: PresentersContainer, presenter: MvpPresenter<*>)
+    abstract fun bind(container: PresentersContainer, presenter: Presenter)
 
-    abstract fun providePresenter(delegated: PresentersContainer): MvpPresenter<*>
-
-    // Delegated may be used from generated code if user plane to generate tag at runtime
-    open fun getTag(delegated: PresentersContainer): String {
-        return tag
-    }
+    abstract fun providePresenter(delegated: PresentersContainer): Presenter
 
 }

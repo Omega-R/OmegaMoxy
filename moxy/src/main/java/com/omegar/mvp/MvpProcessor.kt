@@ -39,28 +39,35 @@ object MvpProcessor {
      * @param presenterField info about presenter from [InjectPresenter]
      * @param delegateTag    unique tag @return MvpPresenter instance
     </Delegated> */
-    private fun <Delegated> getMvpPresenter(
+    private fun <Delegated : Any, Presenter : MvpPresenter<*>> getMvpPresenter(
         target: Delegated,
-        presenterField: PresenterField<Delegated>,
+        presenterField: PresenterField<Delegated, Presenter>,
         delegateTag: String
-    ): MvpPresenter<*>? {
-        val type = presenterField.presenterType
-        val tag = when (type) {
-            PresenterType.LOCAL -> delegateTag + "$" + presenterField.getTag(target)
-            else -> presenterField.getTag(target)
+    ): Presenter {
+        return getOrCreateMvpPresenter(
+            delegateTag = delegateTag,
+            presenterType = presenterField.presenterType,
+            presenterClass = presenterField.presenterClass
+        ) {
+            presenterField.providePresenter(target)
         }
+    }
 
-        return presenterStore[tag] ?: let {
-            presenterField.providePresenter(target)?.also { presenter ->
-                presenter.presenterType = type
-                presenter.tag = tag
-                presenterStore[tag] = presenter
-            }
+    @Suppress("UNCHECKED_CAST")
+    internal inline fun <Presenter : MvpPresenter<*>> getOrCreateMvpPresenter(
+        delegateTag: String,
+        presenterType: PresenterType,
+        presenterClass: KClass<*>,
+        presenterFactory: () -> Presenter
+    ): Presenter {
+        val presenterTag = generatePresenterTag(presenterType, delegateTag, presenterClass)
+        return presenterStore[presenterTag] as Presenter? ?: presenterFactory().also { presenter ->
+            presenter.presenterType = presenterType
+            presenter.presenterTag = presenterTag
         }
     }
 
     /**
-     *
      * Gets presenters [List] annotated with [InjectPresenter] for view.
      *
      * See full info about getting presenter instance in [.getMvpPresenter]
@@ -70,45 +77,45 @@ object MvpProcessor {
      * @param <Delegated> type of delegated
      * @return presenters list for specifies presenters container
     </Delegated> */
-    fun <Delegated : Any> getMvpPresenters(
+    fun <Delegated : Any, P : MvpPresenter<*>> getMvpPresenters(
         delegated: Delegated,
         delegateTag: String,
-        customPresenterFields: List<PresenterField<Delegated>>?
-    ): List<MvpPresenter<*>> {
-        val presenters: MutableList<MvpPresenter<*>> = ArrayList()
-
-        getPresenterBinders(delegated).forEach { presenterBinder ->
-            presenterBinder.presenterFields.forEach { presenterField ->
-                handlePresenterField(delegated, delegateTag, presenters, presenterField)
+        customPresenterFields: List<PresenterField<Delegated, P>>?
+    ): List<P> {
+        return getPresenterBinders<Delegated, P>(delegated::class)
+            .flatMap { it.presenterFields }
+            .plus(customPresenterFields.orEmpty())
+            .map { presenterField ->
+                getMvpPresenter(delegated, presenterField, delegateTag).also { presenter ->
+                    presentersCounter.injectPresenter(presenter, delegateTag)
+                    presenterField.bind(delegated, presenter)
+                }
             }
-        }
-
-        // handle custom presenter fields
-        customPresenterFields?.forEach { presenterField ->
-            handlePresenterField(delegated, delegateTag, presenters, presenterField)
-        }
-        return presenters
     }
 
-    private fun <Delegated : Any> getPresenterBinders(delegated: Delegated): List<PresenterBinder<Delegated>> {
+    @Suppress("UNCHECKED_CAST")
+    private fun <Delegated : Any, P : MvpPresenter<*>> getPresenterBinders(delegatedClass: KClass<out Delegated>):
+            List<PresenterBinder<Delegated, P>> {
         if (!hasMoxyReflector) return emptyList()
 
-        val aClass: KClass<*> = delegated::class
-        val presenterBinders: List<Any>? = MoxyReflector.getPresenterBinders(aClass)
+        val presenterBinders = MoxyReflector.getPresenterBinders(delegatedClass) as List<PresenterBinder<Delegated, P>>?
 
-        return presenterBinders?.takeIf { it.isNotEmpty() }.orEmpty() as List<PresenterBinder<Delegated>>
+        return presenterBinders.orEmpty()
     }
 
-    private fun <Delegated> handlePresenterField(
-        delegated: Delegated,
-        delegateTag: String,
-        presenters: MutableList<MvpPresenter<*>>,
-        presenterField: PresenterField<Delegated>
-    ) {
-        getMvpPresenter(delegated, presenterField, delegateTag)?.let { presenter ->
-            presentersCounter.injectPresenter(presenter, delegateTag)
-            presenters.add(presenter)
-            presenterField.bind(delegated, presenter)
+    /**
+     * @return generated tag in format: &lt;parent_delegate_tag&gt; &lt;delegated_class_full_name&gt;$MvpDelegate@&lt;hashCode&gt;
+     *
+     * example: SampleFragment$MvpDelegate@32649b0
+     */
+    fun generateDelegateTag(delegatedClass: KClass<*>, delegateClass: KClass<*>, uniqueKey: Int): String {
+        return delegatedClass.simpleName + "$" + delegateClass.simpleName + "@" + Integer.toHexString(uniqueKey)
+    }
+
+    fun generatePresenterTag(type: PresenterType, delegateTag: String, presenterClass: KClass<*>): String {
+        return when (type) {
+            PresenterType.LOCAL -> delegateTag + presenterClass.qualifiedName
+            else -> presenterClass.qualifiedName.orEmpty()
         }
     }
 

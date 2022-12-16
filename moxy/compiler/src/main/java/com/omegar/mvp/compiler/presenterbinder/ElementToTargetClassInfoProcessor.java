@@ -56,10 +56,8 @@ public class ElementToTargetClassInfoProcessor extends ElementProcessor<TypeElem
 			String name = element.toString();
 
 			String type = Util.getAnnotationValueAsString(annotation, "type");
-			String tag = Util.getAnnotationValueAsString(annotation, "tag");
-			String presenterId = Util.getAnnotationValueAsString(annotation, "presenterId");
 
-			com.omegar.mvp.compiler.entity.TargetPresenterField field = new com.omegar.mvp.compiler.entity.TargetPresenterField(clazz, name, type, tag, presenterId);
+			com.omegar.mvp.compiler.entity.TargetPresenterField field = new com.omegar.mvp.compiler.entity.TargetPresenterField(clazz, name, type);
 			fields.add(field);
 		}
 		return fields;
@@ -135,20 +133,6 @@ public class ElementToTargetClassInfoProcessor extends ElementProcessor<TypeElem
 						continue;
 					}
 
-					if (field.getTag() == null && presenterProvider.getTag() != null) {
-						continue;
-					}
-					if (field.getTag() != null && !field.getTag().equals(presenterProvider.getTag())) {
-						continue;
-					}
-
-					if (field.getPresenterId() == null && presenterProvider.getPresenterId() != null) {
-						continue;
-					}
-					if (field.getPresenterId() != null && !field.getPresenterId().equals(presenterProvider.getPresenterId())) {
-						continue;
-					}
-
 					field.setPresenterProviderMethodName(presenterProvider.getName());
 				}
 			}
@@ -166,13 +150,6 @@ public class ElementToTargetClassInfoProcessor extends ElementProcessor<TypeElem
 			for (TargetPresenterField field : fields) {
 				if ((field.getClazz()).equals(tagProvider.getPresenterClass())) {
 					if (field.getPresenterType() != tagProvider.getType()) {
-						continue;
-					}
-
-					if (field.getPresenterId() == null && tagProvider.getPresenterId() != null) {
-						continue;
-					}
-					if (field.getPresenterId() != null && !field.getPresenterId().equals(tagProvider.getPresenterId())) {
 						continue;
 					}
 

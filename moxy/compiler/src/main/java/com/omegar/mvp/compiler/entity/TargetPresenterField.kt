@@ -12,8 +12,6 @@ class TargetPresenterField(
     val clazz: TypeMirror,
     val name: String,
     presenterType: String?,
-    val tag: String?,
-    val presenterId: String?
 ) {
     val isParametrized: Boolean
     val typeName: TypeName
