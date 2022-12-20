@@ -36,7 +36,6 @@ open class MvpAppCompatFragment : Fragment, MvpDelegateHolder<MvpAppCompatFragme
         }
 
         super.setArguments(args)
-        mvpDelegate.autoCreate()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

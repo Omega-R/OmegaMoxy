@@ -53,7 +53,7 @@ class TargetClassInfoToPresenterBinderJavaFileProcessor : KotlinFileProcessor<Ta
         val className = targetClassName.simpleNames.joinToString("$") + MvpProcessor.PRESENTER_BINDER_SUFFIX
         val classBuilder = TypeSpec.classBuilder(className)
             .addOriginatingElement(targetClassInfo.typeElement)
-            .superclass(PresenterBinder::class.asClassName().parameterizedBy(targetClassName))
+            .superclass(PresenterBinder::class.asClassName().parameterizedBy(targetClassName, MvpPresenter::class.asClassName().parameterizedBy(STAR)))
             .addProperty(generateGetPresentersMethod(fields, targetClassName))
             .addTypes(fields.map { field ->
                 generatePresenterBinderClass(element, field, targetClassName)
@@ -70,37 +70,38 @@ class TargetClassInfoToPresenterBinderJavaFileProcessor : KotlinFileProcessor<Ta
         fields: List<TargetPresenterField>,
         containerClassName: ClassName
     ): PropertySpec {
+        val listTypeName = LIST.parameterizedBy(
+            PresenterField::class.asClassName().parameterizedBy(
+                containerClassName,
+                MvpPresenter::class.asClassName().parameterizedBy(STAR)
+            )
+        )
         return PropertySpec.builder(
             "presenterFields",
-            LIST.parameterizedBy(PresenterField::class.asClassName().parameterizedBy(containerClassName)),
+            listTypeName,
             KModifier.OVERRIDE
         )
             .initializer(
-                format = "listOf(" + fields.joinToString { "%L()" } + ")",
-                args = fields.map { ClassName.bestGuess(it.generatedClassName) }.toTypedArray()
+                format = "listOf(" + fields.joinToString { "%L()" } + ") as %T",
+                args = (fields.map { ClassName.bestGuess(it.generatedClassName) } + listTypeName).toTypedArray()
             )
             .build()
     }
 
     private fun generatePresenterBinderClass(
-        element: TypeElement, field: TargetPresenterField,
+        element: TypeElement,
+        field: TargetPresenterField,
         targetClassName: ClassName
     ): TypeSpec {
+        val presenterTypeName = field.typeName
         val classBuilder = TypeSpec.classBuilder(field.generatedClassName)
             .addOriginatingElement(element)
             .addModifiers(KModifier.PRIVATE)
-            .superclass(PresenterField::class.asClassName().parameterizedBy(targetClassName))
-            .addSuperclassConstructorParameter("%S", field.tag ?: field.name)
+            .superclass(PresenterField::class.asClassName().parameterizedBy(targetClassName, presenterTypeName))
             .addSuperclassConstructorParameter("%T.%L", field.presenterType.declaringClass, field.presenterType.name)
-            .apply {
-                if (field.presenterId != null) {
-                    addSuperclassConstructorParameter("%S", field.presenterId)
-                } else {
-                    addSuperclassConstructorParameter("null")
-                }
-            }
-            .addFunction(generateBindMethod(field, targetClassName))
-            .addFunction(generateProvidePresenterMethod(field, targetClassName))
+            .addSuperclassConstructorParameter("%T::class", presenterTypeName)
+            .addFunction(generateBindMethod(field, targetClassName, presenterTypeName))
+            .addFunction(generateProvidePresenterMethod(field, targetClassName, presenterTypeName))
         val tagProviderMethodName = field.presenterTagProviderMethodName
         if (tagProviderMethodName != null) {
             classBuilder.addFunction(generateGetTagMethod(tagProviderMethodName, targetClassName))
@@ -110,23 +111,25 @@ class TargetClassInfoToPresenterBinderJavaFileProcessor : KotlinFileProcessor<Ta
 
     private fun generateBindMethod(
         field: TargetPresenterField,
-        targetClassName: ClassName
+        targetClassName: ClassName,
+        presenterTypeName: TypeName
     ): FunSpec {
         return FunSpec.builder("bind")
             .addModifiers(KModifier.OVERRIDE)
             .addParameter("target", targetClassName)
-            .addParameter("presenter", MvpPresenter::class.asClassName().parameterizedBy(STAR))
-            .addStatement("target.%L = presenter as %T", field.name, field.typeName)
+            .addParameter("presenter", presenterTypeName)
+            .addStatement("target.%L = presenter", field.name)
             .build()
     }
 
     private fun generateProvidePresenterMethod(
         field: TargetPresenterField,
-        targetClassName: ClassName
+        targetClassName: ClassName,
+        presenterTypeName: TypeName
     ): FunSpec {
         val builder = FunSpec.builder("providePresenter")
             .addModifiers(KModifier.OVERRIDE)
-            .returns(MvpPresenter::class.asClassName().parameterizedBy(STAR))
+            .returns(presenterTypeName)
             .addParameter("delegated", targetClassName)
         if (field.presenterProviderMethodName != null) {
             builder.addStatement("return delegated.%L()", field.presenterProviderMethodName!!)

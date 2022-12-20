@@ -23,7 +23,6 @@ open class MvpBottomSheetDialogFragment : BottomSheetDialogFragment(), MvpDelega
         }
 
         super.setArguments(args)
-        mvpDelegate.autoCreate()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

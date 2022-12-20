@@ -41,7 +41,6 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder<MvpAppCom
         if (lastStartIntent?.component?.className == this::class.java.name) {
             intent = lastStartIntent
             mvpDelegate.uniqueKey = intent.getIntExtra(EXTRA_UNIQUE_KEY, mvpDelegate.uniqueKey)
-            mvpDelegate.enableAutoCreate()
         }
     }
 

@@ -12,7 +12,9 @@ class MoxyActivity: MvpAppCompatActivity(R.layout.activity_moxy), MoxyView {
         var first: Boolean = true
     }
 
-    private val presenter: MoxyPresenter by providePresenter()
+    private val presenter: MoxyPresenter by providePresenter {
+        MoxyPresenter()
+    }
 
     override var duration: Duration = 0.seconds
 
