@@ -2,6 +2,7 @@ package com.omegar.mvp.compiler.reflector
 
 import com.omegar.mvp.MvpProcessor
 import com.omegar.mvp.ViewStateProvider
+import com.omegar.mvp.compiler.MoxyConst
 import com.omegar.mvp.compiler.MvpCompiler
 import com.omegar.mvp.compiler.pipeline.KotlinFile
 import com.omegar.mvp.compiler.pipeline.KotlinFileProcessor
@@ -127,14 +128,14 @@ class MoxyReflectorProcessor(
         val builder = CodeBlock.builder()
         val viewStateInitMap = getInitMap(presenterClassNames.size, additionalMoxyReflectorsPackages.isNotEmpty())
         if (viewStateInitMap == null) {
-            builder.addStatement("sViewStateProviders = mutableListOf()")
+            builder.addStatement("sViewStateProviders = mutableMapOf()")
         } else {
             builder.addStatement("sViewStateProviders = mutableMapOf(")
             for (presenter in presenterClassNames) {
                 val presenterClassName = presenter.asClassName()
                 val viewStateProvider = ClassName(
                     presenterClassName.packageName,
-                    presenterClassName.simpleNames.joinToString("$") + MvpProcessor.VIEW_STATE_PROVIDER_SUFFIX
+                    presenterClassName.simpleNames.joinToString("$") + MoxyConst.VIEW_STATE_PROVIDER_SUFFIX
                 )
                 builder.addStatement("\t%T::class to %T(),", presenterClassName, viewStateProvider)
             }
@@ -143,7 +144,7 @@ class MoxyReflectorProcessor(
         builder.add("\n")
         val presenterBindersMapInit = getInitMap(presenterBinders.size, additionalMoxyReflectorsPackages.isNotEmpty())
         if (presenterBindersMapInit == null) {
-            builder.addStatement("sPresenterBinders = mutableListOf()")
+            builder.addStatement("sPresenterBinders = mutableMapOf()")
         } else {
             builder.addStatement("sPresenterBinders = mutableMapOf(")
 
@@ -153,7 +154,7 @@ class MoxyReflectorProcessor(
                 for (typeElement in value) {
                     val className = typeElement.asClassName()
                     val presenterBinderName =
-                        className.simpleNames.joinToString("$") + MvpProcessor.PRESENTER_BINDER_SUFFIX
+                        className.simpleNames.joinToString("$") + MoxyConst.PRESENTER_BINDER_SUFFIX
                     if (isFirst) {
                         isFirst = false
                     } else {

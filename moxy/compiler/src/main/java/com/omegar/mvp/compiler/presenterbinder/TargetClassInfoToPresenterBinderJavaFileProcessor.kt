@@ -1,8 +1,8 @@
 package com.omegar.mvp.compiler.presenterbinder
 
 import com.omegar.mvp.MvpPresenter
-import com.omegar.mvp.MvpProcessor
 import com.omegar.mvp.PresenterBinder
+import com.omegar.mvp.compiler.MoxyConst
 import com.omegar.mvp.compiler.Util
 import com.omegar.mvp.compiler.entity.TargetClassInfo
 import com.omegar.mvp.compiler.entity.TargetPresenterField
@@ -50,7 +50,7 @@ class TargetClassInfoToPresenterBinderJavaFileProcessor : KotlinFileProcessor<Ta
         val element: TypeElement = targetClassInfo.typeElement
         val fields = targetClassInfo.fields
 
-        val className = targetClassName.simpleNames.joinToString("$") + MvpProcessor.PRESENTER_BINDER_SUFFIX
+        val className = targetClassName.simpleNames.joinToString("$") + MoxyConst.PRESENTER_BINDER_SUFFIX
         val classBuilder = TypeSpec.classBuilder(className)
             .addOriginatingElement(targetClassInfo.typeElement)
             .superclass(PresenterBinder::class.asClassName().parameterizedBy(targetClassName, MvpPresenter::class.asClassName().parameterizedBy(STAR)))

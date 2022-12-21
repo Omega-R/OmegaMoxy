@@ -2,6 +2,7 @@ package com.omegar.mvp.compiler.viewstateprovider
 
 import com.omegar.mvp.MvpProcessor
 import com.omegar.mvp.ViewStateProvider
+import com.omegar.mvp.compiler.MoxyConst
 import com.omegar.mvp.compiler.entity.PresenterInfo
 import com.omegar.mvp.compiler.pipeline.KotlinFile
 import com.omegar.mvp.compiler.pipeline.KotlinFileProcessor
@@ -18,7 +19,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 class PresenterInfoToViewStateProviderKotlinFileProcessor : KotlinFileProcessor<PresenterInfo>() {
 
     override fun process(presenterInfo: PresenterInfo): KotlinFile {
-        val className = presenterInfo.name.simpleName + MvpProcessor.VIEW_STATE_PROVIDER_SUFFIX
+        val className = presenterInfo.name.simpleName + MoxyConst.VIEW_STATE_PROVIDER_SUFFIX
         val typeSpec = TypeSpec.classBuilder(className)
             .addOriginatingElement(presenterInfo.typeElement)
             .superclass(ViewStateProvider::class)

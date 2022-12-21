@@ -1,6 +1,7 @@
 package com.omegar.mvp.compiler.entity
 
 import com.omegar.mvp.MvpProcessor
+import com.omegar.mvp.compiler.MoxyConst
 import com.omegar.mvp.compiler.Util
 import com.omegar.mvp.presenter.PresenterType
 import com.squareup.kotlinpoet.ParameterizedTypeName
@@ -26,5 +27,5 @@ class TargetPresenterField(
     }
 
     val generatedClassName: String
-        get() = Util.capitalizeString(name) + MvpProcessor.PRESENTER_BINDER_INNER_SUFFIX
+        get() = Util.capitalizeString(name) + MoxyConst.PRESENTER_BINDER_INNER_SUFFIX
 }

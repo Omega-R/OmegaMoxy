@@ -1,6 +1,7 @@
 package com.omegar.mvp.compiler.entity
 
 import com.omegar.mvp.MvpProcessor
+import com.omegar.mvp.compiler.MoxyConst
 import com.omegar.mvp.compiler.Util
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -26,12 +27,12 @@ class ViewInterfaceInfo(
 
     companion object {
         fun getViewStateFullName(elements: Elements?, viewTypeElement: TypeElement?): String {
-            return Util.getFullClassName(elements, viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX
+            return Util.getFullClassName(elements, viewTypeElement) + MoxyConst.VIEW_STATE_SUFFIX
         }
 
         @JvmStatic
         fun getViewStateFullName(fullViewName: String): String {
-            return fullViewName + MvpProcessor.VIEW_STATE_SUFFIX
+            return fullViewName + MoxyConst.VIEW_STATE_SUFFIX
         }
 
         @JvmStatic
@@ -40,7 +41,7 @@ class ViewInterfaceInfo(
         }
 
         fun getViewStateSimpleName(elements: Elements?, viewTypeElement: TypeElement?): String {
-            return Util.getSimpleClassName(elements, viewTypeElement) + MvpProcessor.VIEW_STATE_SUFFIX
+            return Util.getSimpleClassName(elements, viewTypeElement) + MoxyConst.VIEW_STATE_SUFFIX
         }
     }
 

@@ -15,10 +15,6 @@ import kotlin.reflect.KClass
  */
 object MvpProcessor {
 
-    const val PRESENTER_BINDER_SUFFIX = "$\$PresentersBinder"
-    const val PRESENTER_BINDER_INNER_SUFFIX = "Binder"
-    const val VIEW_STATE_SUFFIX = "$\$State"
-    const val VIEW_STATE_PROVIDER_SUFFIX = "$\$ViewStateProvider"
     private var hasMoxyReflector: Boolean = try {
         MoxyReflector
         true
