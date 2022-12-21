@@ -55,8 +55,6 @@ class MoxyReflectorProcessor(
         additionalMoxyReflectorsPackages: MutableSet<String>
     ): KotlinFile {
 
-        println("presenterClassNames = $presenterClassNames")
-
         // sort to preserve order of statements between compilations
         val presenterBinders: Map<TypeElement, List<TypeElement>> = getPresenterBinders(presentersContainers)
 
@@ -114,11 +112,6 @@ class MoxyReflectorProcessor(
             .build()
     }
 
-
-    private fun getInitMap(size: Int, additionalPackages: Boolean): Int? {
-        return if (!additionalPackages) size else null
-    }
-
     private fun generateStaticInitializer(
         presenterClassNamesSet: Set<TypeElement>,
         additionalMoxyReflectorsPackagesSet: Set<String>,
@@ -128,46 +121,39 @@ class MoxyReflectorProcessor(
         val presenterClassNames = presenterClassNamesSet.sortedWith(TYPE_ELEMENT_COMPARATOR)
         val additionalMoxyReflectorsPackages = additionalMoxyReflectorsPackagesSet.sortedWith(Comparator.naturalOrder())
         val builder = CodeBlock.builder()
-        val viewStateInitMap = getInitMap(presenterClassNames.size, additionalMoxyReflectorsPackages.isNotEmpty())
-        if (viewStateInitMap == null) {
-            builder.addStatement("sViewStateProviders = mutableMapOf()")
-        } else {
-            builder.addStatement("sViewStateProviders = mutableMapOf(")
-            for (presenter in presenterClassNames) {
-                val presenterClassName = presenter.asClassName()
-                val viewStateProvider = ClassName(
-                    presenterClassName.packageName,
-                    presenterClassName.simpleNames.joinToString("$") + MoxyConst.VIEW_STATE_PROVIDER_SUFFIX
-                )
-                builder.addStatement("\t%T::class to %T(),", presenterClassName, viewStateProvider)
-            }
-            builder.addStatement(")")
+        builder.addStatement("sViewStateProviders = mutableMapOf(")
+        for (presenter in presenterClassNames) {
+            val presenterClassName = presenter.asClassName()
+            val viewStateProvider = ClassName(
+                presenterClassName.packageName,
+                presenterClassName.simpleNames.joinToString("$") + MoxyConst.VIEW_STATE_PROVIDER_SUFFIX
+            )
+            builder.addStatement("\t%T::class to %T(),", presenterClassName, viewStateProvider)
         }
-        builder.add("\n")
-        val presenterBindersMapInit = getInitMap(presenterBinders.size, additionalMoxyReflectorsPackages.isNotEmpty())
-        if (presenterBindersMapInit == null) {
-            builder.addStatement("sPresenterBinders = mutableMapOf()")
-        } else {
-            builder.addStatement("sPresenterBinders = mutableMapOf(")
+        builder.addStatement(")")
 
-            for ((key, value) in presenterBinders) {
-                builder.add("\t%T::class to listOf(", key)
-                var isFirst = true
-                for (typeElement in value) {
-                    val className = typeElement.asClassName()
-                    val presenterBinderName =
-                        className.simpleNames.joinToString("$") + MoxyConst.PRESENTER_BINDER_SUFFIX
-                    if (isFirst) {
-                        isFirst = false
-                    } else {
-                        builder.add(", ")
-                    }
-                    builder.add("%T()", ClassName(className.packageName, presenterBinderName))
+        builder.add("\n")
+
+        builder.addStatement("sPresenterBinders = mutableMapOf(")
+
+        for ((key, value) in presenterBinders) {
+            builder.add("\t%T::class to listOf(", key)
+            var isFirst = true
+            for (typeElement in value) {
+                val className = typeElement.asClassName()
+                val presenterBinderName =
+                    className.simpleNames.joinToString("$") + MoxyConst.PRESENTER_BINDER_SUFFIX
+                if (isFirst) {
+                    isFirst = false
+                } else {
+                    builder.add(", ")
                 }
-                builder.add("),")
+                builder.add("%T()", ClassName(className.packageName, presenterBinderName))
             }
-            builder.addStatement(")")
+            builder.add("),")
         }
+        builder.addStatement(")")
+
         builder.add("\n")
         for (pkg in additionalMoxyReflectorsPackages) {
             val moxyReflector = ClassName(pkg, "MoxyReflector")
