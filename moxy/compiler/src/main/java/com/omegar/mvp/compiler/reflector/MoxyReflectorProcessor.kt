@@ -55,6 +55,8 @@ class MoxyReflectorProcessor(
         additionalMoxyReflectorsPackages: MutableSet<String>
     ): KotlinFile {
 
+        println("presenterClassNames = $presenterClassNames")
+
         // sort to preserve order of statements between compilations
         val presenterBinders: Map<TypeElement, List<TypeElement>> = getPresenterBinders(presentersContainers)
 
@@ -70,8 +72,8 @@ class MoxyReflectorProcessor(
 
         classBuilder.addInitializerBlock(
             generateStaticInitializer(
-                ArrayList(presenterClassNames),
-                ArrayList(additionalMoxyReflectorsPackages),
+                presenterClassNames,
+                additionalMoxyReflectorsPackages,
                 presenterBinders
             )
         )
@@ -118,13 +120,13 @@ class MoxyReflectorProcessor(
     }
 
     private fun generateStaticInitializer(
-        presenterClassNames: List<TypeElement>,
-        additionalMoxyReflectorsPackages: List<String>,
+        presenterClassNamesSet: Set<TypeElement>,
+        additionalMoxyReflectorsPackagesSet: Set<String>,
         presenterBinders: Map<TypeElement, List<TypeElement>>
     ): CodeBlock {
         // sort to preserve order of statements between compilations
-        presenterClassNames.sortedWith(TYPE_ELEMENT_COMPARATOR)
-        additionalMoxyReflectorsPackages.sortedWith(Comparator.naturalOrder())
+        val presenterClassNames = presenterClassNamesSet.sortedWith(TYPE_ELEMENT_COMPARATOR)
+        val additionalMoxyReflectorsPackages = additionalMoxyReflectorsPackagesSet.sortedWith(Comparator.naturalOrder())
         val builder = CodeBlock.builder()
         val viewStateInitMap = getInitMap(presenterClassNames.size, additionalMoxyReflectorsPackages.isNotEmpty())
         if (viewStateInitMap == null) {
