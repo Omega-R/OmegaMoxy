@@ -58,6 +58,7 @@ object MvpProcessor {
     ): Presenter {
         val presenterTag = generatePresenterTag(presenterType, delegateTag, presenterClass)
         return presenterStore[presenterTag] as Presenter? ?: presenterFactory().also { presenter ->
+            presenterStore[presenterTag] = presenter
             presenter.presenterType = presenterType
             presenter.presenterTag = presenterTag
         }
