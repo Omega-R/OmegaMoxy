@@ -36,7 +36,7 @@ import com.omegar.mvp.presenter.PresenterType
 open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
 
     companion object {
-        private const val KEY_TAG = "MvpDelegate.KEY_TAG"
+        const val KEY_UNIQUE_KEY = "MvpDelegate.MVP_UNIQUE_KEY"
     }
 
     private val mCustomPresenterFields: MutableList<PresenterField<Delegated, MvpPresenter<*>>> = ArrayList()
@@ -45,10 +45,9 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
     private lateinit var presenters: List<MvpPresenter<*>>
 
     @Suppress("LeakingThis")
-    var uniqueKey = System.identityHashCode(this)
+    private var uniqueKey = System.identityHashCode(this)
 
     /**
-     *
      * Get(or create if not exists) presenters for delegated object and bind
      * them to this object fields
      *
@@ -57,19 +56,17 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
     fun onCreate(saveStore: MvpSaveStore<*>?) {
         isAttached = false
 
+        //load unique key for base tag
+        uniqueKey = saveStore?.getInt(KEY_UNIQUE_KEY, uniqueKey) ?: uniqueKey
         //get base tag for presenters
-        delegateTag = (saveStore?.getString(KEY_TAG) ?: generateDelegateTag(delegated::class, this::class, uniqueKey))
-            .also { delegateTag ->
-                //bind presenters to view
-                presenters = mvpProcessor.getMvpPresenters(delegated, delegateTag, mCustomPresenterFields)
-            }
+        delegateTag = generateDelegateTag(delegated::class, this::class, uniqueKey)
+        //bind presenters to view
+        presenters = mvpProcessor.getMvpPresenters(delegated, delegateTag, mCustomPresenterFields)
     }
 
     /**
-     *
      * Attach delegated object as view to presenter fields of this object.
-     * If delegate did not enter at [.onCreate](or
- * [.onCreate]) before this method, then view will not be attached to
+     * If delegate did not enter at [.onCreate](or [.onCreate]) before this method, then view will not be attached to
      * presenters
      */
     fun onAttach() {
@@ -127,7 +124,7 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
      * @param outState out state from Android component
      */
     fun onSaveInstanceState(outState: MvpSaveStore<*>) {
-        outState.putString(KEY_TAG, delegateTag)
+        outState.putInt(KEY_UNIQUE_KEY, uniqueKey)
     }
 
     fun <P : MvpPresenter<*>> addCustomPresenterFields(customPresenterField: PresenterField<Delegated, P>) {

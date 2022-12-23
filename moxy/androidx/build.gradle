@@ -4,20 +4,8 @@ plugins {
     id 'maven-publish'
 }
 
-publishing {
-    publications {
-        release(MavenPublication) {
-            artifactId = 'moxy-androidx'
-
-            afterEvaluate {
-                from components.release
-            }
-        }
-    }
-}
-
 android {
-    namespace 'com.omegar.mbp'
+    namespace 'com.omegar.mvp.androidx'
     compileSdk 33
 
     defaultConfig {
@@ -39,6 +27,29 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+}
+
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId 'com.github.Omega-R.OmegaMoxy'
+            artifactId 'moxy-androidx'
+            version project.hasProperty('version') ? project.version : gradle.gitHash()
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
+    repositories {
+        maven {
+            url gradle.nexusUrl
+            credentials {
+                username gradle.nexusUsername
+                password gradle.nexusPassword
+            }
+        }
     }
 }
 

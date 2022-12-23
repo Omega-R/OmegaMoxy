@@ -28,6 +28,14 @@ internal value class BundleMvpKeyStore(private val bundle: Bundle) : MvpSaveStor
     override fun putAll(keyStore: BundleMvpKeyStore) {
         bundle.putAll(keyStore.bundle)
     }
+
+    override fun getInt(key: String, defaultValue: Int): Int {
+        return bundle.getInt(key, defaultValue)
+    }
+
+    override fun putInt(key: String, value: Int) {
+        bundle.putInt(key, value)
+    }
 }
 
 internal fun Bundle.toKeyStore() = BundleMvpKeyStore(this)

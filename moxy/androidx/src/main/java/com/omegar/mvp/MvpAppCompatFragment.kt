@@ -14,10 +14,6 @@ import androidx.fragment.app.Fragment
  */
 open class MvpAppCompatFragment : Fragment, MvpDelegateHolder<MvpAppCompatFragment> {
 
-    companion object {
-        private const val KEY_UNIQUE_KEY = "MVP_UNIQUE_KEY"
-    }
-
     private var stateSaved = false
     @Suppress("LeakingThis")
     final override val mvpDelegate = MvpDelegate(this)
@@ -27,20 +23,9 @@ open class MvpAppCompatFragment : Fragment, MvpDelegateHolder<MvpAppCompatFragme
     @ContentView
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
 
-    override fun setArguments(args: Bundle?) {
-        val arguments = args ?: Bundle()
-        if (!arguments.containsKey(KEY_UNIQUE_KEY)) {
-            arguments.putInt(KEY_UNIQUE_KEY, mvpDelegate.uniqueKey)
-        } else {
-            mvpDelegate.uniqueKey = arguments.getInt(KEY_UNIQUE_KEY)
-        }
-
-        super.setArguments(args)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mvpDelegate.onCreate(savedInstanceState?.toKeyStore())
+        mvpDelegate.onCreate(savedInstanceState?.toKeyStore() ?: arguments?.toKeyStore())
     }
 
     override fun onStart() {
@@ -53,20 +38,6 @@ open class MvpAppCompatFragment : Fragment, MvpDelegateHolder<MvpAppCompatFragme
         super.onResume()
         stateSaved = false
         mvpDelegate.onAttach()
-    }
-
-    override fun startActivity(intent: Intent, options: Bundle?) {
-        MvpAppCompatActivity.updateLastStartIntent(intent)
-        super.startActivity(intent, options)
-    }
-
-    override fun startActivityForResult(intent: Intent, requestCode: Int) {
-        MvpAppCompatActivity.updateLastStartIntent(intent)
-        super.startActivityForResult(intent, requestCode)
-    }
-
-    override fun startActivity(intent: Intent?) {
-        super.startActivity(intent)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

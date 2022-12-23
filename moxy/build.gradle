@@ -7,10 +7,20 @@ plugins {
 publishing {
     publications {
         release(MavenPublication) {
+            groupId 'com.github.Omega-R.OmegaMoxy'
             artifactId = 'moxy'
-
+            version project.hasProperty('version') ? project.version : gradle.gitHash()
             afterEvaluate {
                 from components.java
+            }
+        }
+    }
+    repositories {
+        maven {
+            url gradle.nexusUrl
+            credentials {
+                username gradle.nexusUsername
+                password gradle.nexusPassword
             }
         }
     }

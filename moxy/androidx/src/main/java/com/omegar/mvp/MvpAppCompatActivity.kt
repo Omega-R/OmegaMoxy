@@ -14,22 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
  */
 open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder<MvpAppCompatActivity> {
 
-    companion object {
-
-        private const val EXTRA_UNIQUE_KEY = "MVP_UNIQUE_KEY"
-        private var lastStartIntent: Intent? = null
-
-
-        internal fun updateLastStartIntent(intent: Intent) {
-            if (!intent.hasExtra(EXTRA_UNIQUE_KEY)) {
-                intent.putExtra(EXTRA_UNIQUE_KEY, System.identityHashCode(intent))
-            }
-            lastStartIntent = intent
-        }
-
-    }
-
-    final override val mvpDelegate = MvpDelegate(this)
+    final override val mvpDelegate by lazy(mode = LazyThreadSafetyMode.NONE) { MvpDelegate(this) }
 
     @Suppress("unused")
     constructor() : super()
@@ -37,25 +22,10 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder<MvpAppCom
     @ContentView
     constructor(@LayoutRes contentLayoutId: Int) : super(contentLayoutId)
 
-    init {
-        if (lastStartIntent?.component?.className == this::class.java.name) {
-            intent = lastStartIntent
-            mvpDelegate.uniqueKey = intent.getIntExtra(EXTRA_UNIQUE_KEY, mvpDelegate.uniqueKey)
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val uniqueKey = intent.getIntExtra(EXTRA_UNIQUE_KEY, 0)
-        when {
-            uniqueKey == 0 -> {
-                intent.putExtra(EXTRA_UNIQUE_KEY, mvpDelegate.uniqueKey)
-            }
-            uniqueKey != mvpDelegate.uniqueKey -> {
-                mvpDelegate.uniqueKey = uniqueKey
-            }
-        }
-        mvpDelegate.onCreate(savedInstanceState?.toKeyStore())
+
+        mvpDelegate.onCreate(savedInstanceState?.toKeyStore() ?: intent.extras?.toKeyStore())
     }
 
     override fun onStart() {
@@ -66,19 +36,6 @@ open class MvpAppCompatActivity : AppCompatActivity, MvpDelegateHolder<MvpAppCom
     override fun onResume() {
         super.onResume()
         mvpDelegate.onAttach()
-    }
-
-    @Suppress("DEPRECATION")
-    override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
-        updateLastStartIntent(intent)
-        super.startActivityForResult(intent, requestCode, options)
-    }
-
-    override fun startActivities(intents: Array<out Intent>, options: Bundle?) {
-        if (intents.isNotEmpty()) {
-            updateLastStartIntent(intents.last())
-        }
-        super.startActivities(intents, options)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

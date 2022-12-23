@@ -6,6 +6,10 @@ interface MvpSaveStore<SaveStore: MvpSaveStore<SaveStore>> {
 
     fun putString(key: String, value: String?)
 
+    fun getInt(key: String, defaultValue: Int): Int
+
+    fun putInt(key: String, value: Int)
+
     fun getKeyStore(key: String): SaveStore?
 
     fun putKeyStore(key: String, keyStore: SaveStore?)

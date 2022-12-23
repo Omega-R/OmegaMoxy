@@ -30,7 +30,8 @@ abstract class MvpPresenter<View : MvpView> {
         @JvmName("setPresenterType") set
 
     @Suppress("UNCHECKED_CAST")
-    private var mvpViewState: MvpViewState<View> = MoxyReflector.getViewState(this::class) as MvpViewState<View>
+    private var mvpViewState: MvpViewState<View> = MoxyReflector.getViewState(this::class) as MvpViewState<View>?
+        ?: throw NullPointerException("ViewState not provided in ${this::class.simpleName}")
 
     private val savedFields: MutableList<SavedField<*>> = mutableListOf()
 
