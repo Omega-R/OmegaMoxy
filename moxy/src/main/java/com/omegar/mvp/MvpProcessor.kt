@@ -50,7 +50,7 @@ object MvpProcessor {
     }
 
     @Suppress("UNCHECKED_CAST")
-    internal inline fun <Presenter : MvpPresenter<*>> getOrCreateMvpPresenter(
+    fun <Presenter : MvpPresenter<*>> getOrCreateMvpPresenter(
         delegateTag: String,
         presenterType: PresenterType,
         presenterClass: KClass<*>,
