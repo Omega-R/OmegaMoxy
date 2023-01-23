@@ -1,15 +1,13 @@
-package com.omegar.mvp.compiler.viewstateprovider;
+package com.omegar.mvp.compiler.viewstateprovider
 
-import com.omegar.mvp.compiler.entity.PresenterInfo;
-import com.omegar.mvp.compiler.pipeline.Validator;
+import com.omegar.mvp.compiler.entity.PresenterInfo
+import com.omegar.mvp.compiler.pipeline.Validator
 
 /**
  * Created by Anton Knyazev on 07.12.2020.
  */
-public class NormalPresenterValidator extends Validator<PresenterInfo> {
+class NormalPresenterValidator : Validator<PresenterInfo>() {
 
-    @Override
-    public boolean validate(PresenterInfo input) {
-        return !input.isParametrized() && !input.isAbstracted();
-    }
+    override fun validate(input: PresenterInfo): Boolean = !input.isParametrized && !input.isAbstracted
+
 }

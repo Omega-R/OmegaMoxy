@@ -26,7 +26,7 @@ class ElementToViewInterfaceInfoProcessor(
         private val elements: Elements,
         private val messager: Messager,
         private val types: Types
-) : ElementProcessor<TypeElement?, ViewInterfaceInfo?>() {
+) : ElementProcessor<TypeElement, ViewInterfaceInfo>() {
 
     companion object {
         private val MOXY_VIEW_STATE_TYPE_ANNOTATION = MoxyViewCommand::class.java.name
@@ -39,9 +39,9 @@ class ElementToViewInterfaceInfoProcessor(
     private val addToEndSingleStrategyClass by lazy { elements.getTypeElement(AddToEndSingleStrategy::class.java.canonicalName) }
 
     @KotlinPoetMetadataPreview
-    override fun process(element: TypeElement?, context: PipelineContext<ViewInterfaceInfo?>) {
-        generateInfo(element!!)?.let {
-            context.next(it)
+    override fun process(input: TypeElement, context: PipelineContext<ViewInterfaceInfo>?) {
+        generateInfo(input)?.let {
+            context?.next(it)
         }
     }
 

@@ -26,7 +26,7 @@ class ViewInterfaceInfo(
 ) : TypeElementHolder {
 
     companion object {
-        fun getViewStateFullName(elements: Elements?, viewTypeElement: TypeElement?): String {
+        fun getViewStateFullName(elements: Elements, viewTypeElement: TypeElement): String {
             return Util.getFullClassName(elements, viewTypeElement) + MoxyConst.VIEW_STATE_SUFFIX
         }
 
@@ -36,11 +36,11 @@ class ViewInterfaceInfo(
         }
 
         @JvmStatic
-        fun getViewFullName(elements: Elements?, viewTypeElement: TypeElement?): String {
+        fun getViewFullName(elements: Elements, viewTypeElement: TypeElement): String {
             return Util.getFullClassName(elements, viewTypeElement)
         }
 
-        fun getViewStateSimpleName(elements: Elements?, viewTypeElement: TypeElement?): String {
+        fun getViewStateSimpleName(elements: Elements, viewTypeElement: TypeElement): String {
             return Util.getSimpleClassName(elements, viewTypeElement) + MoxyConst.VIEW_STATE_SUFFIX
         }
     }
@@ -49,11 +49,11 @@ class ViewInterfaceInfo(
 
     val nameWithTypeVariables: TypeName = if (typeVariables.isEmpty()) name else name.parameterizedBy(typeVariables)
 
-    fun getViewStateFullName(elements: Elements?): String {
+    fun getViewStateFullName(elements: Elements): String {
         return getViewStateFullName(elements, typeElement)
     }
 
-    fun getViewStateSimpleName(elements: Elements?): String {
+    fun getViewStateSimpleName(elements: Elements): String {
         return getViewStateSimpleName(elements, typeElement)
     }
 

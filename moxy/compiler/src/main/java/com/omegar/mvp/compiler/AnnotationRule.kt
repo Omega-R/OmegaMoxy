@@ -1,11 +1,8 @@
-package com.omegar.mvp.compiler;
+package com.omegar.mvp.compiler
 
-import com.omegar.mvp.compiler.entity.AnnotationInfo;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.Modifier;
+import com.omegar.mvp.compiler.entity.AnnotationInfo
+import javax.lang.model.element.Element
+import javax.lang.model.element.Modifier
 
 /**
  * Date: 17-Feb-16
@@ -13,47 +10,44 @@ import javax.lang.model.element.Modifier;
  *
  * @author esorokin
  */
-public abstract class AnnotationRule {
-	protected final Set<Modifier> mValidModifiers;
-	protected final AnnotationInfo<?> mAnnotationInfo;
-	protected StringBuilder mErrorBuilder;
+abstract class AnnotationRule(val annotationInfo: AnnotationInfo<*>, vararg validModifiers: Modifier) {
 
-	public AnnotationRule(AnnotationInfo<?> annotationInfo, Modifier... validModifiers) {
-		mAnnotationInfo = annotationInfo;
-		if (validModifiers == null || validModifiers.length == 0) {
-			throw new RuntimeException("Valid modifiers cant be empty or null.");
-		}
+    protected val validModifiers: Set<Modifier> = validModifiers.toSet()
 
-		mValidModifiers = new HashSet<>(Arrays.asList(validModifiers));
-		mErrorBuilder = new StringBuilder();
-	}
+    protected var errorBuilder: StringBuilder = StringBuilder()
 
-	/**
-	 * Method describe rules for using Annotation.
-	 *
-	 * @param AnnotatedField Checking annotated field.
-	 */
-	public abstract void checkAnnotation(Element AnnotatedField);
+    val errorStack: String
+        get() = errorBuilder.toString()
 
-	public String getErrorStack() {
-		return mErrorBuilder.toString();
-	}
+    init {
+        if (validModifiers.isEmpty()) {
+            throw RuntimeException("Valid modifiers cant be empty or null.")
+        }
+    }
 
-	protected String validModifiersToString() {
-		if (mValidModifiers.size() > 1) {
-			StringBuilder result = new StringBuilder("one of [");
-			boolean addSeparator = false;
-			for (Modifier validModifier : mValidModifiers) {
-				if (addSeparator) {
-					result.append(", ");
-				}
-				addSeparator = true;
-				result.append(validModifier.toString());
-			}
-			result.append("]");
-			return result.toString();
-		} else {
-			return mValidModifiers.iterator().next() + ".";
-		}
-	}
+    /**
+     * Method describe rules for using Annotation.
+     *
+     * @param annotatedField Checking annotated field.
+     */
+    abstract fun checkAnnotation(annotatedField: Element)
+
+    protected fun validModifiersToString(): String {
+        return if (validModifiers.size > 1) {
+            val result = StringBuilder("one of [")
+            var addSeparator = false
+            for (validModifier in validModifiers) {
+                if (addSeparator) {
+                    result.append(", ")
+                }
+                addSeparator = true
+                result.append(validModifier.toString())
+            }
+            result.append("]")
+            result.toString()
+        } else {
+            validModifiers.iterator().next().toString() + "."
+        }
+    }
+
 }

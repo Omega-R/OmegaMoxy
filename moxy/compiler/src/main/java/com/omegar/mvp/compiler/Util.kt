@@ -14,295 +14,237 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.omegar.mvp.compiler;
+package com.omegar.mvp.compiler
 
-import com.omegar.mvp.MvpView;
-import com.omegar.mvp.viewstate.strategy.StrategyType;
-import com.squareup.kotlinpoet.ClassName;
-import com.squareup.kotlinpoet.ClassNames;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.IntersectionType;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVariable;
-import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.Elements;
+import com.omegar.mvp.MvpView
+import com.omegar.mvp.viewstate.strategy.StrategyType
+import com.squareup.kotlinpoet.asClassName
+import java.util.*
+import javax.lang.model.element.*
+import javax.lang.model.type.*
+import javax.lang.model.util.Elements
 
 /**
  * Utilities for handling types in annotation processors
  *
  * @author Yuri Shmakov
  */
-@SuppressWarnings("WeakerAccess")
-public final class Util {
+object Util {
 
-	public static final ClassName MVP_VIEW_CLASS_NAME = ClassNames.get(MvpView.class);
+    val MVP_VIEW_CLASS_NAME = MvpView::class.java.asClassName()
 
-
-	public static String fillGenerics(Map<String, String> types, TypeMirror param) {
-		return fillGenerics(types, Collections.singletonList(param));
-	}
-
-	public static String fillGenerics(Map<String, String> types, List<? extends TypeMirror> params) {
-		return fillGenerics(types, params, ", ");
-	}
-
-	public static String fillGenerics(Map<String, String> types, List<? extends TypeMirror> params, String separator) {
-		StringBuilder result = new StringBuilder();
-
-		for (TypeMirror param : params) {
-			if (result.length() > 0) {
-				result.append(separator);
-			}
-
-			/**
-			 * "if" block's order is critically! E.g. IntersectionType is TypeVariable.
-			 */
-			if (param instanceof WildcardType) {
-				result.append("?");
-				final TypeMirror extendsBound = ((WildcardType) param).getExtendsBound();
-				if (extendsBound != null) {
-					result.append(" extends ").append(fillGenerics(types, extendsBound));
-				}
-				final TypeMirror superBound = ((WildcardType) param).getSuperBound();
-				if (superBound != null) {
-					result.append(" super ").append(fillGenerics(types, superBound));
-				}
-			} else if (param instanceof IntersectionType) {
-				result.append("?");
-				final List<? extends TypeMirror> bounds = ((IntersectionType) param).getBounds();
-
-				if (!bounds.isEmpty()) {
-					result.append(" extends ").append(fillGenerics(types, bounds, " & "));
-				}
-			} else if (param instanceof DeclaredType) {
-				result.append(((DeclaredType) param).asElement());
-
-				final List<? extends TypeMirror> typeArguments = ((DeclaredType) param).getTypeArguments();
-				if (!typeArguments.isEmpty()) {
-					final String s = fillGenerics(types, typeArguments);
-
-					result.append("<").append(s).append(">");
-				}
-			} else if (param instanceof TypeVariable) {
-				String type = types.get(param.toString());
-
-				if (type == null) {
-					type = ((TypeVariable) param).getUpperBound().toString();
-				}
-				result.append(type);
-
-			} else {
-				result.append(param);
-			}
-		}
-
-		return result.toString();
-	}
-
-	public static String getFullClassName(Elements elements, TypeMirror typeMirror) {
-		if (!(typeMirror instanceof DeclaredType)) {
-			return "";
-		}
-
-		TypeElement typeElement = (TypeElement) ((DeclaredType) typeMirror).asElement();
-		return getFullClassName(elements, typeElement);
-	}
-
-	public static String getFullClassName(Elements elements, TypeElement typeElement) {
-		String packageName = elements.getPackageOf(typeElement).getQualifiedName().toString();
-		if (packageName.length() > 0) {
-			packageName += ".";
-		}
-
-		String className = typeElement.toString().substring(packageName.length());
-		return packageName + className.replaceAll("\\.", "\\$");
-	}
-
-    public static String getSimpleClassName(Elements elements, TypeElement typeElement) {
-        String packageName = elements.getPackageOf(typeElement).getQualifiedName().toString();
-        if (packageName.length() > 0) {
-            packageName += ".";
-        }
-
-        String className = typeElement.toString().substring(packageName.length());
-        return className.replaceAll("\\.", "\\$");
+    fun fillGenerics(types: Map<String, String>, param: TypeMirror): String {
+        return fillGenerics(types, listOf(param))
     }
 
-	public static AnnotationMirror getAnnotation(Element element, String annotationClass) {
-		for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
-			if (annotationMirror.getAnnotationType().asElement().toString().equals(annotationClass))
-				return annotationMirror;
-		}
+    @JvmOverloads
+    fun fillGenerics(types: Map<String, String>, params: List<TypeMirror>, separator: String = ", "): String {
+        val result = StringBuilder()
+        for (param in params) {
+            if (result.isNotEmpty()) {
+                result.append(separator)
+            }
+            /**
+             * "if" block's order is critically! E.g. IntersectionType is TypeVariable.
+             */
+            if (param is WildcardType) {
+                result.append("?")
+                val extendsBound = param.extendsBound
+                if (extendsBound != null) {
+                    result.append(" extends ").append(fillGenerics(types, extendsBound))
+                }
+                val superBound = param.superBound
+                if (superBound != null) {
+                    result.append(" super ").append(fillGenerics(types, superBound))
+                }
+            } else if (param is IntersectionType) {
+                result.append("?")
+                val bounds = param.bounds
+                if (bounds.isNotEmpty()) {
+                    result.append(" extends ").append(fillGenerics(types, bounds, " & "))
+                }
+            } else if (param is DeclaredType) {
+                result.append(param.asElement())
+                val typeArguments = param.typeArguments
+                if (typeArguments.isNotEmpty()) {
+                    val s = fillGenerics(types, typeArguments)
+                    result.append("<").append(s).append(">")
+                }
+            } else if (param is TypeVariable) {
+                var type = types[param.toString()]
+                if (type == null) {
+                    type = param.upperBound.toString()
+                }
+                result.append(type)
+            } else {
+                result.append(param)
+            }
+        }
+        return result.toString()
+    }
 
-		return null;
-	}
+    fun getFullClassName(elements: Elements, typeMirror: TypeMirror?): String {
+        if (typeMirror !is DeclaredType) {
+            return ""
+        }
+        val typeElement = typeMirror.asElement() as TypeElement
+        return getFullClassName(elements, typeElement)
+    }
 
-	public static TypeMirror getAnnotationValueAsTypeMirror(AnnotationMirror annotationMirror, String key) {
-		AnnotationValue av = getAnnotationValue(annotationMirror, key);
+    fun getFullClassName(elements: Elements, typeElement: TypeElement): String {
+        var packageName = elements.getPackageOf(typeElement).qualifiedName.toString()
+        if (packageName.isNotEmpty()) {
+            packageName += "."
+        }
+        val className = typeElement.toString().substring(packageName.length)
+        return packageName + className.replace("\\.".toRegex(), "\\$")
+    }
 
-		if (av != null) {
-			return (TypeMirror) av.getValue();
-		} else {
-			return null;
-		}
-	}
+    fun getSimpleClassName(elements: Elements, typeElement: TypeElement): String {
+        var packageName = elements.getPackageOf(typeElement).qualifiedName.toString()
+        if (packageName.isNotEmpty()) {
+            packageName += "."
+        }
+        val className = typeElement.toString().substring(packageName.length)
+        return className.replace("\\.".toRegex(), "\\$")
+    }
 
-	public static StrategyType getAnnotationValueAsStrategyType(AnnotationMirror annotationMirror, String key) {
-		AnnotationValue av = getAnnotationValue(annotationMirror, key);
+    fun getAnnotation(element: Element, annotationClass: String): AnnotationMirror? {
+        for (annotationMirror in element.annotationMirrors) {
+            if (annotationMirror.annotationType.asElement().toString() == annotationClass) return annotationMirror
+        }
+        return null
+    }
 
-		if (av != null) {
-			String enumString = av.getValue().toString();
-			return StrategyType.valueOf(enumString);
-		} else {
-			return null;
-		}
-	}
+    fun getAnnotationValueAsTypeMirror(annotationMirror: AnnotationMirror?, key: String): TypeMirror? {
+        val av = getAnnotationValue(annotationMirror, key)
+        return if (av != null) {
+            av.value as TypeMirror
+        } else {
+            null
+        }
+    }
 
-	public static String getAnnotationValueAsString(AnnotationMirror annotationMirror, String key) {
-		AnnotationValue av = getAnnotationValue(annotationMirror, key);
+    fun getAnnotationValueAsStrategyType(annotationMirror: AnnotationMirror?, key: String): StrategyType? {
+        val av = getAnnotationValue(annotationMirror, key)
+        return if (av != null) {
+            val enumString = av.value.toString()
+            StrategyType.valueOf(enumString)
+        } else {
+            null
+        }
+    }
 
-		if (av != null) {
-			return av.getValue().toString();
-		} else {
-			return null;
-		}
-	}
+    fun getAnnotationValueAsString(annotationMirror: AnnotationMirror?, key: String): String? {
+        val av = getAnnotationValue(annotationMirror, key)
+        return av?.value?.toString()
+    }
 
-	public static boolean getAnnotationValueAsBoolean(AnnotationMirror annotationMirror, String key) {
-		AnnotationValue av = getAnnotationValue(annotationMirror, key);
+    fun getAnnotationValueAsBoolean(annotationMirror: AnnotationMirror?, key: String): Boolean {
+        val av = getAnnotationValue(annotationMirror, key)
+        return if (av != null) {
+            java.lang.Boolean.parseBoolean(av.value.toString())
+        } else {
+            false
+        }
+    }
 
-		if (av != null) {
-			return Boolean.parseBoolean(av.getValue().toString());
-		} else {
-			return false;
-		}
-	}
+    fun getAnnotationValue(annotationMirror: AnnotationMirror?, key: String): AnnotationValue? {
+        if (annotationMirror == null) return null
+        for ((key1, value) in annotationMirror.elementValues) {
+            if (key1.simpleName.toString() == key) {
+                return value
+            }
+        }
+        return null
+    }
 
+    fun getAnnotationValues(annotationMirror: AnnotationMirror?): Map<String, AnnotationValue?> {
+        if (annotationMirror == null) return emptyMap<String, AnnotationValue>()
+        val result: MutableMap<String, AnnotationValue?> = HashMap()
+        for ((key1, value) in annotationMirror.elementValues) {
+            val key = key1.simpleName.toString()
+            if (value != null) {
+                result[key] = value
+            }
+        }
+        return result
+    }
 
-	public static AnnotationValue getAnnotationValue(AnnotationMirror annotationMirror, String key) {
-		if (annotationMirror == null) return null;
+    fun hasEmptyConstructor(element: TypeElement): Boolean {
+        for (enclosedElement in element.enclosedElements) {
+            if (enclosedElement.kind == ElementKind.CONSTRUCTOR) {
+                val parameters = (enclosedElement as ExecutableElement).parameters
+                if (parameters == null || parameters.isEmpty()) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
 
-		for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet()) {
-			if (entry.getKey().getSimpleName().toString().equals(key)) {
-				return entry.getValue();
-			}
-		}
+    fun capitalizeString(string: String?): String {
+        return if (string == null || string.isEmpty()) "" else if (string.length == 1) string.uppercase(Locale.getDefault()) else string[0].uppercaseChar()
+            .toString() + string.substring(1)
+    }
 
-		return null;
-	}
+    fun decapitalizeString(string: String?): String {
+        return if (string == null || string.isEmpty()) "" else if (string.length == 1) string.lowercase(Locale.getDefault()) else string[0].lowercaseChar()
+            .toString() + string.substring(1)
+    }
 
-	public static Map<String, AnnotationValue> getAnnotationValues(AnnotationMirror annotationMirror) {
-		if (annotationMirror == null) return Collections.emptyMap();
+    fun isMvpElement(element: TypeElement?): Boolean {
+        if (element == null) return false
+        val className = element.asClassName()
+        if (className.equals(MVP_VIEW_CLASS_NAME)) return true
+        for (typeMirror in element.interfaces) {
+            val interfaceElement = (typeMirror as DeclaredType).asElement() as TypeElement
+            if (isMvpElement(interfaceElement)) return true
+        }
+        return false
+    }
 
-		Map<String, AnnotationValue> result = new HashMap<>();
+    fun <E> firstOrNull(list: List<E>?): E? {
+        return if (list == null || list.isEmpty()) null else list[0]
+    }
 
-		for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet()) {
-			String key = entry.getKey().getSimpleName().toString();
-			if (entry.getValue() != null) {
-				result.put(key, entry.getValue());
-			}
-		}
+    fun <E> lastOrNull(set: Set<E>?): E? {
+        return if (set == null || set.isEmpty()) null else last(set.iterator())
+    }
 
-		return result;
-	}
+    fun <E> lastOrNull(list: List<E>?): E? {
+        return if (list == null || list.isEmpty()) null else list[list.size - 1]
+    }
 
-	public static boolean hasEmptyConstructor(TypeElement element) {
-		for (Element enclosedElement : element.getEnclosedElements()) {
-			if (enclosedElement.getKind() == ElementKind.CONSTRUCTOR) {
-				List<? extends VariableElement> parameters = ((ExecutableElement) enclosedElement).getParameters();
-				if (parameters == null || parameters.isEmpty()) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+    fun <T> last(iterator: Iterator<T>): T {
+        while (true) {
+            val current = iterator.next()
+            if (!iterator.hasNext()) {
+                return current
+            }
+        }
+    }
 
-	public static String capitalizeString(String string) {
-		return string == null || string.isEmpty() ? "" : string.length() == 1 ? string.toUpperCase() : Character.toUpperCase(string.charAt(0)) + string.substring(1);
-	}
+    fun asElement(mirror: TypeMirror): TypeElement {
+        return (mirror as DeclaredType).asElement() as TypeElement
+    }
 
+    fun <E> newDistinctList(list: List<E>): List<E> {
+        return ArrayList(LinkedHashSet(list))
+    }
 
-	public static String decapitalizeString(String string) {
-		return string == null || string.isEmpty() ? "" : string.length() == 1 ? string.toLowerCase() : Character.toLowerCase(string.charAt(0)) + string.substring(1);
-	}
+    fun substringBefore(string: String, beforeChar: Char): String {
+        val beforeIndex = string.indexOf(beforeChar)
+        return if (beforeIndex >= 0) string.substring(0, beforeIndex) else string
+    }
 
-	public static boolean isMvpElement(TypeElement element) {
-		if (element == null) return false;
+    fun <E> newHashSet(vararg elements: E): HashSet<E> {
+        val set = HashSet<E>(elements.size)
+        Collections.addAll(set, *elements)
+        return set
+    }
 
-		ClassName className = ClassNames.get(element);
-		if (className.equals(MVP_VIEW_CLASS_NAME)) return true;
-
-		for (TypeMirror typeMirror : element.getInterfaces()) {
-			TypeElement interfaceElement = (TypeElement) ((DeclaredType) typeMirror).asElement();
-			if (isMvpElement(interfaceElement)) return true;
-		}
-		return false;
-	}
-
-	public static <E> E firstOrNull(@Nullable List<E> list) {
-		if (list == null || list.isEmpty()) return null;
-		return list.get(0);
-	}
-
-	public static <E> E lastOrNull(@Nullable Set<E> set) {
-		if (set == null || set.isEmpty()) return null;
-		return last(set.iterator());
-	}
-
-	public static <E> E lastOrNull(@Nullable List<E> list) {
-		if (list == null || list.isEmpty()) return null;
-		return list.get(list.size() - 1);
-	}
-
-	public static <T> T last(Iterator<T> iterator) {
-		while (true) {
-			T current = iterator.next();
-			if (!iterator.hasNext()) {
-				return current;
-			}
-		}
-	}
-
-	public static TypeElement asElement(TypeMirror mirror) {
-		return (TypeElement) ((DeclaredType) mirror).asElement();
-	}
-
-	public static <E> List<E> newDistinctList(List<E> list) {
-		return new ArrayList<>(new LinkedHashSet<>(list));
-	}
-
-	public static String substringBefore(String string, char beforeChar) {
-		int beforeIndex = string.indexOf(beforeChar);
-		if (beforeIndex >= 0) return string.substring(0, beforeIndex); else return string;
-	}
-
-	public static <E> HashSet<E> newHashSet(E... elements) {
-		HashSet<E> set = new HashSet<>(elements.length);
-		Collections.addAll(set, elements);
-		return set;
-	}
-
-	public static boolean startWith(@Nonnull String string, @Nonnull String prefix) {
-		return string.indexOf(prefix) == 0;
-	}
-
+    fun startWith(string: String, prefix: String): Boolean {
+        return string.indexOf(prefix) == 0
+    }
 }

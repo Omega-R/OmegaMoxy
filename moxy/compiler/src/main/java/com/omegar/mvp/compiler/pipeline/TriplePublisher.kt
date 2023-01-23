@@ -13,7 +13,7 @@ class TriplePublisher<FI, SE, TH>(
     private val mSeconds: MutableList<SE> = ArrayList()
     private val mThirds: MutableList<TH> = ArrayList()
 
-    override fun publish(context: PipelineContext<Triple<FI, SE, TH>>) {
+    override fun publish(context: PipelineContext<Triple<FI, SE, TH>>?) {
         super.publish(context)
         mPublisher1.publish(LocalContext(mFirsts))
         mPublisher2.publish(LocalContext(mSeconds))

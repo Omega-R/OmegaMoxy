@@ -62,7 +62,7 @@ class ViewInterfaceInfoToViewStateKotlinFileProcessor(
         private val mTypes: Types,
         private val mCurrentMoxyReflectorPackage: String,
         private val mReflectorPackagesPublisher: Publisher<String>
-) : KotlinFileProcessor<ViewInterfaceInfo?>() {
+) : KotlinFileProcessor<ViewInterfaceInfo>() {
 
 
     companion object {
@@ -85,8 +85,8 @@ class ViewInterfaceInfoToViewStateKotlinFileProcessor(
 
 
     @OptIn(KotlinPoetMetadataPreview::class)
-    override fun process(viewInterfaceInfo: ViewInterfaceInfo?): KotlinFile {
-        val viewName = viewInterfaceInfo!!.name
+    override fun process(viewInterfaceInfo: ViewInterfaceInfo): KotlinFile {
+        val viewName = viewInterfaceInfo.name
         val nameWithTypeVariables = viewInterfaceInfo.nameWithTypeVariables
         val variableName = TypeVariableName(VIEW, nameWithTypeVariables)
         val variableNames = listOf(variableName) + viewInterfaceInfo.typeVariables
@@ -350,7 +350,7 @@ class ViewInterfaceInfoToViewStateKotlinFileProcessor(
     }
 
 
-    override fun finish(nextContext: PipelineContext<FileSpec>) {
+    override fun finish(nextContext: PipelineContext<FileSpec>?) {
         mReflectorPackagesPublisher.finish()
         super.finish(nextContext)
     }

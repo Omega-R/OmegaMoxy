@@ -1,12 +1,10 @@
 package com.omegar.mvp.compiler.reflector
 
-import com.omegar.mvp.MvpProcessor
 import com.omegar.mvp.ViewStateProvider
 import com.omegar.mvp.compiler.MoxyConst
 import com.omegar.mvp.compiler.MvpCompiler
 import com.omegar.mvp.compiler.pipeline.KotlinFile
 import com.omegar.mvp.compiler.pipeline.KotlinFileProcessor
-import com.omegar.mvp.compiler.pipeline.Triple
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import java.util.*
@@ -15,15 +13,9 @@ import javax.lang.model.type.DeclaredType
 import javax.lang.model.type.TypeKind
 import kotlin.reflect.KClass
 
-/**
- * Date: 07.12.2016
- * Time: 19:05
- *
- * @author Yuri Shmakov
- */
 class MoxyReflectorProcessor(
     private val destinationPackage: String
-) : KotlinFileProcessor<Triple<MutableSet<TypeElement>, MutableSet<TypeElement>, MutableSet<String>>>() {
+) : KotlinFileProcessor<Triple<Set<TypeElement>, Set<TypeElement>, Set<String>>>() {
 
     companion object {
         private val TYPE_ELEMENT_COMPARATOR = Comparator.comparing { obj: TypeElement -> obj.toString() }
@@ -44,7 +36,7 @@ class MoxyReflectorProcessor(
 
     }
 
-    override fun process(input: Triple<MutableSet<TypeElement>, MutableSet<TypeElement>, MutableSet<String>>): KotlinFile {
+    override fun process(input: Triple<Set<TypeElement>, Set<TypeElement>, Set<String>>): KotlinFile {
         return generate(destinationPackage, input.first, input.second, input.third)
     }
 
@@ -52,13 +44,15 @@ class MoxyReflectorProcessor(
         destinationPackage: String,
         presenterClassNames: Set<TypeElement>,
         presentersContainers: Set<TypeElement>,
-        additionalMoxyReflectorsPackages: MutableSet<String>
+        additionalMoxyReflectorsPackages: Set<String>
     ): KotlinFile {
+
+        val reflectorsPackages = additionalMoxyReflectorsPackages.toMutableSet()
 
         // sort to preserve order of statements between compilations
         val presenterBinders: Map<TypeElement, List<TypeElement>> = getPresenterBinders(presentersContainers)
 
-        additionalMoxyReflectorsPackages.remove(destinationPackage)
+        reflectorsPackages.remove(destinationPackage)
 
         val classBuilder = TypeSpec.objectBuilder("MoxyReflector")
             .addProperty("sViewStateProviders", MAP_CLASS_TO_VIEW_STATE_PROVIDER, KModifier.PRIVATE)
@@ -71,7 +65,7 @@ class MoxyReflectorProcessor(
         classBuilder.addInitializerBlock(
             generateStaticInitializer(
                 presenterClassNames,
-                additionalMoxyReflectorsPackages,
+                reflectorsPackages,
                 presenterBinders
             )
         )
