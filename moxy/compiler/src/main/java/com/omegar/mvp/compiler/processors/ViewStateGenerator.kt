@@ -14,6 +14,7 @@ import com.omegar.mvp.viewstate.ViewCommand
 import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.ksp.toClassName
 
 
 /**
@@ -43,10 +44,10 @@ class ViewStateGenerator : Processor<View, FileSpec> {
 
         private val View.Method.strategy
             get() = (
-                    viewCommandAnnotation?.value?.strategyClass
-                        ?: viewCommandAnnotation?.custom
-                        ?: AddToEndSingleStrategy::class
-                    ).asClassName()
+                    viewCommandAnnotation?.strategyType?.strategyClass?.asClassName()
+                        ?: viewCommandAnnotation?.customStrategy?.toClassName()
+                        ?: AddToEndSingleStrategy::class.asClassName()
+                    )
     }
 
     @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")

@@ -1,6 +1,7 @@
 package com.omegar.mvp.compiler.entities
 
-import com.omegar.mvp.viewstate.strategy.MoxyViewCommand
+import com.google.devtools.ksp.symbol.KSType
+import com.omegar.mvp.viewstate.strategy.StrategyType
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
@@ -26,7 +27,7 @@ data class View(
     data class Method(
         val name: String,
         val type: Type,
-        val viewCommandAnnotation: MoxyViewCommand?,
+        val viewCommandAnnotation: ViewCommandAnnotation?,
     ) : Tagged() {
 
         val params
@@ -44,6 +45,13 @@ data class View(
             data class Function(val params: List<Param>) : Type()
             data class Property(val param: Param) : Type()
         }
+
+        data class ViewCommandAnnotation(
+            val strategyType: StrategyType,
+            val customStrategy: KSType?,
+            val tag: String = ""
+        )
+
     }
 
 }

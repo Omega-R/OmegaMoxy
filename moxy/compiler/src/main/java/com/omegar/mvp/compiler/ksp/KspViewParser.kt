@@ -128,8 +128,26 @@ class KspViewParser(
     }
 
     @OptIn(KspExperimental::class)
-    private fun KSAnnotated.getMoxyViewCommand(): MoxyViewCommand? {
-        return getAnnotationsByType(MoxyViewCommand::class).firstOrNull()
+    private fun KSAnnotated.getMoxyViewCommand(): View.Method.ViewCommandAnnotation? {
+        return getAnnotationsByType(MoxyViewCommand::class).firstOrNull()?.run {
+            val customStrategy = if (value.strategyClass == null) {
+                this@getMoxyViewCommand.annotations.find {
+                    it.shortName.getShortName() == MoxyViewCommand::class.simpleName && it.annotationType.resolve().declaration
+                        .qualifiedName?.asString() == MoxyViewCommand::class.qualifiedName
+                }?.let {
+                    it.arguments.firstOrNull {
+                        it.name?.asString() == "custom"
+                    }?.value as KSType
+                }
+            } else null
+
+            return View.Method.ViewCommandAnnotation(
+                strategyType = value,
+                customStrategy = customStrategy,
+                tag = tag
+            )
+        }
+
     }
 
     private fun <T : Tagged> T.putTags(declaration: KSDeclaration): T = apply {

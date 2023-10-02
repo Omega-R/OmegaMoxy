@@ -37,7 +37,7 @@ dependencies {
 
     implementation project(":moxy")
 
-    implementation "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:1.9.0"
 
     implementation 'com.google.devtools.ksp:symbol-processing-api:1.9.0-1.0.11'
 
