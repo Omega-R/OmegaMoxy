@@ -10,9 +10,7 @@ import kotlin.reflect.KClass
  */
 object MoxyReflector {
     private var sViewStateProviders: Map<String, Any> = HashMap()
-    private var sPresenterBinders: Map<String, List<Any>> = HashMap()
 
-    fun getViewState(presenterClass: KClass<*>): Any? = sViewStateProviders[presenterClass.qualifiedName]
+    fun createViewState(presenterClass: KClass<*>): Any? = sViewStateProviders[presenterClass.qualifiedName]
 
-    fun getPresenterBinders(delegated: KClass<*>): List<Any>? = sPresenterBinders[delegated.qualifiedName]
 }

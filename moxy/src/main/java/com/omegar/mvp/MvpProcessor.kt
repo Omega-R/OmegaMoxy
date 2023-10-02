@@ -4,6 +4,7 @@ import com.omegar.mvp.MvpFacade.presenterStore
 import com.omegar.mvp.MvpFacade.presentersCounter
 import com.omegar.mvp.presenter.PresenterField
 import com.omegar.mvp.presenter.PresenterType
+import com.omegar.mvp.viewstate.MvpViewState
 import kotlin.reflect.KClass
 
 /**
@@ -47,6 +48,15 @@ object MvpProcessor {
         ) {
             presenterField.providePresenter(target)
         }
+    }
+
+    fun <P: MvpPresenter<V>, V: MvpView> createViewState(cls: KClass<P>): MvpViewState<V> {
+        if (!hasMoxyReflector) {
+            throw IllegalStateException("MoxyReflector not found")
+        }
+        @Suppress("UNCHECKED_CAST")
+        return MoxyReflector.createViewState(cls) as MvpViewState<V>?
+            ?: throw NullPointerException("ViewState not provided in ${this::class.simpleName}")
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -93,11 +103,7 @@ object MvpProcessor {
     @Suppress("UNCHECKED_CAST")
     private fun <Delegated : Any, P : MvpPresenter<*>> getPresenterBinders(delegatedClass: KClass<out Delegated>):
             List<PresenterBinder<Delegated, P>> {
-        if (!hasMoxyReflector) return emptyList()
-
-        val presenterBinders = MoxyReflector.getPresenterBinders(delegatedClass) as List<PresenterBinder<Delegated, P>>?
-
-        return presenterBinders.orEmpty()
+        return emptyList()
     }
 
     /**

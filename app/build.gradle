@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
+    id 'com.google.devtools.ksp'
 }
 
 android {
@@ -41,7 +42,7 @@ dependencies {
 
     implementation project(":moxy:androidx")
 
-    kapt project(":moxy:compiler")
+    ksp project(":moxy:compiler")
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'

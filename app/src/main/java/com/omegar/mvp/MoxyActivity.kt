@@ -27,8 +27,12 @@ class MoxyActivity: MvpAppCompatActivity(R.layout.activity_moxy), MoxyView {
         }
     }
 
-    override fun test() {
+    override fun test(count: Int) {
         Toast.makeText(this, "Test", Toast.LENGTH_LONG).show()
+    }
+
+    override fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
 }

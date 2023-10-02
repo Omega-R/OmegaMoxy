@@ -1,7 +1,5 @@
 package com.omegar.mvp
 
-import java.lang.annotation.Inherited
-
 /**
  * Inject view state to [MvpPresenter.mViews] and
  * [MvpPresenter.mViewState] presenter fields. Presenter, annotated with
@@ -10,5 +8,4 @@ import java.lang.annotation.Inherited
  * code, that broke your app.
  */
 @Target(AnnotationTarget.CLASS)
-@Inherited
-internal annotation class InjectViewState 
+annotation class InjectViewState
