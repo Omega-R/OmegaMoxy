@@ -24,11 +24,21 @@ data class View(
 
     val typeNameWithParams = if (typeParams.isEmpty()) className else className.parameterizedBy(typeParams)
 
+    init {
+        val nameCountMap = mutableMapOf<String, Int>()
+        methods.forEach {
+            it.counter = nameCountMap[it.name] ?: 0
+            nameCountMap[it.name] = it.counter + 1
+        }
+    }
+
     data class Method(
         val name: String,
         val type: Type,
         val viewCommandAnnotation: ViewCommandAnnotation?,
     ) : Tagged() {
+        var counter: Int = 0
+            internal set
 
         val params
             get() = when (type) {

@@ -17,8 +17,13 @@ object NamingRules {
     val View.viewStateClassName
         get() = toClassName(viewStateName)
 
-    val View.Method.commandName
-        get() = "${name.replaceFirstChar { it.titlecase(Locale.ROOT) }}Command"
+    val View.Method.commandName: String
+        get() {
+            val capitalizeName = name.replaceFirstChar { it.titlecase(Locale.ROOT) }
+            val counter = if(counter > 0) counter.toString() else ""
+
+            return "$capitalizeName${counter}Command"
+        }
 
     const val moxyReflectorName = "MoxyReflector"
 

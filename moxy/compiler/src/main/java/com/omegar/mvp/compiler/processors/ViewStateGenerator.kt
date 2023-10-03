@@ -156,6 +156,7 @@ class ViewStateGenerator : Processor<View, FileSpec> {
 
     private fun TypeSpec.Builder.addCommandTypes(view: View): TypeSpec.Builder {
         val mvpView = "mvpView"
+
         return addTypes(view.methods.map {
             val statementFormat = when (it.type) {
                 is Function -> "$mvpView.%L(%L)"
