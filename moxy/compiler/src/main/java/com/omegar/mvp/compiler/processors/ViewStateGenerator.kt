@@ -100,11 +100,19 @@ class ViewStateGenerator : Processor<View, FileSpec> {
         return FunSpec.builder(name)
             .addModifiers(KModifier.OVERRIDE)
             .addParameters(type.params.toParamSpec())
-            .addStatement("apply(%1N(%2L))", commandName, type.params.joinToString { it.name })
+            .addStatement("apply(%1N(%2L))", commandName, type.params.joinToString { it.nameWithVarargs })
             .build()
     }
 
-    private fun View.Method.Param.toParamSpec() = ParameterSpec.builder(name, typeName).build()
+    private fun View.Method.Param.toParamSpec(): ParameterSpec {
+        return ParameterSpec.builder(name, typeName)
+            .apply {
+                if (isVarargs) {
+                    modifiers += KModifier.VARARG
+                }
+            }
+            .build()
+    }
 
     private fun List<View.Method.Param>.toParamSpec() = map { it.toParamSpec() }
 
@@ -173,7 +181,7 @@ class ViewStateGenerator : Processor<View, FileSpec> {
                         .build()
                 )
                 .addProperties(it.params.map { param ->
-                    PropertySpec.builder(param.name, param.typeName)
+                    PropertySpec.builder(param.name, param.typeWithVarargs)
                         .initializer("%1N", param.name)
                         .build()
                 })
@@ -182,7 +190,7 @@ class ViewStateGenerator : Processor<View, FileSpec> {
                     FunSpec.builder("apply")
                         .addModifiers(KModifier.OVERRIDE)
                         .addParameter("mvpView", GENERIC_TYPE_VARIABLE_NAME)
-                        .addStatement(statementFormat, it.name, it.params.joinToString(transform = View.Method.Param::name))
+                        .addStatement(statementFormat, it.name, it.params.joinToString { it.nameWithVarargs })
                         .build()
                 )
                 .addFunction(
@@ -201,6 +209,26 @@ class ViewStateGenerator : Processor<View, FileSpec> {
                 .build()
         })
     }
+
+    private val View.Method.Param.typeWithVarargs
+        get() = if (!isVarargs) typeName else
+            when(typeName) {
+                FLOAT -> FLOAT_ARRAY
+                BOOLEAN -> BOOLEAN_ARRAY
+                BYTE -> BYTE_ARRAY
+                CHAR -> CHAR_ARRAY
+                SHORT -> SHORT_ARRAY
+                INT -> INT_ARRAY
+                LONG -> LONG_ARRAY
+                DOUBLE -> DOUBLE_ARRAY
+                U_BYTE -> U_BYTE_ARRAY
+                U_SHORT -> U_SHORT_ARRAY
+                U_INT -> U_INT_ARRAY
+                U_LONG -> U_LONG_ARRAY
+                else -> ARRAY.parameterizedBy(WildcardTypeName.producerOf(typeName))
+            }
+    private val View.Method.Param.nameWithVarargs
+        get() = (if (isVarargs) "*" else "") + name
 
     private fun TypeSpec.Builder.addViewStateFactoryType(view: View): TypeSpec.Builder {
         return addType(

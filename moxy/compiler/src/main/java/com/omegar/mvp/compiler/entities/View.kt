@@ -48,7 +48,8 @@ data class View(
 
         data class Param(
             val name: String,
-            val typeName: TypeName
+            val typeName: TypeName,
+            val isVarargs: Boolean
         )
 
         sealed class Type {

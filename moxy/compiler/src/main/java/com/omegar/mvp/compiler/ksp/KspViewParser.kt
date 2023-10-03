@@ -105,8 +105,9 @@ class KspViewParser(
             .map { func ->
                 val params = func.parameters.map {
                     View.Method.Param(
-                        it.name?.getShortName() ?: PROPERTY_PARAM_NAME,
-                        it.type.toTypeName()
+                        name = it.name?.getShortName() ?: PROPERTY_PARAM_NAME,
+                        typeName = it.type.toTypeName(),
+                        isVarargs = it.isVararg
                     )
                 }
                 View.Method(
@@ -119,7 +120,13 @@ class KspViewParser(
             .map { prop ->
                 View.Method(
                     name = prop.simpleName.getShortName(),
-                    type = View.Method.Type.Property(View.Method.Param(PROPERTY_PARAM_NAME, prop.type.toTypeName())),
+                    type = View.Method.Type.Property(
+                        param = View.Method.Param(
+                            name = PROPERTY_PARAM_NAME,
+                            typeName = prop.type.toTypeName(),
+                            isVarargs = false
+                        )
+                    ),
                     viewCommandAnnotation = prop.getMoxyViewCommand()
                 ).putTags(prop)
             }
