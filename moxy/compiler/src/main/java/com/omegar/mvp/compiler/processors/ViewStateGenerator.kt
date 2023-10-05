@@ -196,6 +196,7 @@ class ViewStateGenerator : Processor<View, FileSpec> {
                 .addFunction(
                     FunSpec.builder("toString")
                         .addModifiers(KModifier.OVERRIDE)
+                        .returns(STRING)
                         .addStatement(
                             it.params.joinToString(
                                 prefix = "return buildString(\"${it.name}\",",
@@ -231,13 +232,15 @@ class ViewStateGenerator : Processor<View, FileSpec> {
         get() = (if (isVarargs) "*" else "") + name
 
     private fun TypeSpec.Builder.addViewStateFactoryType(view: View): TypeSpec.Builder {
+        val returnType = view.viewStateClassName.parameterizedBy(view.className)
         return addType(
             TypeSpec.companionObjectBuilder()
                 .addSuperinterface(ViewStateFactory::class)
                 .addFunction(
                     FunSpec.builder("createViewState")
                         .addModifiers(KModifier.OVERRIDE)
-                        .addStatement("return %T()", view.viewStateClassName.parameterizedBy(view.className))
+                        .returns(returnType)
+                        .addStatement("return %T()", returnType)
                         .build()
                 )
                 .build()
