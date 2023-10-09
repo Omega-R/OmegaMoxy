@@ -10,6 +10,7 @@ import com.squareup.kotlinpoet.ANY
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MAP
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -46,11 +47,7 @@ class MoxyReflectorGenerator(private val reflectorPackageName: String) : Process
         val args = views.flatMap { view ->
 
             val innerParams = view.presenterInnerTypeParams.map {
-                if (it is TypeVariableName && it.bounds.isNotEmpty()) {
-                    it.bounds.first()
-                } else {
-                    it
-                }
+                if (it is TypeVariableName && it.bounds.isNotEmpty()) it.bounds.first() else it
             }
             val params = listOf(view.className.safeParameterizedBy(innerParams)) + innerParams
 
@@ -61,7 +58,11 @@ class MoxyReflectorGenerator(private val reflectorPackageName: String) : Process
         val typeSpec = TypeSpec.objectBuilder(NamingRules.moxyReflectorName)
             .addOriginating(views)
             .addProperty(
-                PropertySpec.builder(PROPERTY_MAP_NAME, MAP.parameterizedBy(STRING.copy(true), lambdaTypeName))
+                PropertySpec.builder(
+                    name = PROPERTY_MAP_NAME,
+                    type = MAP.parameterizedBy(STRING.copy(true), lambdaTypeName),
+                    KModifier.PRIVATE
+                )
                     .initializer(CodeBlock.of("mapOf($init)", *args))
                     .build()
             )

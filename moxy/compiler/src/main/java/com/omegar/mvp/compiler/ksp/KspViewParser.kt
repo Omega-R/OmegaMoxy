@@ -7,8 +7,10 @@ import com.google.devtools.ksp.innerArguments
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.*
+import com.omegar.mvp.Moxy
 import com.omegar.mvp.MvpPresenter
 import com.omegar.mvp.MvpView
+import com.omegar.mvp.compiler.NamingRules.viewStateName
 import com.omegar.mvp.compiler.entities.Tagged
 import com.omegar.mvp.compiler.entities.View
 import com.omegar.mvp.compiler.processors.OriginatingMarker
@@ -42,6 +44,7 @@ class KspViewParser(
 
     private val mvpView = resolver.getClassDeclarationByName(MvpView::class.qualifiedName!!)!!.asType(emptyList())
 
+    @OptIn(KspExperimental::class)
     @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
     override fun invoke(presenterDeclaration: KSClassDeclaration): View? {
         if (presenterDeclaration.simpleName.getShortName() == MvpPresenter::class.simpleName) return null
@@ -76,17 +79,32 @@ class KspViewParser(
             presenterCache[presenterKey] = newView
             return newView
         }
-        val newView = View(
-            className = viewClassName,
-            presenterClassName = presenterDeclaration.toClassName(),
-            methods = viewDeclaration.getMethods(),
-            viewTypeParams = viewDeclaration.typeParameters
-                .filterNot { mvpView.isAssignableFrom(it.bounds.first().resolve()) }
-                .map { it.toTypeVariableName() },
-            presenterInnerTypeParams = view.innerArguments.map { it.toTypeName(presenterDeclaration.typeParameters.toTypeParameterResolver()) },
-            reflectorPackage = reflectorPackage,
-            parent = this(superPresenter)
-        ).putTags(presenterDeclaration)
+
+
+        val oldViewStateDeclaration = resolver.getClassDeclarationByName(viewClassName.reflectionName().viewStateName)
+        val newView = if (oldViewStateDeclaration != null) {
+            View(
+                className = viewClassName,
+                presenterClassName = presenterDeclaration.toClassName(),
+                methods = emptyList(),
+                viewTypeParams = emptyList(),
+                presenterInnerTypeParams = emptyList(),
+                reflectorPackage = oldViewStateDeclaration.getAnnotationsByType(Moxy::class).first().reflectorPackage,
+                parent = null
+            )
+        } else {
+            View(
+                className = viewClassName,
+                presenterClassName = presenterDeclaration.toClassName(),
+                methods = viewDeclaration.getMethods(),
+                viewTypeParams = viewDeclaration.typeParameters
+                    .filterNot { mvpView.isAssignableFrom(it.bounds.first().resolve()) }
+                    .map { it.toTypeVariableName() },
+                presenterInnerTypeParams = view.innerArguments.map { it.toTypeName(presenterDeclaration.typeParameters.toTypeParameterResolver()) },
+                reflectorPackage = reflectorPackage,
+                parent = this(superPresenter)
+            ).putTags(presenterDeclaration)
+        }
 
         presenterCache[presenterKey] = newView
         viewCache[viewKey] = newView

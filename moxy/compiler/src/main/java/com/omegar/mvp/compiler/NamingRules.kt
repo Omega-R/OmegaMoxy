@@ -11,8 +11,11 @@ import java.util.Locale
  */
 object NamingRules {
 
+    val String.viewStateName
+        get() = "$this\$\$State"
+
     val View.viewStateName
-        get() = "$name\$\$State"
+        get() = name.viewStateName
 
     val View.viewStateClassName
         get() = toClassName(viewStateName)
@@ -20,7 +23,7 @@ object NamingRules {
     val View.Method.commandName: String
         get() {
             val capitalizeName = name.replaceFirstChar { it.titlecase(Locale.ROOT) }
-            val counter = if(counter > 0) counter.toString() else ""
+            val counter = if (counter > 0) counter.toString() else ""
 
             return "$capitalizeName${counter}Command"
         }
@@ -28,6 +31,7 @@ object NamingRules {
     const val moxyReflectorName = "MoxyReflector"
 
     const val moxyReflectorPackageName = "com.omegar.mvp"
+
 
     private fun View.toClassName(name: String) = ClassName(className.packageName, name)
 
