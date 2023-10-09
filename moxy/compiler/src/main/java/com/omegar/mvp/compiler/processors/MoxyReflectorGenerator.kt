@@ -30,15 +30,16 @@ class MoxyReflectorGenerator(private val reflectorPackageName: String) : Process
         private const val PROPERTY_MAP_NAME = "sViewStateProviders"
         private const val INPUT_PARAM_NAME = "presenterClass"
         private const val CLASS_PROPERTY_NAME = "qualifiedName"
+        private val VIEW_STATE_FACTORY_CLASS_NAME = ViewStateFactory::class.asClassName()
     }
 
     override fun invoke(views: List<View>): FileSpec {
-        val init = views.joinToString { "%T::class.$CLASS_PROPERTY_NAME to %T" }
+        val init = views.joinToString(separator = ", ") { "%T::class.$CLASS_PROPERTY_NAME to %T" }
         val args = views.flatMap { listOf(it.presenterClassName, it.viewStateClassName) }.toTypedArray()
         val typeSpec = TypeSpec.objectBuilder(NamingRules.moxyReflectorName)
             .addOriginating(views)
             .addProperty(
-                PropertySpec.builder(PROPERTY_MAP_NAME, MUTABLE_MAP.parameterizedBy(STRING.copy(true), ANY))
+                PropertySpec.builder(PROPERTY_MAP_NAME, MUTABLE_MAP.parameterizedBy(STRING.copy(true), VIEW_STATE_FACTORY_CLASS_NAME))
                     .initializer(CodeBlock.of("mutableMapOf($init)", *args))
                     .build()
             )
@@ -47,8 +48,7 @@ class MoxyReflectorGenerator(private val reflectorPackageName: String) : Process
                     .addParameter(INPUT_PARAM_NAME, KClass::class.asClassName().parameterizedBy(STAR))
                     .returns(ANY.copy(nullable = true))
                     .addStatement(
-                        "return ($PROPERTY_MAP_NAME[$INPUT_PARAM_NAME.$CLASS_PROPERTY_NAME] as? %T)?.createViewState()",
-                        ViewStateFactory::class
+                        "return ($PROPERTY_MAP_NAME[$INPUT_PARAM_NAME.$CLASS_PROPERTY_NAME])?.createViewState()",
                     )
                     .build()
             )

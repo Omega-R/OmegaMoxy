@@ -38,6 +38,8 @@ class MvpCompiler(environment: SymbolProcessorEnvironment) : SymbolProcessor {
 
         val symbols = resolver.getSymbolsWithAnnotation(InjectViewState::class.qualifiedName!!)
 
+        val uniqueViews = HashSet<String>()
+
         val views = symbols
             .filterIsInstance<KSClassDeclaration>()
             .flatMap {
@@ -45,7 +47,8 @@ class MvpCompiler(environment: SymbolProcessorEnvironment) : SymbolProcessor {
             }
             .distinctBy { it.presenterClassName.canonicalName + it.className.canonicalName }
             .onEach {
-                if (it.reflectorPackage == currentReflectorPackageName) {
+                if (!uniqueViews.contains(it.className.canonicalName) && it.reflectorPackage == currentReflectorPackageName) {
+                    uniqueViews += it.className.canonicalName
                     viewStateGenerator(it).writeTo(codeGenerator = codeGenerator, aggregating = true)
                 }
             }
