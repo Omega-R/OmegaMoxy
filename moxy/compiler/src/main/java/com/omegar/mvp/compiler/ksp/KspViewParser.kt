@@ -16,6 +16,7 @@ import com.omegar.mvp.compiler.entities.View
 import com.omegar.mvp.compiler.processors.OriginatingMarker
 import com.omegar.mvp.compiler.processors.ViewParser
 import com.omegar.mvp.viewstate.strategy.MoxyViewCommand
+import com.squareup.kotlinpoet.ksp.TypeParameterResolver
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
@@ -139,38 +140,49 @@ class KspViewParser(
     }
 
     private fun KSClassDeclaration.getMethods(): List<View.Method> {
-        val functionSequence = getAllFunctions()
-            .filterNot { it.simpleName.getShortName() in ANY_FUNCTION_SIMPLE_NAME }
-            .map { func ->
-                val params = func.parameters.map {
-                    View.Method.Param(
-                        name = it.name?.getShortName() ?: PROPERTY_PARAM_NAME,
-                        typeName = it.type.toTypeName(typeParameters.toTypeParameterResolver()),
-                        isVarargs = it.isVararg
-                    )
+        val parameterResolver = typeParameters.toTypeParameterResolver()
+        return declarations.mapNotNull { declaration ->
+                when (declaration) {
+                    is KSFunctionDeclaration -> {
+                        if (declaration.simpleName.getShortName() in ANY_FUNCTION_SIMPLE_NAME) null else {
+                            declaration.toMethod(parameterResolver)
+                        }
+                    }
+                    is KSPropertyDeclaration -> {
+                        declaration.toMethod(parameterResolver)
+                    }
+                    else -> null
                 }
-                View.Method(
-                    name = func.simpleName.getShortName(),
-                    type = View.Method.Type.Function(params),
-                    viewCommandAnnotation = func.getMoxyViewCommand()
-                ).putTags(func)
-            }
-        val propertySequence = getAllProperties()
-            .map { prop ->
-                View.Method(
-                    name = prop.simpleName.getShortName(),
-                    type = View.Method.Type.Property(
-                        param = View.Method.Param(
-                            name = PROPERTY_PARAM_NAME,
-                            typeName = prop.type.toTypeName(),
-                            isVarargs = false
-                        )
-                    ),
-                    viewCommandAnnotation = prop.getMoxyViewCommand()
-                ).putTags(prop)
-            }
-        val methodSequence = functionSequence + propertySequence
-        return methodSequence.toList()
+            }.toList()
+     }
+
+    private fun KSFunctionDeclaration.toMethod(resolver: TypeParameterResolver): View.Method {
+        val params = parameters.map {
+            View.Method.Param(
+                name = it.name?.getShortName() ?: PROPERTY_PARAM_NAME,
+                typeName = it.type.toTypeName(resolver),
+                isVarargs = it.isVararg
+            )
+        }
+        return View.Method(
+            name = simpleName.getShortName(),
+            type = View.Method.Type.Function(params),
+            viewCommandAnnotation = getMoxyViewCommand()
+        ).putTags(this)
+    }
+
+    private fun KSPropertyDeclaration.toMethod(resolver: TypeParameterResolver): View.Method {
+        return View.Method(
+            name = simpleName.getShortName(),
+            type = View.Method.Type.Property(
+                param = View.Method.Param(
+                    name = PROPERTY_PARAM_NAME,
+                    typeName = type.toTypeName(resolver),
+                    isVarargs = false
+                )
+            ),
+            viewCommandAnnotation = getMoxyViewCommand()
+        ).putTags(this)
     }
 
     @OptIn(KspExperimental::class)

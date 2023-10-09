@@ -7,5 +7,6 @@ package com.omegar.mvp
  */
 interface BaseView: MvpView {
 
+    fun base() {}
 
 }
