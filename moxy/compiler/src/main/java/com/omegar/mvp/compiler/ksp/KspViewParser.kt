@@ -16,7 +16,6 @@ import com.omegar.mvp.compiler.entities.View
 import com.omegar.mvp.compiler.processors.OriginatingMarker
 import com.omegar.mvp.compiler.processors.ViewParser
 import com.omegar.mvp.viewstate.strategy.MoxyViewCommand
-import com.squareup.kotlinpoet.TypeVariableName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
@@ -75,7 +74,7 @@ class KspViewParser(
                 presenterClassName = presenterDeclaration.toClassName(),
                 parent = this(superPresenter)
             )
-                .putTags(presenterDeclaration)
+                .putTags(presenterDeclaration, viewDeclaration)
             presenterCache[presenterKey] = newView
             return newView
         }
@@ -91,7 +90,7 @@ class KspViewParser(
                 presenterInnerTypeParams = emptyList(),
                 reflectorPackage = oldViewStateDeclaration.getAnnotationsByType(Moxy::class).first().reflectorPackage,
                 parent = null
-            )
+            ).putTags(presenterDeclaration, viewDeclaration)
         } else {
             View(
                 className = viewClassName,
@@ -103,7 +102,7 @@ class KspViewParser(
                 presenterInnerTypeParams = view.innerArguments.map { it.toTypeName(presenterDeclaration.typeParameters.toTypeParameterResolver()) },
                 reflectorPackage = reflectorPackage,
                 parent = this(superPresenter)
-            ).putTags(presenterDeclaration)
+            ).putTags(presenterDeclaration, viewDeclaration)
         }
 
         presenterCache[presenterKey] = newView
@@ -197,9 +196,9 @@ class KspViewParser(
 
     }
 
-    private fun <T : Tagged> T.putTags(declaration: KSDeclaration): T = apply {
+    private fun <T : Tagged> T.putTags(vararg declarations: KSDeclaration): T = apply {
         putTag(OriginatingMarker::class, KspOriginatingMarker)
-        putTag(KSFile::class, declaration.containingFile)
+        putTag(KspOriginatingMarker.Files::class, KspOriginatingMarker.Files(declarations.mapNotNull { it.containingFile }))
     }
 
 }
