@@ -4,7 +4,7 @@ import kotlin.time.Duration
 
 
 @InjectViewState
-class MoxyPresenter : BasePresenter<MoxyView>() {
+class MoxyPresenter : BasePresenter<Long, MoxyView<Int>>() {
 
     init {
         viewState.showToast("Hello World!")

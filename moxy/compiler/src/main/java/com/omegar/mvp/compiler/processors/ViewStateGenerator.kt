@@ -1,7 +1,6 @@
 package com.omegar.mvp.compiler.processors
 
 import com.omegar.mvp.Moxy
-import com.omegar.mvp.ViewStateFactory
 import com.omegar.mvp.compiler.NamingRules.commandName
 import com.omegar.mvp.compiler.NamingRules.viewStateClassName
 import com.omegar.mvp.compiler.NamingRules.viewStateName
@@ -33,10 +32,10 @@ class ViewStateGenerator : Processor<View, FileSpec> {
         private val VIEW_COMMAND_TYPE_NAME = ViewCommand::class.asClassName().parameterizedBy(GENERIC_TYPE_VARIABLE_NAME)
 
         private val View.omegaViewVariableName
-            get() = TypeVariableName(VIEW, typeNameWithParams)
+            get() = TypeVariableName(VIEW, viewTypeNameWithParams)
 
         private val View.viewStateTypeVariables
-            get() = listOf(omegaViewVariableName) + typeParams
+            get() = listOf(omegaViewVariableName) + viewTypeParams
 
         private val View.Method.tag
             get() = viewCommandAnnotation?.tag?.takeIf { it.isNotBlank() }
@@ -56,12 +55,11 @@ class ViewStateGenerator : Processor<View, FileSpec> {
             .addOriginating(view)
             .addMoxyAnnotation(view.reflectorPackage)
             .addModifiers(KModifier.OPEN)
-            .addSuperinterface(view.typeNameWithParams)
+            .addSuperinterface(view.viewTypeNameWithParams)
             .addTypeVariables(view.viewStateTypeVariables)
             .superclass(view.parent, view.omegaViewVariableName)
             .addMethods(view.methods, view.viewStateTypeVariables)
             .addCommandTypes(view)
-            .addViewStateFactoryType(view)
             .build()
 
         return typeSpec.toFileSpec(view.className.packageName)
@@ -231,21 +229,6 @@ class ViewStateGenerator : Processor<View, FileSpec> {
     private val View.Method.Param.nameWithVarargs
         get() = (if (isVarargs) "*" else "") + name
 
-    private fun TypeSpec.Builder.addViewStateFactoryType(view: View): TypeSpec.Builder {
-        val returnType = view.viewStateClassName.parameterizedBy(view.className)
-        return addType(
-            TypeSpec.companionObjectBuilder()
-                .addSuperinterface(ViewStateFactory::class)
-                .addFunction(
-                    FunSpec.builder("createViewState")
-                        .addModifiers(KModifier.OVERRIDE)
-                        .returns(returnType)
-                        .addStatement("return %T()", returnType)
-                        .build()
-                )
-                .build()
-        )
-    }
 
 }
 

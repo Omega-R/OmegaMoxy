@@ -3,6 +3,7 @@ package com.omegar.mvp.compiler.ksp
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.getClassDeclarationByName
+import com.google.devtools.ksp.innerArguments
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.*
@@ -13,8 +14,10 @@ import com.omegar.mvp.compiler.entities.View
 import com.omegar.mvp.compiler.processors.OriginatingMarker
 import com.omegar.mvp.compiler.processors.ViewParser
 import com.omegar.mvp.viewstate.strategy.MoxyViewCommand
+import com.squareup.kotlinpoet.TypeVariableName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
 import com.squareup.kotlinpoet.ksp.toTypeVariableName
 
 
@@ -29,7 +32,7 @@ class KspViewParser(
 ) : ViewParser<KSClassDeclaration> {
 
     companion object {
-        private val ANY_FUNCTION_SIMPLE_NAME = listOf("equals", "hashCode", "toString")
+        private val ANY_FUNCTION_SIMPLE_NAME = listOf("equals", "hashCode", "toString", "<init>")
         private const val PROPERTY_PARAM_NAME = "value"
     }
 
@@ -59,7 +62,10 @@ class KspViewParser(
                         }
                 }
 
-        val viewKey = view.simpleName.asString()
+        val viewClassName = view.toClassName()
+        val viewKey = viewClassName.simpleName
+
+        val viewDeclaration = view.declaration as KSClassDeclaration
 
         viewCache[viewKey]?.let {
             val newView = it.copy(
@@ -70,14 +76,14 @@ class KspViewParser(
             presenterCache[presenterKey] = newView
             return newView
         }
-
         val newView = View(
-            className = view.toClassName(),
+            className = viewClassName,
             presenterClassName = presenterDeclaration.toClassName(),
-            methods = view.getMethods(),
-            typeParams = presenterDeclaration.typeParameters
+            methods = viewDeclaration.getMethods(),
+            viewTypeParams = viewDeclaration.typeParameters
                 .filterNot { mvpView.isAssignableFrom(it.bounds.first().resolve()) }
                 .map { it.toTypeVariableName() },
+            presenterInnerTypeParams = view.innerArguments.map { it.toTypeName(presenterDeclaration.typeParameters.toTypeParameterResolver()) },
             reflectorPackage = reflectorPackage,
             parent = this(superPresenter)
         ).putTags(presenterDeclaration)
@@ -88,12 +94,28 @@ class KspViewParser(
         return newView
     }
 
-    private fun KSTypeReference.getView(): KSClassDeclaration? {
-        val type = element?.typeArguments?.firstOrNull()?.type?.resolve()
+    private fun KSTypeReference.getView(): KSType? {
+        val type = element
+            ?.typeArguments
+            ?.asSequence()
+            ?.map { it.type?.resolve() }
+            ?.firstOrNull {
+                it?.let {
+                    mvpView.isAssignableFrom(it)
+                } ?: false
+            }
         return when (type?.declaration) {
-            is KSClassDeclaration -> type.declaration as KSClassDeclaration
-            is KSTypeParameter -> (type.declaration as KSTypeParameter).bounds.firstOrNull()?.resolve()?.declaration as
-                    KSClassDeclaration
+            is KSClassDeclaration -> type
+            is KSTypeParameter -> {
+                (type.declaration as KSTypeParameter)
+                    .bounds
+                    .map {
+                        it.resolve()
+                    }
+                    .firstOrNull {
+                        mvpView.isAssignableFrom(it)
+                    }
+            }
 
             else -> null
         }
@@ -106,7 +128,7 @@ class KspViewParser(
                 val params = func.parameters.map {
                     View.Method.Param(
                         name = it.name?.getShortName() ?: PROPERTY_PARAM_NAME,
-                        typeName = it.type.toTypeName(),
+                        typeName = it.type.toTypeName(typeParameters.toTypeParameterResolver()),
                         isVarargs = it.isVararg
                     )
                 }
