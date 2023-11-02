@@ -1,9 +1,43 @@
-include ':moxy-ktx'
-include ':moxy', ':stub-reflector', ':moxy-android', ':moxy-compiler', ':stub-android', ':moxy-app-compat', ':moxy-androidx', ':stub-appcompat', ':stub-androidx'
-include ':sample-github'
-include ':sample-kotlin'
-include ':moxy-androidx-sample'
-project(':stub-reflector').projectDir = new File('moxy/stub-reflector')
-project(':stub-android').projectDir = new File('moxy-android/stub-android')
-project(':stub-appcompat').projectDir = new File('moxy-app-compat/stub-appcompat')
-project(':stub-androidx').projectDir = new File('moxy-androidx/stub-androidx')
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+}
+dependencyResolutionManagement {
+    Properties properties = new Properties()
+    def localPropertiesPath = 'local.properties'
+    if (file(localPropertiesPath).exists()) {
+        properties.load(file(localPropertiesPath).newDataInputStream())
+    }
+
+    gradle.ext {
+        nexusUrl = properties.getProperty("nexusUrl") ?: ""
+        nexusUsername = properties.getProperty("nexusUsername")
+        nexusPassword = properties.getProperty("nexusPassword")
+        gitHash = { ->
+            def stdout = new ByteArrayOutputStream()
+            exec {
+                commandLine 'git', 'rev-parse', '--short', 'HEAD'
+                standardOutput = stdout
+            }
+            return stdout.toString().trim()
+        }
+    }
+
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url gradle.nexusUrl }
+        maven { url 'https://jitpack.io' }
+    }
+}
+rootProject.name = "OmegaMoxy"
+include ':app'
+include ':moxy'
+include ':moxy:stub-reflector'
+include ':moxy:androidx'
+include ':moxy:compiler'
