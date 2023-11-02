@@ -48,11 +48,24 @@ public abstract class MvpPresenter<View extends MvpView> {
 		} else {
 			mViews.add(view);
 		}
+		attachView(view, mFirstLaunch);
+
 		if (mFirstLaunch) {
 			mFirstLaunch = false;
 
 			onFirstViewAttach();
 		}
+	}
+
+	/**
+	 * <p>Attach view to view state or to presenter(if view state not exists).</p>
+	 * <p>If you use {@link MvpDelegate}, you should not call this method directly.
+	 * It will be called on {@link MvpDelegate#onAttach()}, if view does not attached.</p>
+	 *
+	 * @param view to attachment
+     * @param isFirstAttach is first presenter init and view binding
+	 */
+	protected void attachView(View view, boolean isFirstAttach) {
 	}
 
 	/**

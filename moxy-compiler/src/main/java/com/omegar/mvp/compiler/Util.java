@@ -187,6 +187,17 @@ public final class Util {
 		}
 	}
 
+	public static boolean getAnnotationValueAsBoolean(AnnotationMirror annotationMirror, String key) {
+		AnnotationValue av = getAnnotationValue(annotationMirror, key);
+
+		if (av != null) {
+			return Boolean.parseBoolean(av.getValue().toString());
+		} else {
+			return false;
+		}
+	}
+
+
 	public static AnnotationValue getAnnotationValue(AnnotationMirror annotationMirror, String key) {
 		if (annotationMirror == null) return null;
 

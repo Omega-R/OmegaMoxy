@@ -16,15 +16,33 @@ import com.omegar.mvp.viewstate.strategy.StateStrategy;
  * @author Yuri Shmakov
  */
 public abstract class MvpViewState<View extends MvpView> {
-	protected ViewCommands<View> mViewCommands = new ViewCommands<>();
-	protected Set<View> mViews;
-	protected Set<View> mInRestoreState;
-	protected Map<View, Set<ViewCommand<View>>> mViewStates;
+	protected final ViewCommands<View> mViewCommands = new ViewCommands<>();
+	protected final Set<View> mViews = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
+	protected final Set<View> mInRestoreState = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
+	protected final Map<View, Set<ViewCommand<View>>> mViewStates = new WeakHashMap<>();
 
-	public MvpViewState() {
-		mViews = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
-		mInRestoreState = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
-		mViewStates = new WeakHashMap<>();
+	protected void apply(ViewCommand<View> command) {
+		mViewCommands.beforeApply(command);
+
+		if (mViews.isEmpty()) {
+			return;
+		}
+
+		for (View view$ : mViews) {
+			command.apply(view$);
+		}
+
+		mViewCommands.afterApply(command);
+	}
+
+	@SuppressWarnings({"unchecked", "SameParameterValue"})
+	protected <C extends ViewCommand<View>> C findCommand(Class<C> clz) {
+		for (ViewCommand<?> viewCommand : mViewCommands.getCurrentState()) {
+			if (viewCommand.getClass() == clz) {
+				return (C) viewCommand;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -104,6 +122,36 @@ public abstract class MvpViewState<View extends MvpView> {
 	 */
 	public boolean isInRestoreState(View view) {
 		return mInRestoreState.contains(view);
+	}
+
+	protected static String buildString(String name, Object... args) {
+		StringBuilder builder = new StringBuilder(name);
+		if (args.length > 0) {
+			builder.append("{");
+			boolean key = true;
+			boolean isFirst = true;
+			for(Object arg : args) {
+				if (!isFirst) {
+					if (key) {
+						builder.append(", ");
+					}
+				} else {
+					isFirst = false;
+				}
+				if (!key && arg instanceof String) {
+					builder.append("'");
+				}
+				builder.append(arg);
+				if (key) {
+					builder.append("=");
+				} else if (arg instanceof String) {
+					builder.append("'");
+				}
+				key = !key;
+			}
+			builder.append("}");
+		}
+		return builder.toString();
 	}
 
 	@Override

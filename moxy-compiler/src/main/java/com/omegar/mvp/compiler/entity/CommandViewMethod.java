@@ -21,16 +21,19 @@ public class CommandViewMethod extends ViewMethod {
 	private final String mUniqueSuffix;
 	private final TypeElement mStrategy;
 	private final String mTag;
+	private final boolean mSingleInstance;
 
 	public CommandViewMethod(Types types, DeclaredType targetInterfaceElement,
 							 ExecutableElement methodElement,
 							 TypeElement strategy,
 							 String tag,
-							 String uniqueSuffix) {
+							 String uniqueSuffix,
+							 boolean singleInstance) {
 		super(types, targetInterfaceElement, methodElement);
 		mStrategy = strategy;
 		mTag = tag;
 		mUniqueSuffix = uniqueSuffix;
+		mSingleInstance = singleInstance;
 	}
 
 	public TypeElement getStrategy() {
@@ -49,6 +52,10 @@ public class CommandViewMethod extends ViewMethod {
 		return Util.capitalizeString(getName()) + mUniqueSuffix + "Command";
 	}
 
+	public boolean isSingleInstance() {
+		return mSingleInstance;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -57,11 +64,12 @@ public class CommandViewMethod extends ViewMethod {
 		CommandViewMethod that = (CommandViewMethod) o;
 		return Objects.equals(mUniqueSuffix, that.mUniqueSuffix) &&
 				Objects.equals(mStrategy, that.mStrategy) &&
-				Objects.equals(mTag, that.mTag);
+				Objects.equals(mTag, that.mTag) &&
+				mSingleInstance == that.mSingleInstance;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), mUniqueSuffix, mStrategy, mTag);
+		return Objects.hash(super.hashCode(), mUniqueSuffix, mStrategy, mTag, mSingleInstance);
 	}
 }

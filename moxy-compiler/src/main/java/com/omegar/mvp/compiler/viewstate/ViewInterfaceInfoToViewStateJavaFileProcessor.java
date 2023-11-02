@@ -12,8 +12,10 @@ import com.omegar.mvp.compiler.pipeline.PipelineContext;
 import com.omegar.mvp.compiler.pipeline.Publisher;
 import com.omegar.mvp.viewstate.MvpViewState;
 import com.omegar.mvp.viewstate.ViewCommand;
+import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -168,12 +170,24 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
 
     private TypeSpec generateCommandClass(CommandViewMethod method, List<TypeVariableName> variableNames) {
         MethodSpec applyMethod = MethodSpec.methodBuilder("apply")
-                .addAnnotation(Override.class)
-                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                .addModifiers(Modifier.PUBLIC)
                 .addParameter(GENERIC_TYPE_VARIABLE_NAME, "mvpView")
                 .addExceptions(method.getExceptions())
                 .addStatement("mvpView.$L($L)", method.getName(), method.getArgumentsString())
                 .build();
+
+        MethodSpec.Builder updateMethodBuilder = null;
+
+        if (method.isSingleInstance()) {
+
+            updateMethodBuilder = MethodSpec.methodBuilder("update")
+                    .addModifiers(Modifier.PRIVATE)
+                    .addParameters(method.getParameterSpecs());
+
+            for (ParameterSpec typeVariable : method.getParameterSpecs()) {
+                updateMethodBuilder.addStatement("this.$1L = $1L", typeVariable.name);
+            }
+        }
 
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(method.getCommandClassName())
                 .addOriginatingElement(method.getElement())
@@ -183,54 +197,44 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
                 }})
                 .superclass(VIEW_COMMAND_TYPE_NAME)
                 .addMethod(generateCommandConstructor(method))
-                .addMethod(applyMethod)
-                .addMethod(generateToStringMethodSpec(method));
+                .addMethod(applyMethod);
+
+        if (updateMethodBuilder != null) {
+            classBuilder.addMethod(updateMethodBuilder.build());
+        }
+
+        classBuilder.addMethod(generateToStringMethodSpec(method));
 
         for (ParameterSpec parameter : method.getParameterSpecs()) {
-            classBuilder.addField(parameter.type, parameter.name, Modifier.PRIVATE, Modifier.FINAL);
+            classBuilder.addField(parameter.type, parameter.name, Modifier.PRIVATE);
         }
 
         return classBuilder.build();
     }
 
     private MethodSpec generateVoidMethod(DeclaredType enclosingType, CommandViewMethod method, TypeSpec commandClass) {
-        // TODO: String commandFieldName = "$cmd";
-        String commandFieldName = decapitalizeString(method.getCommandClassName());
+        String commandClassName = method.getCommandClassName();
 
-        // Add salt if contains argument with same name
-        Random random = new Random();
-        while (method.getArgumentsString().contains(commandFieldName)) {
-            commandFieldName += random.nextInt(10);
+        MethodSpec.Builder builder = MethodSpec.overriding(method.getElement(), enclosingType, mTypes);
+        if (method.isSingleInstance()) {
+            builder.addStatement("$1L command = findCommand($1L.class)", commandClassName)
+                    .beginControlFlow("if (command == null)")
+                    .addStatement("apply(new $1N($2L))", commandClass, method.getArgumentsString())
+                    .nextControlFlow("else")
+                    .addStatement("command.update($L)", method.getArgumentsString())
+                    .addStatement("apply(command)")
+                    .endControlFlow();
+        } else {
+            builder.addStatement("apply(new $1N($2L))", commandClass, method.getArgumentsString());
         }
-
-        return MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
-                .addStatement("$1N $2L = new $1N($3L)", commandClass, commandFieldName, method.getArgumentsString())
-                .addStatement("mViewCommands.beforeApply($L)", commandFieldName)
-                .addCode("\n")
-                .beginControlFlow("if (mViews == null || mViews.isEmpty())")
-                .addStatement("return")
-                .endControlFlow()
-                .addCode("\n")
-                .beginControlFlow("for ($L view$$ : mViews)", VIEW)
-                .addStatement("view$$.$L($L)", method.getName(), method.getArgumentsString())
-                .endControlFlow()
-                .addCode("\n")
-                .addStatement("mViewCommands.afterApply($L)", commandFieldName)
-                .build();
+        return builder.build();
     }
 
     private MethodSpec generateReturnMethod(DeclaredType enclosingType, ReturnViewMethod method, CommandViewMethod commandViewMethod) {
-        String commandClassName = commandViewMethod.getCommandClassName();
-        MethodSpec.Builder builder = MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
-                .beginControlFlow("for ($L viewCommand : mViewCommands.getCurrentState())", VIEW_COMMAND_CLASS_NAME)
-                .beginControlFlow("if (viewCommand instanceof $L)", commandClassName)
-                .addStatement("return (($L) viewCommand).$L", commandClassName, commandViewMethod.getArgumentsString())
-                .endControlFlow()
-                .endControlFlow();
-
+        String defaultValue;
         switch (method.getReturnType().getKind()) {
             case BOOLEAN:
-                builder.addStatement("return false");
+                defaultValue = "false";
                 break;
             case BYTE:
             case SHORT:
@@ -239,14 +243,17 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
             case FLOAT:
             case CHAR:
             case DOUBLE:
-                builder.addStatement("return 0");
+                defaultValue = "0";
                 break;
             default:
-                builder.addStatement("return null");
+                defaultValue = "null";
                 break;
         }
-
-        return builder.build();
+        String commandClassName = commandViewMethod.getCommandClassName();
+        return MethodSpec.overriding(method.getElement(), enclosingType, mTypes)
+                .addStatement("$1L command = findCommand($1L.class)", commandClassName)
+                .addStatement("return command != null ? command.$L : $L", commandViewMethod.getArgumentsString(), defaultValue)
+                .build();
     }
 
     private MethodSpec generateCommandConstructor(CommandViewMethod method) {
@@ -257,10 +264,6 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
                 .addModifiers(Modifier.PRIVATE)
                 .addStatement("super($S, $T.class)", method.getTag(), method.getStrategy());
 
-        if (parameters.size() > 0) {
-            builder.addCode("\n");
-        }
-
         for (ParameterSpec parameter : parameters) {
             builder.addStatement("this.$1N = $1N", parameter);
         }
@@ -269,30 +272,33 @@ public final class ViewInterfaceInfoToViewStateJavaFileProcessor extends JavaFil
     }
 
     private MethodSpec generateToStringMethodSpec(CommandViewMethod method) {
-        StringBuilder statement = new StringBuilder("return \"" + method.getName());
+        StringBuilder statement = new StringBuilder("return ");
 
-        boolean firstParams = true;
-        for (ParameterSpec parameter : method.getParameterSpecs()) {
-            if (firstParams) {
-                firstParams = false;
-                statement.append("{\" + \n\"");
-            } else {
-                statement.append(" + \n\", ");
-            }
-
-            statement.append(parameter.name)
-                    .append("=\" + ")
-                    .append(parameter.name)
-                    .append(" ");
-        }
-        if (!firstParams) {
-            statement.append("+\n'}'");
+        if (method.getParameterSpecs().isEmpty()) {
+            statement.append("\"")
+                    .append(method.getName())
+                    .append("\"");
         } else {
-            statement.append("\"");
+            boolean firstParams = true;
+            statement.append("buildString(")
+                    .append("\"")
+                    .append(method.getName())
+                    .append("\",");
+            for (ParameterSpec parameter : method.getParameterSpecs()) {
+                if (firstParams) {
+                    firstParams = false;
+                } else {
+                    statement.append(",");
+                }
+                statement.append("\"")
+                        .append(parameter.name)
+                        .append("\",")
+                        .append(parameter.name);
+            }
+            statement.append(")");
         }
 
         return MethodSpec.methodBuilder("toString")
-                .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(String.class)
                 .addStatement(statement.toString())

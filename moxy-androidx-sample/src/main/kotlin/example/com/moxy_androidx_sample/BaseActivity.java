@@ -1,5 +1,7 @@
 package example.com.moxy_androidx_sample;
 
+import android.widget.Toast;
+
 import androidx.annotation.ContentView;
 import androidx.annotation.LayoutRes;
 import com.omegar.mvp.MvpAppCompatActivity;
@@ -17,7 +19,7 @@ public abstract class BaseActivity extends MvpAppCompatActivity implements BaseV
 
     @Override
     public void testFunction() {
-
+        Toast.makeText(this, "testFunction", Toast.LENGTH_LONG).show();
     }
 
 }

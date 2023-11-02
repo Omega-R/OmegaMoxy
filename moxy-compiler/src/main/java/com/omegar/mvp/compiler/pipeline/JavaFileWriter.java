@@ -25,7 +25,7 @@ public class JavaFileWriter extends Receiver<JavaFile> {
 
     @Override
     public void receive(JavaFile file) {
-        if (isAsyncRun(file)) {
+        if (false && isAsyncRun(file)) {
             mAsyncExecutors.submit(() -> run(file));
         } else {
             run(file);

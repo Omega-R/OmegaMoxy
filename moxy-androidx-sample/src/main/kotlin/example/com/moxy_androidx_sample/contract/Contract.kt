@@ -10,7 +10,7 @@ interface Contract {
 
         var value: String
 
-        @StateStrategyType(ADD_TO_END_SINGLE)
+        @StateStrategyType(ADD_TO_END_SINGLE, singleInstance = true)
         fun printLog(msg: D?, log: String?)
 
     }
