@@ -1,6 +1,7 @@
 package com.omegar.mvp.compiler.entities
 
 import com.google.devtools.ksp.symbol.KSType
+import com.omegar.mvp.compiler.NamingRules.viewStateClassName
 import com.omegar.mvp.compiler.extensions.safeParameterizedBy
 import com.omegar.mvp.viewstate.strategy.StrategyType
 import com.squareup.kotlinpoet.ClassName
@@ -13,18 +14,18 @@ import com.squareup.kotlinpoet.TypeVariableName
  */
 data class View(
     val className: ClassName,
-    val presenterClassName: ClassName,
+    val presenterClassParamsMap: MutableMap<ClassName, List<TypeVariableName>>,
+    val viewTypePresenterParams: MutableMap<ClassName, List<TypeName>>,
     val methods: List<Method>,
     val viewTypeParams: List<TypeVariableName>,
-    val presenterInnerTypeParams: List<TypeName>,
-    val reflectorPackage: String,
-    val parent: View?
+    val viewTypeResolvedParams: List<TypeName>,
+    val parent: View?,
+    val needGenerate: Boolean
 ) : Tagged() {
 
     val name: String = className.simpleName
 
     val viewTypeNameWithParams = className.safeParameterizedBy(viewTypeParams)
-
 
     init {
         val nameCountMap = mutableMapOf<String, Int>()

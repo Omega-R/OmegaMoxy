@@ -11,8 +11,4 @@ object MvpFacade {
     var presenterStore = PresenterStore
     var mvpProcessor = MvpProcessor
     var presentersCounter = PresentersCounter
-
-    @JvmStatic
-    val instance
-        get() = this
 }

@@ -1,7 +1,5 @@
-package com.omegar.mvp.ktx
+package com.omegar.mvp
 
-import com.omegar.mvp.MvpDelegateHolder
-import com.omegar.mvp.MvpPresenter
 import com.omegar.mvp.presenter.PresenterField
 import com.omegar.mvp.presenter.PresenterType
 import kotlin.reflect.KClass
@@ -28,10 +26,3 @@ class CustomPresenterFactory<P : MvpPresenter<*>, D>(presenterClass: KClass<P>, 
 
 }
 
-inline fun <reified P : MvpPresenter<*>, D : Any> MvpDelegateHolder<D>.providePresenter(
-    noinline factoryBlock: () -> P
-): CustomPresenterFactory<P, D> {
-    return CustomPresenterFactory<P, D>(P::class, factoryBlock).also {
-        mvpDelegate.addCustomPresenterFields(it)
-    }
-}

@@ -12,7 +12,7 @@ import java.util.Locale
 object NamingRules {
 
     val String.viewStateName
-        get() = "$this\$\$State"
+        get() = "${this.replace("View", "MvpView")}State"
 
     val View.viewStateName
         get() = name.viewStateName

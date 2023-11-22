@@ -4,7 +4,7 @@ import com.omegar.mvp.viewstate.strategy.MoxyViewCommand
 import com.omegar.mvp.viewstate.strategy.StrategyType.ONE_EXECUTION
 import kotlin.time.Duration
 
-interface MoxyView: Addon<Long>, BaseView {
+interface MoxyView<M>: Addon<Long>, BaseView<M> {
 
 
     var duration: Duration

@@ -33,5 +33,4 @@ java {
 }
 
 dependencies {
-    compileOnly project(":moxy:stub-reflector")
 }

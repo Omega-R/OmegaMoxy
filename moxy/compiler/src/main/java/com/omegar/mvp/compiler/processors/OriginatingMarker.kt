@@ -1,7 +1,6 @@
 package com.omegar.mvp.compiler.processors
 
 import com.omegar.mvp.compiler.entities.Tagged
-import com.omegar.mvp.compiler.entities.View
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeAliasSpec
@@ -48,6 +47,6 @@ fun TypeSpec.Builder.addOriginating(tagged: Tagged) = apply {
     }
 }
 
-fun TypeSpec.Builder.addOriginating(tagged: List<View>): TypeSpec.Builder = apply {
+fun TypeSpec.Builder.addOriginating(tagged: List<Tagged>): TypeSpec.Builder = apply {
     tagged.forEach { addOriginating(it) }
 }

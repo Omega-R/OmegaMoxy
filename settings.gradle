@@ -38,6 +38,5 @@ dependencyResolutionManagement {
 rootProject.name = "OmegaMoxy"
 include ':app'
 include ':moxy'
-include ':moxy:stub-reflector'
 include ':moxy:androidx'
 include ':moxy:compiler'
