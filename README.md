@@ -18,41 +18,47 @@ Moxy has a few killer features in other ways:
 ## Sample
 
 View interface
-```java
-public interface HelloWorldView extends MvpView {
-	void showMessage(int message);
+```kotlin
+interface HelloWorldView: MvpView {
+
+    var waiting: Boolean
+
+    @MoxyViewCommand(ONE_EXECUTION)
+    fun showMessage(int message)
+
 }
 ```
 Presenter
-```java
-@InjectViewState
-public class HelloWorldPresenter extends MvpPresenter<HelloWorldView> {
-	public HelloWorldPresenter() {
-		getViewState().showMessage(R.string.hello_world);
-	}
+```kotlin
+class HelloWorldPresenter: MvpPresenter<HelloWorldView> {
+
+    init {
+        viewState.showMessage(R.string.hello_world)
+    }
+
 }
 ```
 View implementation
-```java
-public class HelloWorldActivity extends MvpAppCompatActivity implements HelloWorldView {
+```kotlin
+class HelloWorldActivity: MvpAppCompatActivity, HelloWorldView {
 
-	@InjectPresenter
-	HelloWorldPresenter mHelloWorldPresenter;
+    private val helloWorldPresenter: HelloWorldPresenter by providePresenter {
+        HelloWorldPresenter()
+    }
 
-	private TextView mHelloWorldTextView;
+    private lateinit var helloWorldTextView: TextView
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_hello_world);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_hello_world)
 
-		mHelloWorldTextView = ((TextView) findViewById(R.id.activity_hello_world_text_view_message));
-	}
+	helloWorldTextView = findViewById<TextView>(R.id.activity_hello_world_text_view_message)
+    }
 
-	@Override
-	public void showMessage(int message) {
-		mHelloWorldTextView.setText(message);
-	}
+    @Override
+    override fun showMessage(message: Int) {
+        helloWorldTextView.setText(message)
+    }
 }
 ```
 
@@ -61,14 +67,7 @@ public class HelloWorldActivity extends MvpAppCompatActivity implements HelloWor
 ## Wiki
 For all information check [Moxy Wiki](https://github.com/Arello-Mobile/Moxy/wiki)
 
-## Android studio templates
-In order to avoid boilerplate code creating for binding activity, fragments and its presentation part, we propose to use Android Studio templates for Moxy. 
-
-Templates located in [/moxy-templates](https://github.com/Arello-Mobile/Moxy/tree/master/moxy-templates)
-
 ## Links
-[Telegram channel (en)](https://telegram.me/moxy_mvp_library)<br />
-[Telegram channel (ru)](https://telegram.me/moxy_ru)<br />
 [References](https://github.com/Arello-Mobile/Moxy/wiki#references)<br />
 [FAQ](https://github.com/Arello-Mobile/Moxy/wiki/FAQ)
 
@@ -84,45 +83,18 @@ allprojects {
 }
 ```
 
-Base modules integration:
+Add dependency:
 ```groovy
-dependencies {
-  ...
-  implementation 'com.github.Omega-R.OmegaMoxy:moxy:1.5.7'
-  annotationProcessor 'com.github.Omega-R.OmegaMoxy:moxy-compiler:1.5.7'
-}
-```
-For additional base view classes `MvpActivity` and `MvpFragment` add this:
-```groovy
-dependencies {
-  ...
-  implementation 'com.github.Omega-R.OmegaMoxy:moxy-android:1.5.7'
-}
-```
 
-If you are planning to use AndroidX, then you can use `MvpAppCompatActivity` and `MvpAppCompatFragment`. Then add this:
-```groovy
-dependencies {
-  ...
-  implementation 'com.github.Omega-R.OmegaMoxy:moxy-androidx:1.5.7'
+plugins {
+  id 'com.google.devtools.ksp' version '1.9.0-1.0.11' apply false 
 }
-```
-If you are planning to use AppCompat, then you can use `MvpAppCompatActivity` and `MvpAppCompatFragment`. Then add this:
-```groovy
-dependencies {
-  ...
-  implementation 'com.github.Omega-R.OmegaMoxy:moxy-app-compat:1.5.7'
-  implementation 'com.android.support:appcompat-v7:$support_version'
-}
-```
-### Kotlin
-If you are using kotlin, use `kapt` instead of `provided`/`apt` dependency type:
-```groovy
-apply plugin: 'kotlin-kapt'
 
 dependencies {
   ...
-  kapt 'com.github.Omega-R.OmegaMoxy:moxy-compiler:1.5.7'
+  implementation 'com.github.Omega-R.OmegaMoxy:moxy:3.1.0'
+  implementation 'com.github.Omega-R.OmegaMoxy:moxy-androidx:3.1.0'
+  ksp 'com.github.Omega-R.OmegaMoxy:moxy-compiler:3.1.0'	
 }
 ```
 
@@ -133,7 +105,7 @@ Moxy is completely without reflection! No special ProGuard rules required.
 ```
 The MIT License (MIT)
 
-Copyright (c) 2016 Arello Mobile
+Copyright (c) 2023 Omega
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
