@@ -5,7 +5,7 @@ import android.widget.Toast
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-class MoxyFragment : MvpAppCompatFragment(R.layout.activity_moxy), MoxyView {
+class MoxyFragment : MvpAppCompatFragment(R.layout.activity_moxy), MoxyView<Int> {
 
     private val presenter: MoxyPresenter by providePresenter {
         MoxyPresenter()

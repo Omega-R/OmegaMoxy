@@ -81,7 +81,7 @@ class KspViewParser(
         val newView = if (oldViewStateDeclaration != null) {
             View(
                 className = viewClassName,
-                presenterClassParamsMap = mutableMapOf(presenterDeclaration.toClassName() to presenterDeclaration.typeParameters.map { it.toTypeVariableName() }),
+                presenterClassParamsMap = mutableMapOf(presenterDeclaration.toClassName() to presenterDeclaration.typeParameters.map { it.toTypeVariableName(presenterDeclaration.typeParameters.toTypeParameterResolver()) }),
                 methods = emptyList(),
                 viewTypeParams = emptyList(),
                 parent = null,
@@ -97,7 +97,7 @@ class KspViewParser(
             View(
                 className = viewClassName,
                 presenterClassParamsMap = mutableMapOf(
-                    presenterDeclaration.toClassName() to presenterDeclaration.typeParameters.map { it.toTypeVariableName() }
+                    presenterDeclaration.toClassName() to presenterDeclaration.typeParameters.map { it.toTypeVariableName(presenterDeclaration.typeParameters.toTypeParameterResolver()) }
                 ),
                 methods = viewDeclaration.getMethods(declarations, superView),
                 viewTypeResolvedParams = superView?.viewTypePresenterParams?.get(superPresenter.toClassName()).orEmpty(),
