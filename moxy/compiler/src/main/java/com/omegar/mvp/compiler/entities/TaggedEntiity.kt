@@ -18,4 +18,8 @@ open class Tagged {
         taggedMap[cls] = value
     }
 
+    fun copyTagged(tagged: Tagged) {
+        taggedMap.putAll(tagged.taggedMap)
+    }
+
 }

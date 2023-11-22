@@ -11,7 +11,6 @@ import com.omegar.mvp.viewstate.MvpViewState
  * @author Alexander Blinov
  * @author Konstantin Tckhovrebov
  */
-@InjectViewState
 abstract class MvpPresenter<View : MvpView> {
 
     /**

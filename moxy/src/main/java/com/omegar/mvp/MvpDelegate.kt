@@ -127,7 +127,7 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
         outState.putInt(KEY_UNIQUE_KEY, uniqueKey)
     }
 
-    fun <P : MvpPresenter<*>> addCustomPresenterFields(customPresenterField: PresenterField<Delegated, P>) {
+    fun <P : MvpPresenter<*>> addCustomPresenterFields(customPresenterField: CustomPresenterFactory<P, *>) {
         @Suppress("UNCHECKED_CAST")
         mCustomPresenterFields.add(customPresenterField as PresenterField<Delegated, MvpPresenter<*>>)
     }

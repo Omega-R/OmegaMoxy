@@ -1,19 +1,23 @@
 package com.omegar.mvp.compiler.processors
 
-import com.omegar.mvp.Moxy
+import com.omegar.mvp.CustomPresenterFactory
+import com.omegar.mvp.MoxyReflector
+import com.omegar.mvp.MvpDelegateHolder
 import com.omegar.mvp.compiler.NamingRules.commandName
 import com.omegar.mvp.compiler.NamingRules.viewStateClassName
 import com.omegar.mvp.compiler.NamingRules.viewStateName
 import com.omegar.mvp.compiler.entities.View
 import com.omegar.mvp.compiler.entities.View.Method.Type.Function
 import com.omegar.mvp.compiler.entities.View.Method.Type.Property
-import com.omegar.mvp.compiler.extensions.toFileSpec
+import com.omegar.mvp.compiler.extensions.safeParameterizedBy
+import com.omegar.mvp.compiler.extensions.toFileSpecBuilder
 import com.omegar.mvp.viewstate.MvpViewState
 import com.omegar.mvp.viewstate.ViewCommand
 import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
+import kotlin.reflect.KClass
 
 
 /**
@@ -52,34 +56,45 @@ class ViewStateGenerator : Processor<View, FileSpec> {
     @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
     override fun invoke(view: View): FileSpec {
         val typeSpec = TypeSpec.classBuilder(view.viewStateName)
+            .addCompanionObject(view)
             .addOriginating(view)
-            .addMoxyAnnotation(view.reflectorPackage)
             .addModifiers(KModifier.OPEN)
             .addSuperinterface(view.viewTypeNameWithParams)
             .addTypeVariables(view.viewStateTypeVariables)
-            .superclass(view.parent, view.omegaViewVariableName)
+            .superclass(view.parent, view.omegaViewVariableName, view.viewTypeResolvedParams)
             .addMethods(view.methods, view.viewStateTypeVariables)
             .addCommandTypes(view)
             .build()
 
-        return typeSpec.toFileSpec(view.className.packageName)
+        return typeSpec.toFileSpecBuilder(view.className.packageName)
+            .apply {
+                view.presenterClassParamsMap.forEach { entry ->
+                    addFunction(view.createProvidePresenterFunSpec(entry.key, entry.value, view.presenterClassParamsMap.size == 1))
+                }
+            }
+            .build()
     }
 
-    private fun TypeSpec.Builder.addMoxyAnnotation(reflectorPackage: String): TypeSpec.Builder {
-        return addAnnotation(
-            AnnotationSpec.builder(Moxy::class)
-                .addMember("reflectorPackage=\"%L\"", reflectorPackage)
+    private fun TypeSpec.Builder.addCompanionObject(view: View) = apply {
+        addType(
+            TypeSpec.companionObjectBuilder()
+                .apply {
+                    view.viewTypePresenterParams.forEach { entry ->
+                        val innerParams = entry.value.map {
+                            if (it is TypeVariableName && it.bounds.isNotEmpty()) it.bounds.first() else it
+                        }
+                        val params = listOf(view.className.safeParameterizedBy(innerParams)) + innerParams
+
+                        val returnType = view.viewStateClassName.parameterizedBy(*params.toTypedArray())
+                        addInitializerBlock(CodeBlock.of("%T[%T::class] = {%T() }", MoxyReflector::class.asClassName(), entry.key, returnType))
+                    }
+                }
                 .build()
         )
     }
 
-
-    private fun TypeSpec.Builder.superclass(parentView: View?, omegaViewVariableName: TypeVariableName): TypeSpec.Builder {
-        return superclass(
-            parentView?.let {
-                parentView.viewStateClassName.parameterizedBy(omegaViewVariableName)
-            } ?: MVP_VIEW_STATE_TYPE_NAME
-        )
+    private fun TypeSpec.Builder.superclass(parentView: View?, omegaViewVariableName: TypeVariableName, additionParams: List<TypeName>): TypeSpec.Builder {
+        return superclass(parentView?.viewStateClassName?.parameterizedBy(listOf(omegaViewVariableName) + additionParams) ?: MVP_VIEW_STATE_TYPE_NAME)
     }
 
     private fun TypeSpec.Builder.addMethods(
@@ -229,6 +244,23 @@ class ViewStateGenerator : Processor<View, FileSpec> {
     private val View.Method.Param.nameWithVarargs
         get() = (if (isVarargs) "*" else "") + name
 
+
+    private fun View.createProvidePresenterFunSpec(presenterType: ClassName, typeParams: List<TypeVariableName>, generalName: Boolean): FunSpec {
+        val parameterizedPresenterType = presenterType.safeParameterizedBy(typeParams)
+        val lambda = LambdaTypeName.get(
+            parameters = emptyArray<TypeName>(),
+            returnType = parameterizedPresenterType
+        )
+        val presenterFactoryTypeName = CustomPresenterFactory::class.asClassName().parameterizedBy(parameterizedPresenterType, className.safeParameterizedBy(viewTypePresenterParams[presenterType]))
+        return FunSpec.builder("provide${ if (generalName) "Presenter" else presenterType.simpleName}")
+            .receiver(MvpDelegateHolder::class.asClassName().parameterizedBy(STAR))
+            .addTypeVariables(typeParams)
+            .addParameter("factoryBlock", lambda)
+            .returns(presenterFactoryTypeName)
+            .addCode(viewStateClassName.simpleName + ".Companion\n")
+            .addCode("return %T(%T::class as %T<%T>, factoryBlock).also { mvpDelegate.addCustomPresenterFields(it) }", presenterFactoryTypeName, presenterType, KClass::class.asClassName(), parameterizedPresenterType)
+            .build()
+    }
 
 }
 

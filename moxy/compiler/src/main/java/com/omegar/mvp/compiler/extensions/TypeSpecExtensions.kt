@@ -10,8 +10,12 @@ import com.squareup.kotlinpoet.TypeSpec
  */
 
 fun TypeSpec.toFileSpec(packageName: String): FileSpec {
+    return toFileSpecBuilder(packageName)
+        .build()
+}
+
+fun TypeSpec.toFileSpecBuilder(packageName: String): FileSpec.Builder {
     return FileSpec.builder(packageName, name!!)
         .addType(this)
         .indent("\t")
-        .build()
 }

@@ -1,7 +1,6 @@
 package com.omegar.mvp.compiler.ksp
 
 import com.google.devtools.ksp.symbol.KSFile
-import com.omegar.mvp.RegisterMoxyReflectorPackages
 import com.omegar.mvp.compiler.entities.Tagged
 import com.omegar.mvp.compiler.processors.OriginatingMarker
 import com.squareup.kotlinpoet.FunSpec

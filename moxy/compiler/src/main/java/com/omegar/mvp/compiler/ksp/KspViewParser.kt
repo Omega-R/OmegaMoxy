@@ -7,9 +7,7 @@ import com.google.devtools.ksp.innerArguments
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.*
-import com.omegar.mvp.Moxy
 import com.omegar.mvp.MvpPresenter
-import com.omegar.mvp.MvpView
 import com.omegar.mvp.compiler.NamingRules.viewStateName
 import com.omegar.mvp.compiler.entities.Tagged
 import com.omegar.mvp.compiler.entities.View
@@ -22,6 +20,7 @@ import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
 import com.squareup.kotlinpoet.ksp.toTypeVariableName
+import java.lang.RuntimeException
 
 
 /**
@@ -29,9 +28,9 @@ import com.squareup.kotlinpoet.ksp.toTypeVariableName
  * Copyright (c) 2023 Omega https://omega-r.com
  */
 class KspViewParser(
-    private val reflectorPackage: String,
     private val logger: KSPLogger,
-    private val resolver: Resolver
+    private val resolver: Resolver,
+    private val mvpView: KSType
 ) : ViewParser<KSClassDeclaration> {
 
     companion object {
@@ -43,8 +42,6 @@ class KspViewParser(
     private val viewCache = mutableMapOf<String, View>()
 
 
-    private val mvpView = resolver.getClassDeclarationByName(MvpView::class.qualifiedName!!)!!.asType(emptyList())
-
     @OptIn(KspExperimental::class)
     @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
     override fun invoke(presenterDeclaration: KSClassDeclaration): View? {
@@ -54,48 +51,63 @@ class KspViewParser(
         presenterCache[presenterKey]?.let {
             return it
         }
+
         val (superPresenter, view) = presenterDeclaration.getSuperPresenterAndView()
-
         val viewClassName = view.toClassName()
-        val viewKey = viewClassName.simpleName
-
+        val viewKey = viewClassName.canonicalName
         val viewDeclaration = view.declaration as KSClassDeclaration
 
-        val superView = this(superPresenter)
         viewCache[viewKey]?.let {
-            val newView = it.copy(
-                presenterClassName = presenterDeclaration.toClassName(),
-                parent = superView
-            )
-                .putTags(presenterDeclaration, viewDeclaration)
-            presenterCache[presenterKey] = newView
-            return newView
+            it.presenterClassParamsMap
+                    .apply {
+                        put(
+                            presenterDeclaration.toClassName(),
+                            presenterDeclaration.typeParameters.map { it.toTypeVariableName() }
+                        )
+                    }
+            it.viewTypePresenterParams
+                .apply {
+                    put(
+                        presenterDeclaration.toClassName(),
+                        view.innerArguments.map { it.toTypeName(presenterDeclaration.typeParameters.toTypeParameterResolver()) }
+                    )
+                }
+            it.putTags(presenterDeclaration)
+            presenterCache[presenterKey] = it
+            return it
         }
-
 
         val oldViewStateDeclaration = resolver.getClassDeclarationByName(viewClassName.reflectionName().viewStateName)
         val newView = if (oldViewStateDeclaration != null) {
             View(
                 className = viewClassName,
-                presenterClassName = presenterDeclaration.toClassName(),
+                presenterClassParamsMap = mutableMapOf(presenterDeclaration.toClassName() to presenterDeclaration.typeParameters.map { it.toTypeVariableName() }),
                 methods = emptyList(),
                 viewTypeParams = emptyList(),
-                presenterInnerTypeParams = emptyList(),
-                reflectorPackage = oldViewStateDeclaration.getAnnotationsByType(Moxy::class).first().reflectorPackage,
-                parent = null
-            ).putTags(presenterDeclaration, viewDeclaration)
+                parent = null,
+                viewTypeResolvedParams = emptyList(),
+                viewTypePresenterParams = mutableMapOf(presenterDeclaration.toClassName() to view.innerArguments.map { it.toTypeName(presenterDeclaration.typeParameters.toTypeParameterResolver()) }),
+                needGenerate = false
+                ).putTags(presenterDeclaration, viewDeclaration)
         } else {
+            val superView = this(superPresenter)
+
+            val declarations = mutableListOf<KSDeclaration>(presenterDeclaration, viewDeclaration)
+
             View(
                 className = viewClassName,
-                presenterClassName = presenterDeclaration.toClassName(),
-                methods = viewDeclaration.getMethods(superView),
+                presenterClassParamsMap = mutableMapOf(
+                    presenterDeclaration.toClassName() to presenterDeclaration.typeParameters.map { it.toTypeVariableName() }
+                ),
+                methods = viewDeclaration.getMethods(declarations, superView),
+                viewTypeResolvedParams = superView?.viewTypePresenterParams?.get(superPresenter.toClassName()).orEmpty(),
                 viewTypeParams = viewDeclaration.typeParameters
                     .filterNot { mvpView.isAssignableFrom(it.bounds.first().resolve()) }
                     .map { it.toTypeVariableName() },
-                presenterInnerTypeParams = view.innerArguments.map { it.toTypeName(presenterDeclaration.typeParameters.toTypeParameterResolver()) },
-                reflectorPackage = reflectorPackage,
-                parent = superView
-            ).putTags(presenterDeclaration, viewDeclaration)
+                viewTypePresenterParams = mutableMapOf(presenterDeclaration.toClassName() to view.innerArguments.map { it.toTypeName(presenterDeclaration.typeParameters.toTypeParameterResolver()) }),
+                parent = superView,
+                needGenerate = true
+            ).putTags(*declarations.toTypedArray())
         }
 
         presenterCache[presenterKey] = newView
@@ -110,7 +122,7 @@ class KspViewParser(
                 (reference.resolve().declaration as? KSClassDeclaration)
                     ?.takeIf { it.classKind == ClassKind.CLASS }
                     ?.let {
-                        it to reference.findView()!!
+                        it to (reference.findView() ?: throw RuntimeException("It is impossible to find a view in $this"))
                     }
             }
     }
@@ -138,11 +150,14 @@ class KspViewParser(
                     }
             }
 
-            else -> null
+            else -> {
+                logger.warn("Unknown type is " + type?.declaration?.let { it::class}.toString())
+                null
+            }
         }
     }
 
-    private fun KSClassDeclaration.getMethods(superView: View?): List<View.Method> {
+    private fun KSClassDeclaration.getMethods(tagsDeclarations: MutableList<KSDeclaration>, superView: View?): List<View.Method> {
         val parameterResolver: TypeParameterResolver = typeParameters.toTypeParameterResolver()
         val typeNameResolverMap = mutableMapOf<KSDeclaration?, TypeNameResolver>()
         val additionalSequence = superTypes
@@ -154,6 +169,7 @@ class KspViewParser(
             }
             .filterIsInstance<KSClassDeclaration>()
             .flatMap {
+                tagsDeclarations += it
                 it.declarations
             }
         val typeNameResolver = TypeNameResolver(emptyList(), this, parameterResolver)
@@ -187,7 +203,7 @@ class KspViewParser(
             name = simpleName.getShortName(),
             type = View.Method.Type.Function(params),
             viewCommandAnnotation = getMoxyViewCommand()
-        ).putTags(this)
+        )
     }
 
     private fun KSPropertyDeclaration.toMethod(resolver: TypeNameResolver): View.Method {
@@ -201,7 +217,7 @@ class KspViewParser(
                 )
             ),
             viewCommandAnnotation = getMoxyViewCommand()
-        ).putTags(this)
+        )
     }
 
     @OptIn(KspExperimental::class)
@@ -229,7 +245,9 @@ class KspViewParser(
 
     private fun <T : Tagged> T.putTags(vararg declarations: KSDeclaration): T = apply {
         putTag(OriginatingMarker::class, KspOriginatingMarker)
-        putTag(KspOriginatingMarker.Files::class, KspOriginatingMarker.Files(declarations.mapNotNull { it.containingFile }))
+        val oldList = getTag(KspOriginatingMarker.Files::class)?.files.orEmpty()
+        val list = oldList + declarations.mapNotNull { it.containingFile }
+        putTag(KspOriginatingMarker.Files::class, KspOriginatingMarker.Files(list))
     }
 
     private fun KSTypeReference.toTypeName(resolver: TypeNameResolver): TypeName {

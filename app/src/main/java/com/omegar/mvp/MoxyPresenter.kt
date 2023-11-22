@@ -2,8 +2,6 @@ package com.omegar.mvp
 
 import kotlin.time.Duration
 
-
-@InjectViewState
 class MoxyPresenter : BasePresenter<Long, MoxyView>() {
 
     init {

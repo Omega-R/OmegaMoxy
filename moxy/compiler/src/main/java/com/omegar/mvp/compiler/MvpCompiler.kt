@@ -1,16 +1,16 @@
 package com.omegar.mvp.compiler
 
+import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.omegar.mvp.InjectViewState
+import com.omegar.mvp.MvpPresenter
+import com.omegar.mvp.MvpView
 import com.omegar.mvp.compiler.entities.View
 import com.omegar.mvp.compiler.ksp.KspViewParser
-import com.omegar.mvp.compiler.processors.MoxyReflectorGenerator
 import com.omegar.mvp.compiler.processors.ViewStateGenerator
-import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 
 /**
@@ -22,41 +22,27 @@ class MvpCompiler(environment: SymbolProcessorEnvironment) : SymbolProcessor {
     private val codeGenerator = environment.codeGenerator
     private val logger = environment.logger
     private var isProcessed = false
-    private val currentReflectorPackageName =
-        environment.options.getOrDefault("moxyReflectorPackage", NamingRules.moxyReflectorPackageName)
-
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         if (isProcessed) {
             return emptyList()
         }
         isProcessed = true
+        val mvpView = resolver.getClassDeclarationByName(MvpView::class.qualifiedName!!)!!.asStarProjectedType()
+        val mvpPresenter = resolver.getClassDeclarationByName(MvpPresenter::class.qualifiedName!!)!!.asStarProjectedType()
 
-        val parser = KspViewParser(currentReflectorPackageName, logger, resolver)
+        val parser = KspViewParser(logger, resolver, mvpView)
         val viewStateGenerator = ViewStateGenerator()
-        val moxyReflectorGenerator = MoxyReflectorGenerator(currentReflectorPackageName)
 
-        val symbols = resolver.getSymbolsWithAnnotation(InjectViewState::class.qualifiedName!!)
-
-        val uniqueViews = HashSet<String>()
-
-        val views = symbols
+        resolver.getAllFiles()
+            .flatMap { it.declarations }
             .filterIsInstance<KSClassDeclaration>()
-            .flatMap {
-                generateSequence(seedFunction = { parser(it) }, nextFunction = View::parent)
-            }
-            .distinctBy { it.presenterClassName.canonicalName + it.className.canonicalName }
-            .onEach {
-                if (!uniqueViews.contains(it.className.canonicalName) && it.reflectorPackage == currentReflectorPackageName) {
-                    uniqueViews += it.className.canonicalName
-                    viewStateGenerator(it).writeTo(codeGenerator = codeGenerator, aggregating = true)
-                }
-            }
+            .filter { mvpPresenter.isAssignableFrom(it.asStarProjectedType()) }
+            .flatMap { generateSequence(seedFunction = { parser(it) }, nextFunction = View::parent) }
+            .filter { it.needGenerate }
+            .distinctBy { it.className.canonicalName }
             .toList()
-
-        if (currentReflectorPackageName == NamingRules.moxyReflectorPackageName) {
-            moxyReflectorGenerator(views).writeTo(codeGenerator = codeGenerator, aggregating = true)
-        }
+            .forEach { viewStateGenerator(it).writeTo(codeGenerator = codeGenerator, aggregating = false) }
 
         return emptyList()
     }
