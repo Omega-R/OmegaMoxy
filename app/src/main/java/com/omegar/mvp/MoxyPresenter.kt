@@ -1,5 +1,6 @@
 package com.omegar.mvp
 
+import com.omegar.mvp.base.BasePresenter
 import kotlin.time.Duration
 
 class MoxyPresenter : BasePresenter<Long, Int, MoxyView<Int>>() {

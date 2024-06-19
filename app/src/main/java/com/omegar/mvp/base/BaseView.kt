@@ -1,4 +1,6 @@
-package com.omegar.mvp
+package com.omegar.mvp.base
+
+import com.omegar.mvp.MvpView
 
 
 /**

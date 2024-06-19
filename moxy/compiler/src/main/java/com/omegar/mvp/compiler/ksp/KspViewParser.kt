@@ -247,7 +247,9 @@ class KspViewParser(
         putTag(OriginatingMarker::class, KspOriginatingMarker)
         val oldList = getTag(KspOriginatingMarker.Files::class)?.files.orEmpty()
         val list = oldList + declarations.mapNotNull { it.containingFile }
-        putTag(KspOriginatingMarker.Files::class, KspOriginatingMarker.Files(list))
+        val oldFiles = getTag(KspOriginatingMarker.Files::class)
+        val newFiles = oldFiles?.let { KspOriginatingMarker.Files(oldFiles.files + list) } ?: KspOriginatingMarker.Files(list)
+        putTag(KspOriginatingMarker.Files::class, newFiles)
     }
 
     private fun KSTypeReference.toTypeName(resolver: TypeNameResolver): TypeName {
