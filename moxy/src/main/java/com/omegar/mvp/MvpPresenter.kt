@@ -39,6 +39,7 @@ abstract class MvpPresenter<View : MvpView> {
     val attachedViews: Set<View>
         get() = mvpViewState.attachedViews
 
+    @Suppress("UNCHECKED_CAST")
     internal fun attachView(mvpView: MvpView) {
         val view = mvpView as View
         attachView(view, firstLaunch)
@@ -87,10 +88,12 @@ abstract class MvpPresenter<View : MvpView> {
         // nothing
     }
 
+    @Suppress("UNCHECKED_CAST")
     internal fun detachView(view: MvpView) {
         detachView(view as View)
     }
 
+    @Suppress("UNCHECKED_CAST")
     internal fun destroyView(view: MvpView) {
         destroyView(view as View)
     }

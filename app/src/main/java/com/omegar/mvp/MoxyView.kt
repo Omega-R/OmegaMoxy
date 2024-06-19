@@ -1,5 +1,6 @@
 package com.omegar.mvp
 
+import com.omegar.mvp.base.BaseView
 import com.omegar.mvp.viewstate.strategy.MoxyViewCommand
 import com.omegar.mvp.viewstate.strategy.StrategyType.ONE_EXECUTION
 import kotlin.time.Duration

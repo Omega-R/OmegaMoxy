@@ -1,7 +1,6 @@
 package com.omegar.mvp.compiler.entities
 
 import com.google.devtools.ksp.symbol.KSType
-import com.omegar.mvp.compiler.NamingRules.viewStateClassName
 import com.omegar.mvp.compiler.extensions.safeParameterizedBy
 import com.omegar.mvp.viewstate.strategy.StrategyType
 import com.squareup.kotlinpoet.ClassName

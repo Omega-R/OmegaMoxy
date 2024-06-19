@@ -68,8 +68,33 @@ class ViewStateGenerator : Processor<View, FileSpec> {
 
         return typeSpec.toFileSpecBuilder(view.className.packageName)
             .apply {
-                view.presenterClassParamsMap.forEach { entry ->
-                    addFunction(view.createProvidePresenterFunSpec(entry.key, entry.value, view.presenterClassParamsMap.size == 1))
+                val receiver = MvpDelegateHolder::class.asClassName().parameterizedBy(STAR)
+                when (view.presenterClassParamsMap.size) {
+                    1 -> {
+                        val entry = view.presenterClassParamsMap.entries.first()
+                        addFunction(view.createProvidePresenterFunSpec(
+                            receiver = receiver,
+                            presenterType = entry.key,
+                            typeParams = entry.value,
+                            generalName = true
+                        ))
+                        addFunction(view.createProvidePresenterFunSpec(
+                            receiver = receiver,
+                            presenterType = entry.key,
+                            typeParams = entry.value,
+                            generalName = false
+                        ))
+                    }
+                    else -> {
+                        view.presenterClassParamsMap.forEach { entry ->
+                            addFunction(view.createProvidePresenterFunSpec(
+                                receiver = receiver,
+                                presenterType = entry.key,
+                                typeParams = entry.value,
+                                generalName = false
+                            ))
+                        }
+                    }
                 }
             }
             .build()
@@ -245,7 +270,12 @@ class ViewStateGenerator : Processor<View, FileSpec> {
         get() = (if (isVarargs) "*" else "") + name
 
 
-    private fun View.createProvidePresenterFunSpec(presenterType: ClassName, typeParams: List<TypeVariableName>, generalName: Boolean): FunSpec {
+    private fun View.createProvidePresenterFunSpec(
+        receiver: TypeName,
+        presenterType: ClassName,
+        typeParams: List<TypeVariableName>,
+        generalName: Boolean
+    ): FunSpec {
         val parameterizedPresenterType = presenterType.safeParameterizedBy(typeParams)
         val lambda = LambdaTypeName.get(
             parameters = emptyArray<TypeName>(),
@@ -253,11 +283,12 @@ class ViewStateGenerator : Processor<View, FileSpec> {
         )
         val presenterFactoryTypeName = CustomPresenterFactory::class.asClassName().parameterizedBy(parameterizedPresenterType, className.safeParameterizedBy(viewTypePresenterParams[presenterType]))
         return FunSpec.builder("provide${ if (generalName) "Presenter" else presenterType.simpleName}")
-            .receiver(MvpDelegateHolder::class.asClassName().parameterizedBy(STAR))
+            .receiver(receiver)
             .addTypeVariables(typeParams)
             .addParameter("factoryBlock", lambda)
             .returns(presenterFactoryTypeName)
             .addCode(viewStateClassName.simpleName + ".Companion\n")
+            .addStatement("@Suppress(\"UNCHECKED_CAST\")")
             .addCode("return %T(%T::class as %T<%T>, factoryBlock).also { mvpDelegate.addCustomPresenterFields(it) }", presenterFactoryTypeName, presenterType, KClass::class.asClassName(), parameterizedPresenterType)
             .build()
     }
