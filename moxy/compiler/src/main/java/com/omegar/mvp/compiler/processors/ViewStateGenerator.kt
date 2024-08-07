@@ -11,6 +11,7 @@ import com.omegar.mvp.compiler.entities.View.Method.Type.Function
 import com.omegar.mvp.compiler.entities.View.Method.Type.Property
 import com.omegar.mvp.compiler.extensions.safeParameterizedBy
 import com.omegar.mvp.compiler.extensions.toFileSpecBuilder
+import com.omegar.mvp.presenter.PresenterType
 import com.omegar.mvp.viewstate.MvpViewState
 import com.omegar.mvp.viewstate.ViewCommand
 import com.omegar.mvp.viewstate.strategy.AddToEndSingleStrategy
@@ -285,11 +286,15 @@ class ViewStateGenerator : Processor<View, FileSpec> {
         return FunSpec.builder("provide${ if (generalName) "Presenter" else presenterType.simpleName}")
             .receiver(receiver)
             .addTypeVariables(typeParams)
+            .addParameter(ParameterSpec.builder("presenterType",  PresenterType::class)
+                .defaultValue("%T.%L", PresenterType::class.asTypeName(), PresenterType.LOCAL)
+                .build()
+            )
             .addParameter("factoryBlock", lambda)
             .returns(presenterFactoryTypeName)
             .addCode(viewStateClassName.simpleName + ".Companion\n")
             .addStatement("@Suppress(\"UNCHECKED_CAST\")")
-            .addCode("return %T(%T::class as %T<%T>, factoryBlock).also { mvpDelegate.addCustomPresenterFields(it) }", presenterFactoryTypeName, presenterType, KClass::class.asClassName(), parameterizedPresenterType)
+            .addCode("return %T(%T::class as %T<%T>, presenterType, factoryBlock).also { mvpDelegate.addCustomPresenterFields(it) }", presenterFactoryTypeName, presenterType, KClass::class.asClassName(), parameterizedPresenterType)
             .build()
     }
 

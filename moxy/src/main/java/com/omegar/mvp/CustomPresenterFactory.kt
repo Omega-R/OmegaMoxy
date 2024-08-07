@@ -9,8 +9,8 @@ import kotlin.reflect.KProperty
  * Created by Anton Knyazev on 25.11.2020.
  */
 
-class CustomPresenterFactory<P : MvpPresenter<*>, D>(presenterClass: KClass<P>, private val factoryBlock: () -> P) :
-    PresenterField<D, P>(PresenterType.LOCAL, presenterClass) {
+class CustomPresenterFactory<P : MvpPresenter<*>, D>(presenterClass: KClass<P>, presenterType: PresenterType = PresenterType.LOCAL, private val factoryBlock: () -> P) :
+    PresenterField<D, P>(presenterType, presenterClass) {
 
     private var presenter: P? = null
 
