@@ -37,11 +37,11 @@ dependencies {
 
     implementation project(":moxy")
 
-    implementation "org.jetbrains.kotlin:kotlin-reflect:1.9.0"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:2.0.0"
 
-    implementation 'com.google.devtools.ksp:symbol-processing-api:1.9.0-1.0.11'
+    implementation 'com.google.devtools.ksp:symbol-processing-api:2.0.0-1.0.+'
 
-    def kotlinPoetVersion = '1.14.2'
+    def kotlinPoetVersion = '1.17.0'
 
     implementation "com.squareup:kotlinpoet:$kotlinPoetVersion"
     implementation "com.squareup:kotlinpoet-metadata:$kotlinPoetVersion"
