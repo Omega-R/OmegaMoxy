@@ -17,6 +17,9 @@ object NamingRules {
     val View.viewStateName
         get() = name.viewStateName
 
+    val View.presenterStateName
+        get() = name.replace("View", "MvpPresenterState")
+
     val View.viewStateClassName
         get() = toClassName(viewStateName)
 
@@ -27,6 +30,9 @@ object NamingRules {
 
             return "$capitalizeName${counter}Command"
         }
+
+    val View.Method.propertyFlowName
+        get() ="${name}Flow"
 
     const val moxyReflectorName = "MoxyReflector"
 

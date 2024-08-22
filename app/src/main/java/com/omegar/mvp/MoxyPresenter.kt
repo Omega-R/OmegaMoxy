@@ -3,7 +3,7 @@ package com.omegar.mvp
 import com.omegar.mvp.base.BasePresenter
 import kotlin.time.Duration
 
-class MoxyPresenter : BasePresenter<Long, Int, MoxyView<Int>>() {
+class MoxyPresenter<E> : BasePresenter<Long, Int, MoxyView<Int, E>>() {
 
     init {
         viewState.showToast("Hello World!")

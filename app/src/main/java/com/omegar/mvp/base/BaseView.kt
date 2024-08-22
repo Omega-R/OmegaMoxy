@@ -1,5 +1,6 @@
 package com.omegar.mvp.base
 
+import com.omegar.mvp.Addon
 import com.omegar.mvp.MvpView
 
 
@@ -9,6 +10,6 @@ import com.omegar.mvp.MvpView
  */
 interface BaseView<M>: MvpView {
 
-    fun base() {}
+    fun base(value: Addon<M>)
 
 }

@@ -39,7 +39,7 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
         const val KEY_UNIQUE_KEY = "MvpDelegate.MVP_UNIQUE_KEY"
     }
 
-    private val mCustomPresenterFields: MutableList<PresenterField<Delegated, MvpPresenter<*>>> = ArrayList()
+    private val customPresenterFields: MutableList<PresenterField<Delegated, MvpPresenter<*>>> = ArrayList()
     private lateinit var delegateTag: String
     private var isAttached = false
     private lateinit var presenters: List<MvpPresenter<*>>
@@ -61,7 +61,11 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
         //get base tag for presenters
         delegateTag = generateDelegateTag(delegated::class, this::class, uniqueKey)
         //bind presenters to view
-        presenters = mvpProcessor.getMvpPresenters(delegated, delegateTag, mCustomPresenterFields)
+        presenters = mvpProcessor.getMvpPresenters(delegated, delegateTag, customPresenterFields)
+    }
+
+    fun isCreated(): Boolean {
+        return ::presenters.isInitialized
     }
 
     /**
@@ -129,12 +133,12 @@ open class MvpDelegate<Delegated : Any>(private val delegated: Delegated) {
 
     fun <P : MvpPresenter<*>> addCustomPresenterFields(customPresenterField: CustomPresenterFactory<P, *>) {
         @Suppress("UNCHECKED_CAST")
-        mCustomPresenterFields.add(customPresenterField as PresenterField<Delegated, MvpPresenter<*>>)
+        customPresenterFields.add(customPresenterField as PresenterField<Delegated, MvpPresenter<*>>)
     }
 
     fun <P : MvpPresenter<*>> addCustomPresenterFields(customPresenterField: PresenterField<Delegated, P>) {
         @Suppress("UNCHECKED_CAST")
-        mCustomPresenterFields.add(customPresenterField as PresenterField<Delegated, MvpPresenter<*>>)
+        customPresenterFields.add(customPresenterField as PresenterField<Delegated, MvpPresenter<*>>)
     }
 
 

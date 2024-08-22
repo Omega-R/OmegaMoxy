@@ -10,6 +10,7 @@ import com.omegar.mvp.MvpPresenter
 import com.omegar.mvp.MvpView
 import com.omegar.mvp.compiler.entities.View
 import com.omegar.mvp.compiler.ksp.KspViewParser
+import com.omegar.mvp.compiler.processors.PresenterStateGenerator
 import com.omegar.mvp.compiler.processors.ViewStateGenerator
 import com.squareup.kotlinpoet.ksp.writeTo
 
@@ -18,6 +19,10 @@ import com.squareup.kotlinpoet.ksp.writeTo
  * Copyright (c) 2023 Omega https://omega-r.com
  */
 class MvpCompiler(environment: SymbolProcessorEnvironment) : SymbolProcessor {
+
+    companion object {
+        private const val COMPOSE_CLASS_NAME = "com.omegar.mvp.compose.MvpPresenterState"
+    }
 
     private val codeGenerator = environment.codeGenerator
     private val logger = environment.logger
@@ -34,6 +39,11 @@ class MvpCompiler(environment: SymbolProcessorEnvironment) : SymbolProcessor {
         val parser = KspViewParser(logger, resolver, mvpView)
         val viewStateGenerator = ViewStateGenerator()
 
+        val presenterStateGenerator = PresenterStateGenerator(logger)
+
+        val composeClassDeclaration = resolver.getClassDeclarationByName(resolver.getKSNameFromString(COMPOSE_CLASS_NAME))
+        val composeEnabled = composeClassDeclaration != null
+
         resolver.getAllFiles()
             .flatMap { it.declarations }
             .filterIsInstance<KSClassDeclaration>()
@@ -42,7 +52,10 @@ class MvpCompiler(environment: SymbolProcessorEnvironment) : SymbolProcessor {
             .filter { it.needGenerate }
             .distinctBy { it.className.canonicalName }
             .toList()
-            .forEach { viewStateGenerator(it).writeTo(codeGenerator = codeGenerator, aggregating = false) }
+            .forEach {
+                viewStateGenerator(it).writeTo(codeGenerator = codeGenerator, aggregating = false)
+                presenterStateGenerator(it).writeTo(codeGenerator = codeGenerator, aggregating = true)
+            }
 
         return emptyList()
     }
